@@ -367,6 +367,25 @@
 								>{$i18n.t("'s', 'm', 'h', 'd', 'w' or '-1' for no expiration.")}</span
 							>
 						</div>
+
+						<div class="mt-2 flex w-full justify-between">
+							<div class=" self-center text-xs font-medium">{$i18n.t('JWT Max Count')}</div>
+						</div>
+
+						<div class="mt-2 flex space-x-2">
+							<input
+								class="w-full rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+								type="number"
+								bind:value={adminConfig.ENHANCED_JWT_MAX_COUNT}
+							/>
+						</div>
+
+						<div class="mt-2 text-xs text-gray-400 dark:text-gray-500">
+							{$i18n.t('The maximum number of simultaneous logins per user, 0 means no limit')}
+						</div>
+						<div class="text-xs text-gray-400 dark:text-gray-500">
+							{$i18n.t('Redis and expiration is required for jwt max count limit')}
+						</div>
 					</div>
 
 					<div class=" space-y-3">

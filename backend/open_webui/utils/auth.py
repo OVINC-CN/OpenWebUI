@@ -1,13 +1,14 @@
 import logging
 import shutil
+import time
 import uuid
 import jwt
 import base64
 import hmac
 import hashlib
+
 import requests
 import os
-
 
 from datetime import datetime, timedelta
 import pytz
@@ -23,12 +24,16 @@ from open_webui.env import (
     STATIC_DIR,
     SRC_LOG_LEVELS,
     FRONTEND_BUILD_DIR,
+    REDIS_URL,
+    REDIS_SENTINEL_HOSTS,
+    REDIS_SENTINEL_PORT,
 )
 
 from fastapi import BackgroundTasks, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 
+from open_webui.utils.redis import get_redis_connection, get_sentinels_from_env
 
 logging.getLogger("passlib").setLevel(logging.ERROR)
 
@@ -37,6 +42,7 @@ log.setLevel(SRC_LOG_LEVELS["OAUTH"])
 
 SESSION_SECRET = WEBUI_SECRET_KEY
 ALGORITHM = "HS256"
+
 
 ##############
 # Auth Utils
@@ -164,6 +170,63 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
+redis_client = None
+if REDIS_URL:
+    redis_client = get_redis_connection(
+        redis_url=REDIS_URL,
+        redis_sentinels=get_sentinels_from_env(
+            REDIS_SENTINEL_HOSTS, REDIS_SENTINEL_PORT
+        ),
+        decode_responses=True,
+    )
+
+
+def jwt_cache_key(id: str) -> str:
+    return f"enhanced:jwt:{id}"
+
+
+def check_jwt_max_count(data: dict, token: str) -> Optional[dict]:
+    from open_webui.config import ENHANCED_JWT_MAX_COUNT
+
+    # redis and jwt limit
+    jwt_max_count = int(ENHANCED_JWT_MAX_COUNT.value)
+    if not redis_client or jwt_max_count <= 0:
+        return data
+    # check for data
+    if not data or "id" not in data:
+        return data
+    # load from redis
+    key = jwt_cache_key(data["id"])
+    token_map = redis_client.hgetall(key)
+    if not token_map:
+        return None
+    # sort
+    tokens = [[created_at, token] for token, created_at in token_map.items()]
+    tokens.sort(key=lambda x: x[0], reverse=True)
+    # check for last
+    to_verify = tokens[:jwt_max_count]
+    for t in to_verify:
+        if t[1] == token:
+            return data
+    # remove old tokens
+    to_remove = tokens[jwt_max_count:]
+    if to_remove:
+        redis_client.hdel(key, *[t[1] for t in to_remove])
+    return None
+
+
+def set_jwt_token(user_id: str, token: str) -> None:
+    from open_webui.config import ENHANCED_JWT_MAX_COUNT
+
+    # redis and jwt limit
+    jwt_max_count = int(ENHANCED_JWT_MAX_COUNT.value)
+    if not redis_client or jwt_max_count <= 0:
+        return
+    # save to redis
+    key = jwt_cache_key(user_id)
+    redis_client.hset(name=key, key=token, value=str(time.time_ns()))
+
+
 def create_token(data: dict, expires_delta: Union[timedelta, None] = None) -> str:
     payload = data.copy()
 
@@ -178,7 +241,7 @@ def create_token(data: dict, expires_delta: Union[timedelta, None] = None) -> st
 def decode_token(token: str) -> Optional[dict]:
     try:
         decoded = jwt.decode(token, SESSION_SECRET, algorithms=[ALGORITHM])
-        return decoded
+        return check_jwt_max_count(data=decoded, token=token)
     except Exception:
         return None
 

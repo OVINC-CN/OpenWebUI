@@ -335,6 +335,7 @@ from open_webui.config import (
     EZFP_KEY,
     EZFP_CALLBACK_HOST,
     EZFP_AMOUNT_CONTROL,
+    ENHANCED_JWT_MAX_COUNT,
 )
 from open_webui.env import (
     AUDIT_EXCLUDED_PATHS,
@@ -863,8 +864,10 @@ app.state.config.AUTOCOMPLETE_GENERATION_INPUT_MAX_LENGTH = (
 )
 
 ########################################
-# Usage
+# Enhanced
 ########################################
+
+app.state.config.ENHANCED_JWT_MAX_COUNT = ENHANCED_JWT_MAX_COUNT
 
 app.state.config.CREDIT_NO_CREDIT_MSG = CREDIT_NO_CREDIT_MSG
 app.state.config.USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE = (

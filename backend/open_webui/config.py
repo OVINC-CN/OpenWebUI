@@ -2654,8 +2654,14 @@ LDAP_CIPHERS = PersistentConfig(
 )
 
 ####################################
-# Credit and Usage
+# Enhanced Feature
 ####################################
+
+ENHANCED_JWT_MAX_COUNT = PersistentConfig(
+    "ENHANCED_JWT_MAX_COUNT",
+    "enhanced.jwt.max_count",
+    os.environ.get("ENHANCED_JWT_MAX_COUNT", "0"),
+)
 
 CREDIT_NO_CREDIT_MSG = PersistentConfig(
     "CREDIT_NO_CREDIT_MSG",

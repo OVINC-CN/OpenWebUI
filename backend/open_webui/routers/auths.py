@@ -44,6 +44,7 @@ from open_webui.utils.auth import (
     get_verified_user,
     get_current_user,
     get_password_hash,
+    set_jwt_token,
 )
 from open_webui.utils.webhook import post_webhook
 from open_webui.utils.access_control import get_permissions
@@ -302,6 +303,7 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
                         request.app.state.config.JWT_EXPIRES_IN
                     ),
                 )
+                set_jwt_token(user_id=user.id, token=token)
 
                 # Set the cookie token
                 response.set_cookie(
@@ -393,6 +395,7 @@ async def signin(request: Request, response: Response, form_data: SigninForm):
             data={"id": user.id},
             expires_delta=expires_delta,
         )
+        set_jwt_token(user_id=user.id, token=token)
 
         datetime_expires_at = (
             datetime.datetime.fromtimestamp(expires_at, datetime.timezone.utc)
@@ -497,6 +500,7 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
                 data={"id": user.id},
                 expires_delta=expires_delta,
             )
+            set_jwt_token(user_id=user.id, token=token)
 
             datetime_expires_at = (
                 datetime.datetime.fromtimestamp(expires_at, datetime.timezone.utc)
@@ -681,6 +685,7 @@ async def get_admin_config(request: Request, user=Depends(get_admin_user)):
         "ENABLE_MESSAGE_RATING": request.app.state.config.ENABLE_MESSAGE_RATING,
         "ENABLE_CHANNELS": request.app.state.config.ENABLE_CHANNELS,
         "ENABLE_USER_WEBHOOKS": request.app.state.config.ENABLE_USER_WEBHOOKS,
+        "ENHANCED_JWT_MAX_COUNT": request.app.state.config.ENHANCED_JWT_MAX_COUNT,
     }
 
 
@@ -697,6 +702,7 @@ class AdminConfig(BaseModel):
     ENABLE_MESSAGE_RATING: bool
     ENABLE_CHANNELS: bool
     ENABLE_USER_WEBHOOKS: bool
+    ENHANCED_JWT_MAX_COUNT: int
 
 
 @router.post("/admin/config")
@@ -733,6 +739,8 @@ async def update_admin_config(
 
     request.app.state.config.ENABLE_USER_WEBHOOKS = form_data.ENABLE_USER_WEBHOOKS
 
+    request.app.state.config.ENHANCED_JWT_MAX_COUNT = form_data.ENHANCED_JWT_MAX_COUNT
+
     return {
         "SHOW_ADMIN_DETAILS": request.app.state.config.SHOW_ADMIN_DETAILS,
         "WEBUI_URL": request.app.state.config.WEBUI_URL,
@@ -746,6 +754,7 @@ async def update_admin_config(
         "ENABLE_COMMUNITY_SHARING": request.app.state.config.ENABLE_COMMUNITY_SHARING,
         "ENABLE_MESSAGE_RATING": request.app.state.config.ENABLE_MESSAGE_RATING,
         "ENABLE_USER_WEBHOOKS": request.app.state.config.ENABLE_USER_WEBHOOKS,
+        "ENHANCED_JWT_MAX_COUNT": request.app.state.config.ENHANCED_JWT_MAX_COUNT,
     }
 
 
