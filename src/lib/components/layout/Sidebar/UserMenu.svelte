@@ -168,23 +168,11 @@
 					class="flex gap-2 items-center py-1.5 px-3 text-sm  cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
 					id="chat-share-button"
 					on:click={() => {
-						window.open('https://docs.openwebui.com', '_blank');
+						window.open('https://docs.comiai.cc', '_blank');
 					}}
 				>
 					<QuestionMarkCircle className="size-5" />
 					<div class="flex items-center">{$i18n.t('Documentation')}</div>
-				</DropdownMenu.Item>
-
-				<!-- Releases -->
-				<DropdownMenu.Item
-					class="flex gap-2 items-center py-1.5 px-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
-					id="menu-item-releases"
-					on:click={() => {
-						window.open('https://github.com/U8F69/open-webui/releases', '_blank');
-					}}
-				>
-					<Map className="size-5" />
-					<div class="flex items-center">{$i18n.t('Releases')}</div>
 				</DropdownMenu.Item>
 
 				<DropdownMenu.Item
