@@ -172,7 +172,6 @@
 
 <div class="w-full h-screen max-h-[100dvh] text-white relative">
 	<AnimatedBackground />
-	<div class="w-full h-full absolute top-0 left-0 bg-white/30 dark:bg-black/30 backdrop-blur-sm"></div>
 
 	<div class="w-full absolute top-0 left-0 right-0 h-8 drag-region" />
 
