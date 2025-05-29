@@ -124,6 +124,22 @@
 				</div>
 
 				<div class="mb-3">
+					<div class="text-base font-medium">{$i18n.t('OpenAI Embedding Price')}</div>
+					<hr class="mt-2.5 border-gray-100 dark:border-gray-850 my-2" />
+					<div class="mt-2 flex w-full justify-between">
+						<div class=" self-center text-xs font-medium">
+							{$i18n.t('Prompt Price For 1M Tokens')}
+						</div>
+						<input
+							class="rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+							bind:value={config.USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE}
+							type="number"
+							step="0.000001"
+						/>
+					</div>
+				</div>
+
+				<div class="mb-3">
 					<div class="text-base font-medium">{$i18n.t('Feature Price')}</div>
 					<div class="text-xs text-gray-400 dark:text-gray-500">
 						{$i18n.t('For 1M requests')}

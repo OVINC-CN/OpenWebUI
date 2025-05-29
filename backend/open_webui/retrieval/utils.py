@@ -30,6 +30,8 @@ from open_webui.config import (
     RAG_EMBEDDING_CONTENT_PREFIX,
     RAG_EMBEDDING_PREFIX_FIELD_NAME,
 )
+from open_webui.utils.credit.usage import CreditDeduct
+from open_webui.utils.credit.utils import check_credit_by_user_id
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["RAG"])
@@ -660,6 +662,11 @@ def generate_openai_batch_embeddings(
     prefix: str = None,
     user: UserModel = None,
 ) -> Optional[list[list[float]]]:
+
+    # check credit
+    if user:
+        check_credit_by_user_id(user_id=user.id, form_data={}, is_embedding=True)
+
     try:
         log.debug(
             f"generate_openai_batch_embeddings:model {model} batch size: {len(texts)}"
@@ -689,6 +696,22 @@ def generate_openai_batch_embeddings(
         r.raise_for_status()
         data = r.json()
         if "data" in data:
+            # calculate usage
+            if user:
+                input_text = "".join(texts)
+                with CreditDeduct(
+                    user=user,
+                    model_id=model,
+                    body={"messages": [{"role": "user", "content": input_text}]},
+                    is_stream=False,
+                    is_embedding=True,
+                ) as credit_deduct:
+                    if "usage" in data:
+                        prompt_tokens = data["usage"]["prompt_tokens"]
+                        credit_deduct.usage.prompt_tokens = prompt_tokens
+                        credit_deduct.usage.total_tokens = prompt_tokens
+                    else:
+                        credit_deduct.run(input_text)
             return [elem["embedding"] for elem in data["data"]]
         else:
             raise "Something went wrong :/"

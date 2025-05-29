@@ -331,6 +331,7 @@ class UsageConfigForm(BaseModel):
     CREDIT_DEFAULT_CREDIT: float = Field(default=0, ge=0)
     USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE: str = Field(default="")
     USAGE_DEFAULT_ENCODING_MODEL: str = Field(default="gpt-4o")
+    USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE: float = Field(default=0, ge=0)
     USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE: float = Field(default=0, ge=0)
     USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE: float = Field(default=0, ge=0)
     USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE: float = Field(default=0, ge=0)
@@ -352,6 +353,7 @@ async def get_usage_config(request: Request, user=Depends(get_admin_user)):
         "CREDIT_DEFAULT_CREDIT": request.app.state.config.CREDIT_DEFAULT_CREDIT,
         "USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE": request.app.state.config.USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE,
         "USAGE_DEFAULT_ENCODING_MODEL": request.app.state.config.USAGE_DEFAULT_ENCODING_MODEL,
+        "USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE": request.app.state.config.USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE,
         "USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE": request.app.state.config.USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE,
         "USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE": request.app.state.config.USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE,
         "USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE": request.app.state.config.USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE,
@@ -379,6 +381,9 @@ async def set_usage_config(
     request.app.state.config.USAGE_DEFAULT_ENCODING_MODEL = (
         form_data.USAGE_DEFAULT_ENCODING_MODEL
     )
+    request.app.state.config.USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE = (
+        form_data.USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE
+    )
     request.app.state.config.USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE = (
         form_data.USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE
     )
@@ -405,6 +410,7 @@ async def set_usage_config(
         "CREDIT_NO_CREDIT_MSG": request.app.state.config.CREDIT_NO_CREDIT_MSG,
         "USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE": request.app.state.config.USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE,
         "USAGE_DEFAULT_ENCODING_MODEL": request.app.state.config.USAGE_DEFAULT_ENCODING_MODEL,
+        "USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE": request.app.state.config.USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE,
         "USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE": request.app.state.config.USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE,
         "USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE": request.app.state.config.USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE,
         "USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE": request.app.state.config.USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE,

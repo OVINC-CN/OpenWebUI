@@ -150,6 +150,7 @@ class CreditDeduct:
         model_id: str,
         body: dict,
         is_stream: bool,
+        is_embedding: bool = False,
     ) -> None:
         self.remote_id = ""
         self.user = user
@@ -165,7 +166,7 @@ class CreditDeduct:
             self.completion_unit_price,
             self.request_unit_price,
             _,
-        ) = get_model_price(model=self.model)
+        ) = get_model_price(model=self.model, is_embedding=is_embedding)
         self.features = {
             k
             for k, v in (
@@ -206,8 +207,9 @@ class CreditDeduct:
             )
         )
         logger.info(
-            "[credit_deduct] user: %s; tokens: %d %d; cost: %s",
-            self.user.id,
+            "[credit_deduct] user: %s; model: %s; tokens: %d %d; cost: %s",
+            self.user.name,
+            self.model_id,
             self.usage.prompt_tokens,
             self.usage.completion_tokens,
             self.total_price,

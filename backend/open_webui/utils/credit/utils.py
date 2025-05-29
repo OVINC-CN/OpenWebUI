@@ -17,6 +17,7 @@ from open_webui.config import (
     USAGE_CALCULATE_DEFAULT_TOKEN_PRICE,
     USAGE_CALCULATE_DEFAULT_REQUEST_PRICE,
     CREDIT_NO_CREDIT_MSG,
+    USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE,
 )
 from open_webui.models.chats import Chats
 from open_webui.models.credits import Credits
@@ -25,7 +26,16 @@ from open_webui.models.models import Models, ModelModel
 
 def get_model_price(
     model: Optional[ModelModel] = None,
+    is_embedding: Optional[bool] = False,
 ) -> (Decimal, Decimal, Decimal, Decimal):
+    # embedding
+    if is_embedding:
+        return (
+            Decimal(USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE.value),
+            Decimal(0),
+            Decimal(0),
+            Decimal(0),
+        )
     # no model provide
     if not model or not isinstance(model, ModelModel):
         return (
@@ -103,11 +113,13 @@ def is_free_request(model_price: list, form_data: dict) -> bool:
     return is_free_model and is_feature_free
 
 
-def check_credit_by_user_id(user_id: str, form_data: dict) -> None:
+def check_credit_by_user_id(
+    user_id: str, form_data: dict, is_embedding: bool = False
+) -> None:
     # load model
     model_id = form_data.get("model") or form_data.get("model_id") or ""
     model = Models.get_model_by_id(model_id)
-    model_price = get_model_price(model)
+    model_price = get_model_price(model, is_embedding=is_embedding)
     minimum_credit = model_price[-1]
     # check for free
     if is_free_request(model_price=model_price, form_data=form_data):
