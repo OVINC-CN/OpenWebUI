@@ -5,6 +5,7 @@ from typing import Optional, Union
 import requests
 import hashlib
 from concurrent.futures import ThreadPoolExecutor
+import time
 
 from huggingface_hub import snapshot_download
 from langchain.retrievers import ContextualCompressionRetriever, EnsembleRetriever
@@ -402,12 +403,13 @@ def get_embedding_function(
     url,
     key,
     embedding_batch_size,
+    azure_api_version=None,
 ):
     if embedding_engine == "":
         return lambda query, prefix=None, user=None: embedding_function.encode(
             query, **({"prompt": prefix} if prefix else {})
         ).tolist()
-    elif embedding_engine in ["ollama", "openai"]:
+    elif embedding_engine in ["ollama", "openai", "azure_openai"]:
         func = lambda query, prefix=None, user=None: generate_embeddings(
             engine=embedding_engine,
             model=embedding_model,
@@ -416,6 +418,7 @@ def get_embedding_function(
             url=url,
             key=key,
             user=user,
+            azure_api_version=azure_api_version,
         )
 
         def generate_multiple(query, prefix, user, func):
@@ -720,6 +723,82 @@ def generate_openai_batch_embeddings(
         return None
 
 
+def generate_azure_openai_batch_embeddings(
+    model: str,
+    texts: list[str],
+    url: str,
+    key: str = "",
+    version: str = "",
+    prefix: str = None,
+    user: UserModel = None,
+) -> Optional[list[list[float]]]:
+
+    # check credit
+    if user:
+        check_credit_by_user_id(user_id=user.id, form_data={}, is_embedding=True)
+
+    try:
+        log.debug(
+            f"generate_azure_openai_batch_embeddings:deployment {model} batch size: {len(texts)}"
+        )
+        json_data = {"input": texts}
+        if isinstance(RAG_EMBEDDING_PREFIX_FIELD_NAME, str) and isinstance(prefix, str):
+            json_data[RAG_EMBEDDING_PREFIX_FIELD_NAME] = prefix
+
+        url = f"{url}/openai/deployments/{model}/embeddings?api-version={version}"
+
+        for _ in range(5):
+            r = requests.post(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "api-key": key,
+                    **(
+                        {
+                            "X-OpenWebUI-User-Name": user.name,
+                            "X-OpenWebUI-User-Id": user.id,
+                            "X-OpenWebUI-User-Email": user.email,
+                            "X-OpenWebUI-User-Role": user.role,
+                        }
+                        if ENABLE_FORWARD_USER_INFO_HEADERS and user
+                        else {}
+                    ),
+                },
+                json=json_data,
+            )
+            if r.status_code == 429:
+                retry = float(r.headers.get("Retry-After", "1"))
+                time.sleep(retry)
+                continue
+            r.raise_for_status()
+            data = r.json()
+            if "data" in data:
+                # calculate usage
+                if user:
+                    input_text = "".join(texts)
+                    with CreditDeduct(
+                        user=user,
+                        model_id=model,
+                        body={"messages": [{"role": "user", "content": input_text}]},
+                        is_stream=False,
+                        is_embedding=True,
+                    ) as credit_deduct:
+                        if "usage" in data:
+                            prompt_tokens = data["usage"]["prompt_tokens"]
+                            credit_deduct.usage.prompt_tokens = prompt_tokens
+                            credit_deduct.usage.total_tokens = prompt_tokens
+                        else:
+                            credit_deduct.run(input_text)
+                # result
+                return [elem["embedding"] for elem in data["data"]]
+            else:
+                raise Exception("Something went wrong :/")
+        return None
+    except Exception as e:
+        log.exception(f"Error generating azure openai batch embeddings: {e}")
+        return None
+
+
 def generate_ollama_batch_embeddings(
     model: str,
     texts: list[str],
@@ -728,6 +807,11 @@ def generate_ollama_batch_embeddings(
     prefix: str = None,
     user: UserModel = None,
 ) -> Optional[list[list[float]]]:
+
+    # check credit
+    if user:
+        check_credit_by_user_id(user_id=user.id, form_data={}, is_embedding=True)
+
     try:
         log.debug(
             f"generate_ollama_batch_embeddings:model {model} batch size: {len(texts)}"
@@ -758,6 +842,19 @@ def generate_ollama_batch_embeddings(
         data = r.json()
 
         if "embeddings" in data:
+
+            # calculate usage
+            if user:
+                input_text = "".join(texts)
+                with CreditDeduct(
+                    user=user,
+                    model_id=model,
+                    body={"messages": [{"role": "user", "content": input_text}]},
+                    is_stream=False,
+                    is_embedding=True,
+                ) as credit_deduct:
+                    credit_deduct.run(input_text)
+
             return data["embeddings"]
         else:
             raise "Something went wrong :/"
@@ -784,38 +881,33 @@ def generate_embeddings(
             text = f"{prefix}{text}"
 
     if engine == "ollama":
-        if isinstance(text, list):
-            embeddings = generate_ollama_batch_embeddings(
-                **{
-                    "model": model,
-                    "texts": text,
-                    "url": url,
-                    "key": key,
-                    "prefix": prefix,
-                    "user": user,
-                }
-            )
-        else:
-            embeddings = generate_ollama_batch_embeddings(
-                **{
-                    "model": model,
-                    "texts": [text],
-                    "url": url,
-                    "key": key,
-                    "prefix": prefix,
-                    "user": user,
-                }
-            )
+        embeddings = generate_ollama_batch_embeddings(
+            **{
+                "model": model,
+                "texts": text if isinstance(text, list) else [text],
+                "url": url,
+                "key": key,
+                "prefix": prefix,
+                "user": user,
+            }
+        )
         return embeddings[0] if isinstance(text, str) else embeddings
     elif engine == "openai":
-        if isinstance(text, list):
-            embeddings = generate_openai_batch_embeddings(
-                model, text, url, key, prefix, user
-            )
-        else:
-            embeddings = generate_openai_batch_embeddings(
-                model, [text], url, key, prefix, user
-            )
+        embeddings = generate_openai_batch_embeddings(
+            model, text if isinstance(text, list) else [text], url, key, prefix, user
+        )
+        return embeddings[0] if isinstance(text, str) else embeddings
+    elif engine == "azure_openai":
+        azure_api_version = kwargs.get("azure_api_version", "")
+        embeddings = generate_azure_openai_batch_embeddings(
+            model,
+            text if isinstance(text, list) else [text],
+            url,
+            key,
+            azure_api_version,
+            prefix,
+            user,
+        )
         return embeddings[0] if isinstance(text, str) else embeddings
 
 

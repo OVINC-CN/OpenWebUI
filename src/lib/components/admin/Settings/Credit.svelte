@@ -124,7 +124,7 @@
 				</div>
 
 				<div class="mb-3">
-					<div class="text-base font-medium">{$i18n.t('OpenAI Embedding Price')}</div>
+					<div class="text-base font-medium">{$i18n.t('Embedding Price')}</div>
 					<hr class="mt-2.5 border-gray-100 dark:border-gray-850 my-2" />
 					<div class="mt-2 flex w-full justify-between">
 						<div class=" self-center text-xs font-medium">
