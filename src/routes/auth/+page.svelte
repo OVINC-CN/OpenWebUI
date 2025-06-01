@@ -487,7 +487,7 @@
 		background-image: url('/static/banner.jpg');
 		background-repeat: no-repeat;
 		background-position: top center;
-		background-size: cover;
+		background-size: 100% auto;
 		background-attachment: fixed;
 	}
 
