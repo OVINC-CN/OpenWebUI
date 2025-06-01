@@ -496,7 +496,7 @@ verify_email_template = """<!DOCTYPE html>
         </div>
         
         <div class="email-content">
-            <p class="instruction-text">请点击下方按钮激活您的账户，开始精彩体验。激活链接有效期为24小时。</p>
+            <p class="instruction-text">请点击下方按钮激活您的Comi AI账户。激活链接有效期为24小时。</p>
             <a href="%(link)s" class="activate-button">立即激活账户</a>
             <p class="note">如果您没有注册我们的服务，请忽略此邮件。</p>
         </div>
@@ -521,9 +521,9 @@ def send_verify_email(email: str):
     link = f"{WEBUI_URL.value.rstrip('/')}/api/v1/auths/signup_verify/{code}"
     send_email(
         receiver=email,
-        subject=f"{WEBUI_NAME} Email Verify",
+        subject=f"Comi AI 邮箱验证",
         body=verify_email_template
-        % {"title": f"{WEBUI_NAME} Email Verify", "link": link},
+        % {"title": f"Comi AI 邮箱验证", "link": link},
     )
 
 
