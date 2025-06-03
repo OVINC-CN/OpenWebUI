@@ -494,10 +494,10 @@ def verify_password_reset_token(token: str) -> str:
             REDIS_SENTINEL_HOSTS, REDIS_SENTINEL_PORT
         ),
     )
-    email = redis.get(name=get_password_reset_key(token=token))
+    email = redis.get(name=get_password_reset_key(code=token))
     if email:
         # 用完即删除token
-        redis.delete(get_password_reset_key(token=token))
+        redis.delete(get_password_reset_key(code=token))
     return email
 
 
