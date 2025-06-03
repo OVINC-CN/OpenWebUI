@@ -342,171 +342,113 @@ def get_admin_user(user=Depends(get_current_user)):
     return user
 
 
-verify_email_template = """<!DOCTYPE html>
-<html lang="zh-CN">
+verify_email_template = """
+<!DOCTYPE html>
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>账户激活</title>
+    <title>%(title)s</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Poppins', Arial, sans-serif;
-            background-color: #f5f7fa;
-            color: #333;
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-        }
-        
-        .email-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-        
-        .email-header {
-            background: linear-gradient(135deg, #6B73FF 0%%, #5DADE2 100%%);
-            padding: 30px;
-            text-align: center;
-        }
-        
-        .email-header img {
-            max-width: 100px;
-            height: auto;
-        }
-        
-        .email-header h1 {
-            color: white;
-            font-size: 24px;
-            margin-top: 15px;
-            font-weight: 600;
-        }
-        
-        .email-content {
-            padding: 40px 30px;
-            text-align: center;
-        }
-        
-        .welcome-text {
-            font-size: 18px;
-            margin-bottom: 25px;
-            color: #2c3e50;
-        }
-        
-        .instruction-text {
-            font-size: 16px;
-            margin-bottom: 30px;
-            color: #5d6778;
-        }
-        
-        .activate-button {
-            display: inline-block;
-            background: linear-gradient(to right, #5D8CF7, #4286F5);
-            color: white;
-            text-decoration: none;
-            padding: 14px 30px;
-            border-radius: 50px;
-            font-weight: 500;
-            font-size: 16px;
-            margin: 20px 0;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(65, 132, 234, 0.35);
-        }
-        
-        .activate-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(65, 132, 234, 0.40);
-        }
-        
-        .note {
-            font-size: 14px;
-            color: #8a94a6;
-            margin-top: 30px;
-        }
-        
-        .email-footer {
-            background-color: #f8fafc;
-            padding: 20px;
-            text-align: center;
-            font-size: 13px;
-            color: #8a94a6;
-            border-top: 1px solid #eaeef3;
-        }
-        
-        .social-links {
-            margin: 15px 0;
-        }
-        
-        .social-link {
-            display: inline-block;
-            margin: 0 8px;
-            width: 32px;
-            height: 32px;
-            background-color: #e1e5eb;
-            border-radius: 50%%;
-            line-height: 32px;
-            text-align: center;
-            transition: background-color 0.3s ease;
-        }
-        
-        .social-link:hover {
-            background-color: #d0d5dd;
-        }
-        
-        @media only screen and (max-width: 600px) {
-            .email-container {
-                border-radius: 0;
-            }
-            
-            .email-header, .email-content {
-                padding: 25px 20px;
-            }
-            
-            .email-header h1 {
-                font-size: 22px;
-            }
-            
-            .welcome-text {
-                font-size: 16px;
-            }
-            
-            .instruction-text {
-                font-size: 15px;
-            }
-            
-            .activate-button {
-                padding: 12px 25px;
-                font-size: 15px;
-            }
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 0; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(90deg, #667eea 0%%, #764ba2 100%%); color: #ffffff; text-align: center; padding: 30px 20px; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 300; }
+        .content { padding: 40px 30px; }
+        .content h2 { color: #333333; margin-top: 0; font-size: 24px; font-weight: 600; }
+        .content p { color: #666666; line-height: 1.6; margin: 15px 0; font-size: 16px; }
+        .button { display: inline-block; background: linear-gradient(90deg, #667eea 0%%, #764ba2 100%%); color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 50px; font-weight: 600; margin: 20px 0; text-align: center; font-size: 16px; }
+        .button:hover { opacity: 0.9; }
+        .footer { background-color: #f8f9fa; color: #6c757d; text-align: center; padding: 20px; font-size: 14px; }
+        .logo { width: 50px; height: 50px; margin: 0 auto 20px; background: #ffffff; border-radius: 50%%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: #667eea; }
     </style>
 </head>
 <body>
-    <div class="email-container">
-        <div class="email-header">
+    <div class="container">
+        <div class="header">
+            <div class="logo">OW</div>
             <h1>%(title)s</h1>
         </div>
-        
-        <div class="email-content">
-            <p class="instruction-text">请点击下方按钮激活您的Comi AI账户。激活链接有效期为24小时。</p>
-            <a href="%(link)s" class="activate-button">立即激活账户</a>
-            <p class="note">如果您没有注册我们的服务，请忽略此邮件。</p>
+        <div class="content">
+            <h2>点击下方链接验证您的邮箱</h2>
+            <p>您好！感谢您注册我们的服务。请点击下方按钮来验证您的邮箱地址。</p>
+            <p style="text-align: center;">
+                <a href="%(link)s" class="button">验证邮箱</a>
+            </p>
+            <p>如果按钮无法点击，请复制以下链接到浏览器地址栏：</p>
+            <p style="word-break: break-all; background-color: #f8f9fa; padding: 15px; border-radius: 5px; font-family: monospace;">%(link)s</p>
+            <p><strong>注意：</strong>此链接将在24小时后失效。</p>
+        </div>
+        <div class="footer">
+            <p>此邮件由系统自动发送，请勿回复。</p>
         </div>
     </div>
 </body>
-</html>"""
+</html>
+"""
+
+
+password_reset_email_template = """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>%(title)s</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 0; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(90deg, #667eea 0%%, #764ba2 100%%); color: #ffffff; text-align: center; padding: 30px 20px; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 300; }
+        .content { padding: 40px 30px; }
+        .content h2 { color: #333333; margin-top: 0; font-size: 24px; font-weight: 600; }
+        .content p { color: #666666; line-height: 1.6; margin: 15px 0; font-size: 16px; }
+        .button { display: inline-block; background: linear-gradient(90deg, #667eea 0%%, #764ba2 100%%); color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 50px; font-weight: 600; margin: 20px 0; text-align: center; font-size: 16px; }
+        .button:hover { opacity: 0.9; }
+        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .footer { background-color: #f8f9fa; color: #6c757d; text-align: center; padding: 20px; font-size: 14px; }
+        .logo { width: 50px; height: 50px; margin: 0 auto 20px; background: #ffffff; border-radius: 50%%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: #667eea; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">OW</div>
+            <h1>%(title)s</h1>
+        </div>
+        <div class="content">
+            <h2>重置您的密码</h2>
+            <p>您好！我们收到了重置您账户密码的请求。</p>
+            <p>请点击下方按钮来重置您的密码：</p>
+            <p style="text-align: center;">
+                <a href="%(link)s" class="button">重置密码</a>
+            </p>
+            <p>如果按钮无法点击，请复制以下链接到浏览器地址栏：</p>
+            <p style="word-break: break-all; background-color: #f8f9fa; padding: 15px; border-radius: 5px; font-family: monospace;">%(link)s</p>
+            <div class="warning">
+                <strong>重要提醒：</strong>
+                <ul style="margin: 10px 0 0 20px;">
+                    <li>此链接将在1小时后失效</li>
+                    <li>如果您没有请求重置密码，请忽略此邮件</li>
+                    <li>为了您的账户安全，建议设置强密码</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer">
+            <p>此邮件由系统自动发送，请勿回复。</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
 
 
 def get_email_code_key(code: str) -> str:
     return f"email_verify:{code}"
+
+
+def get_password_reset_key(code: str) -> str:
+    return f"password_reset:{code}"
 
 
 def send_verify_email(email: str):
@@ -525,6 +467,38 @@ def send_verify_email(email: str):
         body=verify_email_template
         % {"title": f"Comi AI 邮箱验证", "link": link},
     )
+
+
+def send_password_reset_email(email: str):
+    redis = get_redis_connection(
+        redis_url=REDIS_URL,
+        redis_sentinels=get_sentinels_from_env(
+            REDIS_SENTINEL_HOSTS, REDIS_SENTINEL_PORT
+        ),
+    )
+    code = f"{uuid.uuid4().hex}{uuid.uuid1().hex}"
+    redis.set(name=get_password_reset_key(code=code), value=email, ex=timedelta(hours=1))
+    link = f"{WEBUI_URL.value.rstrip('/')}/auth/reset-password?token={code}"
+    send_email(
+        receiver=email,
+        subject=f"重置您的密码 - {WEBUI_NAME.value}",
+        body=password_reset_email_template
+        % {"title": f"重置您的密码 - {WEBUI_NAME.value}", "link": link},
+    )
+
+
+def verify_password_reset_token(token: str) -> str:
+    redis = get_redis_connection(
+        redis_url=REDIS_URL,
+        redis_sentinels=get_sentinels_from_env(
+            REDIS_SENTINEL_HOSTS, REDIS_SENTINEL_PORT
+        ),
+    )
+    email = redis.get(name=get_password_reset_key(token=token))
+    if email:
+        # 用完即删除token
+        redis.delete(get_password_reset_key(token=token))
+    return email
 
 
 def verify_email_by_code(code: str) -> str:
