@@ -92,17 +92,31 @@
 								新密码
 							</label>
 							<div class="mt-1 relative">
-								<input
-									id="new-password"
-									name="new-password"
-									type={showPassword ? 'text' : 'password'}
-									autocomplete="new-password"
-									required
-									bind:value={newPassword}
-									disabled={loading}
-									class="block w-full appearance-none rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 pr-10 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white disabled:opacity-50"
-									placeholder="请输入新密码"
-								/>
+								{#if showPassword}
+									<input
+										id="new-password"
+										name="new-password"
+										type="text"
+										autocomplete="new-password"
+										required
+										bind:value={newPassword}
+										disabled={loading}
+										class="block w-full appearance-none rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 pr-10 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white disabled:opacity-50"
+										placeholder="请输入新密码"
+									/>
+								{:else}
+									<input
+										id="new-password"
+										name="new-password"
+										type="password"
+										autocomplete="new-password"
+										required
+										bind:value={newPassword}
+										disabled={loading}
+										class="block w-full appearance-none rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 pr-10 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white disabled:opacity-50"
+										placeholder="请输入新密码"
+									/>
+								{/if}
 								<button
 									type="button"
 									class="absolute inset-y-0 right-0 pr-3 flex items-center"
