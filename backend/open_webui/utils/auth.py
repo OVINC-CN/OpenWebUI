@@ -357,7 +357,7 @@ verify_email_template = """
         .content { padding: 40px 30px; }
         .content h2 { color: #333333; margin-top: 0; font-size: 24px; font-weight: 600; }
         .content p { color: #666666; line-height: 1.6; margin: 15px 0; font-size: 16px; }
-        .button { display: inline-block; background: linear-gradient(90deg, #667eea 0%%, #764ba2 100%%); color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 50px; font-weight: 600; margin: 20px 0; text-align: center; font-size: 16px; }
+        .button { display: inline-block; background: linear-gradient(90deg, #667eea 0%%, #764ba2 100%%); color: #667eea; text-decoration: none; padding: 15px 30px; border-radius: 50px; font-weight: 600; margin: 20px 0; text-align: center; font-size: 16px; }
         .button:hover { opacity: 0.9; }
         .footer { background-color: #f8f9fa; color: #6c757d; text-align: center; padding: 20px; font-size: 14px; }
         .logo { width: 50px; height: 50px; margin: 0 auto 20px; background: #ffffff; border-radius: 50%%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: #667eea; }
@@ -366,7 +366,7 @@ verify_email_template = """
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">OW</div>
+            <div class="logo">Comi</div>
             <h1>%(title)s</h1>
         </div>
         <div class="content">
@@ -403,7 +403,7 @@ password_reset_email_template = """
         .content { padding: 40px 30px; }
         .content h2 { color: #333333; margin-top: 0; font-size: 24px; font-weight: 600; }
         .content p { color: #666666; line-height: 1.6; margin: 15px 0; font-size: 16px; }
-        .button { display: inline-block; background: linear-gradient(90deg, #667eea 0%%, #764ba2 100%%); color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 50px; font-weight: 600; margin: 20px 0; text-align: center; font-size: 16px; }
+        .button { display: inline-block; background: linear-gradient(90deg, #667eea 0%%, #764ba2 100%%); color: #667eea; text-decoration: none; padding: 15px 30px; border-radius: 50px; font-weight: 600; margin: 20px 0; text-align: center; font-size: 16px; }
         .button:hover { opacity: 0.9; }
         .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 5px; margin: 20px 0; }
         .footer { background-color: #f8f9fa; color: #6c757d; text-align: center; padding: 20px; font-size: 14px; }
@@ -413,7 +413,7 @@ password_reset_email_template = """
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">OW</div>
+            <div class="logo">Comi</div>
             <h1>%(title)s</h1>
         </div>
         <div class="content">
