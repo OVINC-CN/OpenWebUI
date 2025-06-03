@@ -82,6 +82,15 @@ class UpdatePasswordForm(BaseModel):
     new_password: str
 
 
+class ForgotPasswordForm(BaseModel):
+    email: str
+
+
+class ResetPasswordForm(BaseModel):
+    token: str
+    new_password: str
+
+
 class SignupForm(BaseModel):
     name: str
     email: str

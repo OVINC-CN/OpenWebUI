@@ -605,9 +605,9 @@
 						await goto(`/auth?redirect=${encodedUrl}`);
 					}
 				} else {
-					// Don't redirect if we're already on the auth page
+					// Don't redirect if we're already on the auth page or any auth subpage
 					// Needed because we pass in tokens from OAuth logins via URL fragments
-					if ($page.url.pathname !== '/auth') {
+					if (!$page.url.pathname.startsWith('/auth')) {
 						await goto(`/auth?redirect=${encodedUrl}`);
 					}
 				}
