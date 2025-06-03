@@ -19,6 +19,8 @@ from open_webui.models.auths import (
     UpdatePasswordForm,
     UpdateProfileForm,
     UserResponse,
+    ForgotPasswordForm,
+    ResetPasswordForm,
 )
 from open_webui.models.users import Users, UserModel
 from open_webui.models.groups import Groups
@@ -56,6 +58,8 @@ from open_webui.utils.auth import (
     get_http_authorization_cred,
     send_verify_email,
     verify_email_by_code,
+    send_password_reset_email,
+    verify_password_reset_token,
 )
 from open_webui.utils.webhook import post_webhook
 from open_webui.utils.access_control import get_permissions
@@ -182,6 +186,73 @@ async def update_password(
             raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_PASSWORD)
     else:
         raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
+
+
+############################
+# Forgot Password
+############################
+
+
+@router.post("/forgot-password", response_model=dict)
+async def forgot_password(form_data: ForgotPasswordForm):
+    """发送密码重置邮件"""
+    email = form_data.email.lower()
+    
+    if not validate_email_format(email):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, detail=ERROR_MESSAGES.INVALID_EMAIL_FORMAT
+        )
+    
+    # 检查用户是否存在
+    user = Users.get_user_by_email(email)
+    if not user:
+        # 为了安全起见，即使用户不存在也返回成功消息
+        return {"message": "如果该邮箱地址已注册，您将收到密码重置邮件"}
+    
+    try:
+        send_password_reset_email(email)
+        return {"message": "如果该邮箱地址已注册，您将收到密码重置邮件"}
+    except Exception as e:
+        log.error(f"发送密码重置邮件失败: {str(e)}")
+        raise HTTPException(500, detail="发送邮件失败，请稍后重试")
+
+
+############################
+# Reset Password
+############################
+
+
+@router.post("/reset-password", response_model=dict)
+async def reset_password(form_data: ResetPasswordForm):
+    """使用token重置密码"""
+    if not form_data.token or not form_data.new_password:
+        raise HTTPException(400, detail="缺少必要参数")
+    
+    # 验证密码长度
+    if len(form_data.new_password.encode("utf-8")) > 72:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail=ERROR_MESSAGES.PASSWORD_TOO_LONG,
+        )
+    
+    # 验证token并获取邮箱
+    email = verify_password_reset_token(form_data.token)
+    if not email:
+        raise HTTPException(400, detail="重置链接无效或已过期")
+    
+    # 获取用户
+    user = Users.get_user_by_email(email)
+    if not user:
+        raise HTTPException(404, detail="用户不存在")
+    
+    # 更新密码
+    hashed_password = get_password_hash(form_data.new_password)
+    success = Auths.update_user_password_by_id(user.id, hashed_password)
+    
+    if success:
+        return {"message": "密码重置成功"}
+    else:
+        raise HTTPException(500, detail="密码重置失败，请重试")
 
 
 ############################
