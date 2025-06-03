@@ -481,9 +481,9 @@ def send_password_reset_email(email: str):
     link = f"{WEBUI_URL.value.rstrip('/')}/auth/reset-password?token={code}"
     send_email(
         receiver=email,
-        subject=f"重置您的密码 - {WEBUI_NAME.value}",
+        subject=f"重置您的密码 - {WEBUI_NAME}",
         body=password_reset_email_template
-        % {"title": f"重置您的密码 - {WEBUI_NAME.value}", "link": link},
+        % {"title": f"重置您的密码 - {WEBUI_NAME}", "link": link},
     )
 
 
