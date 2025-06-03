@@ -136,8 +136,9 @@ class OAuthManager:
                         break
         else:
             if not user:
-                # If role management is disabled, use the default role for new users
-                role = auth_manager_config.DEFAULT_USER_ROLE
+                # If role management is disabled, assign "user" role to new OAuth users
+                log.debug("Assigning new OAuth user the user role")
+                role = "user"
             else:
                 # If role management is disabled, use the existing role for existing users
                 role = user.role
