@@ -709,12 +709,19 @@ export const forgotPassword = async (email: string) => {
 		})
 	})
 		.then(async (res) => {
-			if (!res.ok) throw await res.json();
+			if (!res.ok) {
+				// 尝试解析JSON响应，如果失败则返回状态文本
+				try {
+					throw await res.json();
+				} catch (e) {
+					throw res.statusText || '服务器错误';
+				}
+			}
 			return res.json();
 		})
 		.catch((err) => {
 			console.error(err);
-			error = err.detail;
+			error = typeof err === 'object' && err.detail ? err.detail : err;
 			return null;
 		});
 
@@ -739,12 +746,19 @@ export const resetPassword = async (token: string, newPassword: string) => {
 		})
 	})
 		.then(async (res) => {
-			if (!res.ok) throw await res.json();
+			if (!res.ok) {
+				// 尝试解析JSON响应，如果失败则返回状态文本
+				try {
+					throw await res.json();
+				} catch (e) {
+					throw res.statusText || '服务器错误';
+				}
+			}
 			return res.json();
 		})
 		.catch((err) => {
 			console.error(err);
-			error = err.detail;
+			error = typeof err === 'object' && err.detail ? err.detail : err;
 			return null;
 		});
 
