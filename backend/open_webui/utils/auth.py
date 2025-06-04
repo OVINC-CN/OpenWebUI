@@ -509,3 +509,32 @@ def verify_email_by_code(code: str) -> str:
         ),
     )
     return redis.get(name=get_email_code_key(code=code))
+
+
+async def verify_recaptcha(token: str, secret_key: str) -> bool:
+    """
+    验证reCAPTCHA令牌
+    """
+    if not token or not secret_key:
+        return False
+        
+    try:
+        data = {
+            'secret': secret_key,
+            'response': token
+        }
+        
+        response = requests.post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            data=data,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            return result.get('success', False)
+        
+    except Exception as e:
+        log.error(f"reCAPTCHA验证失败: {str(e)}")
+        
+    return False
