@@ -525,7 +525,7 @@ async def verify_recaptcha(token: str, secret_key: str) -> bool:
         }
         
         response = requests.post(
-            'https://www.google.com/recaptcha/api/siteverify',
+            'https://www.recaptcha.net/recaptcha/api/siteverify',
             data=data,
             timeout=10
         )
