@@ -377,6 +377,10 @@ from open_webui.config import (
     SMTP_PORT,
     SMTP_USERNAME,
     SMTP_PASSWORD,
+    # reCAPTCHA
+    ENABLE_RECAPTCHA,
+    RECAPTCHA_SITE_KEY,
+    RECAPTCHA_SECRET_KEY,
     USAGE_CALCULATE_MINIMUM_COST,
     EZFP_PAY_PRIORITY,
     USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE,
@@ -593,6 +597,10 @@ app.state.config.SMTP_HOST = SMTP_HOST
 app.state.config.SMTP_PORT = SMTP_PORT
 app.state.config.SMTP_USERNAME = SMTP_USERNAME
 app.state.config.SMTP_PASSWORD = SMTP_PASSWORD
+
+app.state.config.ENABLE_RECAPTCHA = ENABLE_RECAPTCHA
+app.state.config.RECAPTCHA_SITE_KEY = RECAPTCHA_SITE_KEY
+app.state.config.RECAPTCHA_SECRET_KEY = RECAPTCHA_SECRET_KEY
 
 app.state.config.ENABLE_API_KEY = ENABLE_API_KEY
 app.state.config.ENABLE_API_KEY_ENDPOINT_RESTRICTIONS = (
@@ -1443,6 +1451,8 @@ async def get_app_config(request: Request):
         "name": app.state.WEBUI_NAME,
         "version": VERSION,
         "default_locale": str(DEFAULT_LOCALE),
+        "ENABLE_RECAPTCHA": app.state.config.ENABLE_RECAPTCHA,
+        "RECAPTCHA_SITE_KEY": app.state.config.RECAPTCHA_SITE_KEY,
         "oauth": {
             "providers": {
                 name: config.get("name", name)
