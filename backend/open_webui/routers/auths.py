@@ -43,6 +43,8 @@ from open_webui.config import (
     OPENID_PROVIDER_URL,
     ENABLE_OAUTH_SIGNUP,
     ENABLE_LDAP,
+    ENABLE_RECAPTCHA,
+    RECAPTCHA_SECRET_KEY,
 )
 from pydantic import BaseModel, Field
 
@@ -60,6 +62,7 @@ from open_webui.utils.auth import (
     verify_email_by_code,
     send_password_reset_email,
     verify_password_reset_token,
+    verify_recaptcha,
 )
 from open_webui.utils.webhook import post_webhook
 from open_webui.utils.access_control import get_permissions
@@ -566,6 +569,23 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
                 status.HTTP_403_FORBIDDEN, detail=ERROR_MESSAGES.ACCESS_PROHIBITED
             )
 
+    # reCAPTCHA验证
+    if ENABLE_RECAPTCHA.value:
+        if not form_data.recaptcha_token:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST, detail="reCAPTCHA验证是必需的"
+            )
+        
+        is_valid = await verify_recaptcha(
+            form_data.recaptcha_token, 
+            RECAPTCHA_SECRET_KEY.value
+        )
+        
+        if not is_valid:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST, detail="reCAPTCHA验证失败"
+            )
+
     # check for email domain whitelist
     email_domain_whitelist = [
         i.strip()
@@ -836,6 +856,8 @@ async def get_admin_config(request: Request, user=Depends(get_admin_user)):
         "ENABLE_SIGNUP": request.app.state.config.ENABLE_SIGNUP,
         "ENABLE_SIGNUP_VERIFY": request.app.state.config.ENABLE_SIGNUP_VERIFY,
         "SIGNUP_EMAIL_DOMAIN_WHITELIST": request.app.state.config.SIGNUP_EMAIL_DOMAIN_WHITELIST,
+        "ENABLE_RECAPTCHA": request.app.state.config.ENABLE_RECAPTCHA,
+        "RECAPTCHA_SITE_KEY": request.app.state.config.RECAPTCHA_SITE_KEY,
         "ENABLE_API_KEY": request.app.state.config.ENABLE_API_KEY,
         "ENABLE_API_KEY_ENDPOINT_RESTRICTIONS": request.app.state.config.ENABLE_API_KEY_ENDPOINT_RESTRICTIONS,
         "API_KEY_ALLOWED_ENDPOINTS": request.app.state.config.API_KEY_ALLOWED_ENDPOINTS,
@@ -858,6 +880,8 @@ class AdminConfig(BaseModel):
     ENABLE_SIGNUP: bool
     ENABLE_SIGNUP_VERIFY: bool = Field(default=False)
     SIGNUP_EMAIL_DOMAIN_WHITELIST: str = Field(default="")
+    ENABLE_RECAPTCHA: bool = Field(default=False)
+    RECAPTCHA_SITE_KEY: str = Field(default="")
     ENABLE_API_KEY: bool
     ENABLE_API_KEY_ENDPOINT_RESTRICTIONS: bool
     API_KEY_ALLOWED_ENDPOINTS: str
@@ -884,7 +908,8 @@ async def update_admin_config(
     request.app.state.config.SIGNUP_EMAIL_DOMAIN_WHITELIST = (
         form_data.SIGNUP_EMAIL_DOMAIN_WHITELIST
     )
-
+    request.app.state.config.ENABLE_RECAPTCHA = form_data.ENABLE_RECAPTCHA
+    request.app.state.config.RECAPTCHA_SITE_KEY = form_data.RECAPTCHA_SITE_KEY
     request.app.state.config.ENABLE_API_KEY = form_data.ENABLE_API_KEY
     request.app.state.config.ENABLE_API_KEY_ENDPOINT_RESTRICTIONS = (
         form_data.ENABLE_API_KEY_ENDPOINT_RESTRICTIONS
@@ -927,6 +952,8 @@ async def update_admin_config(
         "ENABLE_SIGNUP": request.app.state.config.ENABLE_SIGNUP,
         "ENABLE_SIGNUP_VERIFY": request.app.state.config.ENABLE_SIGNUP_VERIFY,
         "SIGNUP_EMAIL_DOMAIN_WHITELIST": request.app.state.config.SIGNUP_EMAIL_DOMAIN_WHITELIST,
+        "ENABLE_RECAPTCHA": request.app.state.config.ENABLE_RECAPTCHA,
+        "RECAPTCHA_SITE_KEY": request.app.state.config.RECAPTCHA_SITE_KEY,
         "ENABLE_API_KEY": request.app.state.config.ENABLE_API_KEY,
         "ENABLE_API_KEY_ENDPOINT_RESTRICTIONS": request.app.state.config.ENABLE_API_KEY_ENDPOINT_RESTRICTIONS,
         "API_KEY_ALLOWED_ENDPOINTS": request.app.state.config.API_KEY_ALLOWED_ENDPOINTS,
