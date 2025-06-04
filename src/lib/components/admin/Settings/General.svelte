@@ -309,7 +309,7 @@
 						{$i18n.t('After verify, will auto change to role User')}
 					</div>
 
-					<div class=" flex w-full justify-between pr-2">
+					<div class="mb-2.5 flex w-full justify-between pr-2">
 						<div class="self-center text-xs font-medium">
 							启用 reCAPTCHA 验证
 						</div>
@@ -422,9 +422,7 @@
 
 					<div class=" mb-2.5 w-full justify-between">
 						<div class="flex w-full justify-between">
-							<div class="flex w-full justify-between">
-								<div class=" self-center text-xs font-medium">{$i18n.t('JWT Expiration')}</div>
-							</div>
+							<div class=" self-center text-xs font-medium">{$i18n.t('JWT Expiration')}</div>
 						</div>
 
 						<div class="flex mt-2 space-x-2">
