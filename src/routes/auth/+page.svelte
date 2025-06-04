@@ -15,6 +15,7 @@
 
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import OnBoarding from '$lib/components/OnBoarding.svelte';
+	import ReCaptcha from '$lib/components/auth/ReCaptcha.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -25,8 +26,10 @@
 	let name = '';
 	let email = '';
 	let password = '';
+	let recaptchaToken = '';
 
 	let ldapUsername = '';
+	let recaptchaComponent;
 
 	const querystringValue = (key) => {
 		const querystring = window.location.search;
@@ -60,9 +63,18 @@
 	};
 
 	const signUpHandler = async () => {
-		const sessionUser = await userSignUp(name, email, password, generateInitialsImage(name)).catch(
+		if ($config?.ENABLE_RECAPTCHA && mode === 'signup' && !recaptchaToken) {
+			toast.error('请完成reCAPTCHA验证');
+			return;
+		}
+
+		const sessionUser = await userSignUp(name, email, password, generateInitialsImage(name), recaptchaToken).catch(
 			(error) => {
 				toast.error(`${error}`);
+				if (recaptchaComponent) {
+					recaptchaComponent.reset();
+					recaptchaToken = '';
+				}
 				return null;
 			}
 		);
@@ -136,6 +148,20 @@
 			}
 		}
 	}
+
+	const handleRecaptchaVerified = (event) => {
+		recaptchaToken = event.detail.token;
+	};
+
+	const handleRecaptchaExpired = () => {
+		recaptchaToken = '';
+		toast.warning('reCAPTCHA已过期，请重新验证');
+	};
+
+	const handleRecaptchaError = () => {
+		recaptchaToken = '';
+		toast.error('reCAPTCHA验证出错，请刷新页面重试');
+	};
 
 	onMount(async () => {
 		if ($user !== undefined) {
@@ -305,6 +331,17 @@
 												</div>
 											{/if}
 										</div>
+
+										{#if mode === 'signup' && $config?.ENABLE_RECAPTCHA && $config?.RECAPTCHA_SITE_KEY}
+											<ReCaptcha
+												bind:this={recaptchaComponent}
+												siteKey={$config.RECAPTCHA_SITE_KEY}
+												theme="light"
+												on:verified={handleRecaptchaVerified}
+												on:expired={handleRecaptchaExpired}
+												on:error={handleRecaptchaError}
+											/>
+										{/if}
 									</div>
 								{/if}
 								<div class="mt-5">
