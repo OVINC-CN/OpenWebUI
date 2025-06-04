@@ -886,6 +886,25 @@ SIGNUP_EMAIL_DOMAIN_WHITELIST = PersistentConfig(
     os.environ.get("SIGNUP_EMAIL_DOMAIN_WHITELIST", ""),
 )
 
+# reCAPTCHA配置
+ENABLE_RECAPTCHA = PersistentConfig(
+    "ENABLE_RECAPTCHA",
+    "ui.recaptcha.enabled",
+    os.environ.get("ENABLE_RECAPTCHA", "False").lower() == "true",
+)
+
+RECAPTCHA_SITE_KEY = PersistentConfig(
+    "RECAPTCHA_SITE_KEY",
+    "ui.recaptcha.site_key",
+    os.environ.get("RECAPTCHA_SITE_KEY", ""),
+)
+
+RECAPTCHA_SECRET_KEY = PersistentConfig(
+    "RECAPTCHA_SECRET_KEY",
+    "ui.recaptcha.secret_key",
+    os.environ.get("RECAPTCHA_SECRET_KEY", ""),
+)
+
 SMTP_HOST = PersistentConfig(
     "SMTP_HOST",
     "ui.smtp.host",
