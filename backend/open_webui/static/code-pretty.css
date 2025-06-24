@@ -1,0 +1,397 @@
+@font-face {
+    font-family: 'Fira Code';
+    src: url('../assets/fonts/FiraCode-VF.woff2') format('woff2-variations');
+    font-weight: 200 700;
+    font-display: swap;
+    font-style: normal;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* 代码块容器样式 */
+.language-javascript, [class*="language-"] {
+    background: #f6f8fa !important;
+    border-radius: 10px !important;
+    box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.1) !important;
+    position: relative;
+    margin: 1.2em 0;
+}
+
+.dark .language-javascript, .dark [class*="language-"] {
+    background: #282c34 !important;
+    box-shadow: 0 10px 30px 0 rgba(0, 0, 0, .4) !important;
+}
+
+/* 代码块顶部栏 */
+.sticky.top-8 {
+    background: #e1e4e8 !important;
+    height: 40px !important;
+    display: flex;
+    align-items: center;
+    border-radius: 10px 10px 0 0;
+    padding: 0 15px !important;
+    margin-bottom: -59px !important;
+}
+
+.dark .sticky.top-8 {
+    background: #21252b !important;
+}
+
+/* 语言标识 */
+.text-text-300 {
+    position: absolute;
+    left: 60px;
+    top: 2px;
+    color: #abb2bf !important;
+    font-size: 17px !important;
+    font-weight: 500 !important;
+    z-index: 11;
+}
+
+.dark .text-text-300 {
+    color: #586069 !important;
+}
+
+/* 顶部按钮样式优化 */
+.save-code-button, .copy-code-button, .run-code-button {
+    background: #f8f9fa !important;
+    color: #333 !important;
+    border: 1px solid #d1d5da !important;
+    font-size: 12px !important;
+    padding: 4px 12px !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.dark .save-code-button, .dark .copy-code-button, .dark .run-code-button {
+    background: #323842 !important;
+    color: #abb2bf !important;
+    border: 1px solid #3e4451 !important;
+}
+
+.save-code-button:hover, .copy-code-button:hover {
+    background: #e9ecef !important;
+    color: #222 !important;
+}
+
+.dark .save-code-button:hover, .dark .copy-code-button:hover {
+    background: #3e4451 !important;
+    color: #fff !important;
+}
+
+/* 代码块顶部装饰圆点 */
+.language-javascript::before, [class*="language-"]::before {
+    content: " ";
+    position: absolute;
+    border-radius: 50%;
+    background: #ff5f56;
+    width: 12px;
+    height: 12px;
+    left: 15px;
+    top: 14px;
+    box-shadow: 20px 0 #ffbd2e, 40px 0 #27c93f;
+    z-index: 10;
+}
+
+.dakr .language-javascript::before, .dakr [class*="language-"]::before {
+    background: #fc625d;
+    box-shadow: 20px 0 #fdbc40, 40px 0 #35cd4b;
+}
+
+/* 代码内容区域 */
+.cm-content {
+    font-family: 'Fira Code', -apple-system, BlinkMacSystemFont, Inter, ui-sans-serif, system-ui, 'Segoe UI', Roboto, Ubuntu, Cantarell, 'Noto Sans', sans-serif, 'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    font-size: 15px !important;
+    line-height: 1.6em !important;
+    padding: 20px 1.4em 1em 30px !important;
+    color: #24292e !important;
+}
+
+.dark .cm-content {
+    color: #abb2bf !important;
+}
+
+/* 代码语法高亮 */
+.cm-line .ͼb {
+    /* 关键字 */
+    color: #d73a49 !important;
+}
+
+.dark .cm-line .ͼb {
+    color: #c678dd !important;
+}
+
+.cm-line .ͼd {
+    /* 数字 */
+    color: #a29bfe !important;
+}
+
+.dakr .cm-line .ͼd {
+    color: #e5c07b !important;
+}
+
+.cm-line .ͼe {
+    /* 字符串 */
+    color: #6a89cc !important;
+}
+
+.dakr .cm-line .ͼe {
+    color: #98c379 !important;
+}
+
+.cm-line .ͼg {
+    /* 变量 */
+    color: #2ca9e1 !important;
+    font-style: italic;
+}
+
+.dakr .cm-line .ͼg {
+    color: #e3adb9 !important;
+}
+
+/* 代码语法高亮 - 扩展 */
+.cm-comment {
+    /* 注释 */
+    color: #7f848e !important;
+    font-style: italic;
+}
+
+.cm-property {
+    color: #61afef !important;
+}
+
+cm-tag {
+    color: #e06c75 !important;
+}
+
+.cm-attribute {
+    color: #d19a66 !important;
+}
+
+.cm-string {
+    color: #98c379 !important;
+}
+
+.cm-operator {
+    color: #56b6c2 !important;
+}
+
+span.ͼc {
+    color: #7d5fff !important;
+}
+
+span.ͼl {
+    color: #6bddcd !important;
+}
+
+span.ͼt {
+    /* 暗色模式下的逗号 */
+    color: #ddb078 !important;;
+    font-style: italic;
+}
+
+span.ͼr {
+    /* 暗色模式下的函数名 */
+    font-style: italic;
+}
+
+span.ͼf {
+    /* 亮色模式下奇怪的符号 */
+    color: #70a1ff;
+}
+
+span.ͼm {
+    /* 亮色模式下的注释 */
+    color: #f29a76;
+    font-style: italic;
+}
+
+span.ͼw {
+    /* 暗色模式下的注释 */
+    font-style: italic;
+}
+
+/* 行号栏样式 */
+.cm-gutters {
+    background: #f6f8fa !important;
+    border-right: 1px solid #d1d5da !important;
+    color: #586069 !important;
+    padding-right: 10px !important;
+    font-family: "Fira Code";
+}
+
+.dark .cm-gutters {
+    background: #282c34 !important;
+    border-right: 1px solid #3e4451 !important;
+    color: #495162 !important;
+}
+
+/* 当前行高亮 */
+.cm-activeLine {
+    background: #6699ff0b !important;
+}
+
+.cm-gutterElement.cm-activeLineGutter {
+    background-color: #f9d3e3;
+}
+
+.dark .cm-gutterElement.cm-activeLineGutter {
+    background-color: #dd7694;
+}
+
+/* 添加代码选中样式 */
+.cm-selectionBackground, .cm-content ::selection {
+    background-color: rgba(122, 129, 255, 0.2) !important;
+}
+
+.cm-line.cm-selected {
+    background-color: rgba(122, 129, 255, 0.2) !important;
+}
+
+/* 选中时的文本颜色保持原样，确保可读性 */
+.cm-content ::selection {
+    color: rgba(62, 158, 111, 0.9) !important;
+}
+
+.dark .cm-content ::selection {
+    color: rgba(245, 177, 255, 0.9) !important;
+}
+
+/* 匹配相同结果时的颜色 */
+.cm-selectionMatch {
+    background-color: #9c88ff5a !important;
+}
+
+/* 当有多行选中时的样式 */
+.cm-selectionLayer > .cm-selectionBackground {
+    background-color: rgba(122, 129, 255, 0.2) !important;
+}
+
+/* 代码块折叠/展开样式添加与修改 */
+.cm-scroller {
+    background-color: #f6f8fa;
+}
+
+#collapsed > .cm-scroller, #expanded > .cm-scroller {
+    padding-bottom: 40px;
+}
+
+.dark .cm-scroller {
+    background-color: #282c34;
+}
+
+.cm-scroller {
+    overflow: auto !important;
+}
+
+.cm-editor {
+    transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden !important;
+}
+
+/* 只给超高的代码块添加最大高度和内边距 */
+.cm-editor#collapsed {
+    height: 400px;
+}
+
+/* .cm-editor#expanded { padding-bottom: 40px; } */
+.code-expand-btn {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 6px 15px;
+    border-radius: 15px;
+    font-size: 12px;
+    cursor: pointer;
+    border: none;
+    color: #666;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 11;
+    transition: all 0.3s ease;
+}
+
+.dark .code-expand-btn {
+    background: rgba(45, 45, 45, 0.6);
+    color: #fff;
+}
+
+.code-expand-btn:hover {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transform: translateX(-50%) translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.dark .code-expand-btn:hover {
+    background: rgba(45, 45, 45, 0.8);
+}
+
+.code-expand-btn:active {
+    transform: translateX(-50%) translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.code-expand-btn::before {
+    content: "⌄";
+    display: inline-block;
+    margin-right: 4px;
+    font-size: 14px;
+    transition: transform 0.3s ease;
+    margin-bottom: 6px;
+}
+
+.code-expand-btn#expanded::before {
+    transform: rotate(180deg);
+    margin-bottom: 0;
+    margin-top: 6px;
+}
+
+.code-expand-btn::after {
+    content: "展开代码";
+}
+
+.code-expand-btn#expanded::after {
+    content: "收起代码";
+}
+
+/* 渐变遮罩 */
+.cm-editor#collapsed::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(transparent 0%, rgba(255, 255, 255, 0.3) 40%, rgba(255, 255, 255, 0.6) 80%, rgba(255, 255, 255, 0.8) 100%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+    /* 确保遮罩层覆盖到滚动条 */
+    width: calc(100% + 17px);
+    /* 17px是标准滚动条宽度 */
+}
+
+.dark .cm-editor#collapsed::after {
+    background: linear-gradient(transparent 0%, rgba(45, 45, 45, 0.3) 40%, rgba(45, 45, 45, 0.6) 80%, rgba(45, 45, 45, 0.8) 100%);
+}
+
+/* 只在折叠状态显示渐变遮罩 */
+.cm-editor#collapsed::after {
+    opacity: 1;
+}
+
+/* 隐藏原始的折叠按钮 */
+div.flex.items-center.gap-0\.5 button.flex.gap-1.items-center:not(.run-code-button) {
+    display: none;
+}

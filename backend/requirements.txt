@@ -1,5 +1,5 @@
 fastapi==0.115.7
-uvicorn[standard]==0.34.2
+uvicorn[standard]==0.29.0
 pydantic==2.10.6
 python-multipart==0.0.20
 
@@ -8,20 +8,20 @@ python-jose==3.4.0
 passlib[bcrypt]==1.7.4
 
 requests==2.32.4
-aiohttp==3.11.11
+aiohttp==3.9.5
 async-timeout
 aiocache
 aiofiles
-starlette-compress==1.6.0
+starlette-compress==1.1.0
 
 sqlalchemy==2.0.38
 alembic==1.14.0
 peewee==3.18.1
 peewee-migrate==1.12.2
-psycopg2-binary==2.9.9
-pgvector==0.4.0
+psycopg-binary
+pgvector==0.3.6
 PyMySQL==1.1.1
-bcrypt==4.3.0
+bcrypt==4.2.0
 
 pymongo
 redis
@@ -30,7 +30,7 @@ boto3==1.35.53
 argon2-cffi==23.1.0
 APScheduler==3.10.4
 
-RestrictedPython==8.0
+RestrictedPython==7.4
 
 loguru==0.7.3
 asgiref==3.8.1
@@ -38,24 +38,22 @@ asgiref==3.8.1
 # AI libraries
 openai
 anthropic
-google-genai==1.15.0
-google-generativeai==0.8.5
+google-generativeai
 tiktoken
 
-langchain==0.3.24
-langchain-community==0.3.23
+langchain
+langchain-community
 
-fake-useragent==2.1.0
-chromadb==0.6.3
 pymilvus==2.5.0
 qdrant-client~=1.12.0
 opensearch-py==2.8.0
-playwright==1.49.1 # Caution: version must match docker-compose.playwright.yaml
+# playwright==1.49.1
 elasticsearch==9.0.1
-pinecone==6.0.2
-
+# pinecone==6.0.2
+# weaviate-client==4.6.8
+sentence-transformers==3.0.1
 transformers
-sentence-transformers==4.1.0
+
 accelerate
 colbert-ai==0.2.21
 einops==0.8.1
@@ -67,40 +65,40 @@ fpdf2==2.8.2
 pymdown-extensions==10.14.2
 docx2txt==0.8
 python-pptx==1.0.0
-unstructured==0.16.17
+# unstructured==0.16.2
 nltk==3.9.1
 Markdown==3.7
 pypandoc==1.15
-pandas==2.2.3
+# pandas==2.2.3
+# tabulate==0.9.0
 openpyxl==3.1.5
 pyxlsb==1.0.10
 xlrd==2.0.1
-validators==0.35.0
+# validators==0.35.0
 psutil
 sentencepiece
 soundfile==0.13.1
 azure-ai-documentintelligence==1.0.2
-
-pillow==11.2.1
-opencv-python-headless==4.11.0.86
+# pillow==11.2.1
+# opencv-python-headless==4.11.0.86
+chardet==5.2.0
+# lxml==5.4.1
 rapidocr-onnxruntime==1.4.4
 rank-bm25==0.2.2
 
-onnxruntime==1.20.1
+# onnxruntime==1.20.1
+# faster-whisper==1.1.1
 
-faster-whisper==1.1.1
+# PyJWT[crypto]==2.10.1
+# authlib==1.4.1
 
-PyJWT[crypto]==2.10.1
-authlib==1.4.1
-
-black==25.1.0
+# black==25.1.0
 langfuse==2.44.0
 youtube-transcript-api==1.0.3
 pytube==15.0.0
-
+# duckduckgo-search==8.0.2
 extract_msg
 pydub
-duckduckgo-search==8.0.2
 
 ## Google Drive
 google-api-python-client
@@ -140,3 +138,8 @@ opentelemetry-instrumentation-requests==0.53b1
 opentelemetry-instrumentation-logging==0.53b1
 opentelemetry-instrumentation-httpx==0.53b1
 opentelemetry-instrumentation-aiohttp-client==0.53b1
+
+pydantic-settings==2.5.0
+# fast-bitrix24==1.1.20
+beautifulsoup4==4.12.3
+# playwright==1.49.1

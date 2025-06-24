@@ -90,10 +90,10 @@
 	onMount(() => {});
 </script>
 
-<div class="m-auto w-full max-w-6xl px-2 @2xl:px-20 translate-y-6 py-24 text-center">
+<div class="m-auto w-full px-2 @2xl:px-20 translate-y-6 py-24 text-center">
 	{#if $temporaryChatEnabled}
 		<Tooltip
-			content={$i18n.t('This chat won’t appear in history and your messages will not be saved.')}
+			content={$i18n.t(`This chat won't appear in history and your messages will not be saved.`)}
 			className="w-full flex justify-center mb-0.5"
 			placement="top"
 		>
@@ -139,7 +139,18 @@
 
 				<div class=" text-3xl @sm:text-3xl line-clamp-1" in:fade={{ duration: 100 }}>
 					{#if models[selectedModelIdx]?.name}
-						{models[selectedModelIdx]?.name}
+						<span>{models[selectedModelIdx]?.name}</span>
+						<button
+							class="ml-3 px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+							on:click={() => {
+								const modelSelectorButton = document.getElementById('model-selector-0-button');
+								if (modelSelectorButton) {
+									modelSelectorButton.click();
+								}
+							}}
+						>
+							切换模型
+						</button>
 					{:else}
 						{$i18n.t('Hello, {{name}}', { name: $user?.name })}
 					{/if}
@@ -164,7 +175,7 @@
 								)}
 							</div>
 						</Tooltip>
-
+ 
 						{#if models[selectedModelIdx]?.info?.meta?.user}
 							<div class="mt-0.5 text-sm font-normal text-gray-400 dark:text-gray-500">
 								By

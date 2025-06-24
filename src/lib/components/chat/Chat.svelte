@@ -36,7 +36,8 @@
 		chatTitle,
 		showArtifacts,
 		tools,
-		toolServers
+		toolServers,
+		showPreview
 	} from '$lib/stores';
 	import {
 		convertMessagesToHistory,
@@ -2014,7 +2015,7 @@
 
 <div
 	class="h-screen max-h-[100dvh] transition-width duration-200 ease-in-out {$showSidebar
-		? '  md:max-w-[calc(100%-260px)]'
+		? '  md:max-w-[100%]'
 		: ' '} w-full max-w-full flex flex-col"
 	id="chat-container"
 >
@@ -2033,8 +2034,8 @@
 				/>
 			{/if}
 
-			<PaneGroup direction="horizontal" class="w-full h-full">
-				<Pane defaultSize={50} class="h-full flex relative max-w-full flex-col">
+			<PaneGroup direction="horizontal" class="w-full h-full min-w-0">
+				<Pane defaultSize={50} class="h-full flex relative w-full min-w-0 flex-1 flex-col overflow-hidden">
 					<Navbar
 						bind:this={navbarElement}
 						chat={{
@@ -2055,10 +2056,10 @@
 						{initNewChat}
 					/>
 
-					<div class="flex flex-col flex-auto z-10 w-full @container">
+					<div class="flex flex-col flex-1 w-full min-w-0 @container relative">
 						{#if $settings?.landingPageMode === 'chat' || createMessagesList(history, history.currentId).length > 0}
 							<div
-								class=" pb-2.5 flex flex-col justify-between w-full flex-auto overflow-auto h-0 max-w-full z-10 scrollbar-hidden"
+								class="pb-2.5 flex flex-col justify-between w-full flex-1 min-w-0 overflow-auto h-0 z-10 scrollbar-hidden"
 								id="messages-container"
 								bind:this={messagesContainerElement}
 								on:scroll={(e) => {
@@ -2067,7 +2068,7 @@
 										messagesContainerElement.clientHeight + 5;
 								}}
 							>
-								<div class=" h-full w-full flex flex-col">
+								<div class="h-full w-full flex flex-col flex-1 min-w-0">
 									<Messages
 										chatId={$chatId}
 										bind:history
@@ -2088,7 +2089,7 @@
 								</div>
 							</div>
 
-							<div class=" pb-2">
+							<div class="pb-2 min-w-0">
 								<MessageInput
 									{history}
 									{taskIds}
@@ -2146,43 +2147,58 @@
 								</div>
 							</div>
 						{:else}
-							<div class="overflow-auto w-full h-full flex items-center">
-								<Placeholder
-									{history}
-									{selectedModels}
-									bind:files
-									bind:prompt
-									bind:autoScroll
-									bind:selectedToolIds
-									bind:selectedFilterIds
-									bind:imageGenerationEnabled
-									bind:codeInterpreterEnabled
-									bind:webSearchEnabled
-									bind:atSelectedModel
-									transparentBackground={$settings?.backgroundImageUrl ?? false}
-									toolServers={$toolServers}
-									{stopResponse}
-									{createMessagePair}
-									on:upload={async (e) => {
-										const { type, data } = e.detail;
-
-										if (type === 'web') {
-											await uploadWeb(data);
-										} else if (type === 'youtube') {
-											await uploadYoutubeTranscription(data);
-										}
-									}}
-									on:submit={async (e) => {
-										if (e.detail || files.length > 0) {
-											await tick();
-											submitPrompt(
-												($settings?.richTextInput ?? true)
-													? e.detail.replaceAll('\n\n', '\n')
-													: e.detail
-											);
-										}
-									}}
-								/>
+							<div class="w-full flex flex-col items-center relative">
+								<!-- 按钮绝对定位到欢迎语右上角 -->
+								<button
+									class="absolute right-8 top-8 px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition z-20"
+									style="min-width: 120px;"
+									on:click={() => showPreview.update(v => !v)}
+								>
+									{#if $showPreview}
+										隐藏预览面板
+									{:else}
+										显示预览面板
+									{/if}
+								</button>
+								<div class="w-full flex flex-col items-center">
+									<Placeholder
+										{history}
+										{selectedModels}
+										bind:files
+										bind:prompt
+										bind:autoScroll
+										bind:selectedToolIds
+										bind:selectedFilterIds
+										bind:imageGenerationEnabled
+										bind:codeInterpreterEnabled
+										bind:webSearchEnabled
+										bind:atSelectedModel
+										transparentBackground={$settings?.backgroundImageUrl ?? false}
+										toolServers={$toolServers}
+										{stopResponse}
+										{createMessagePair}
+										on:upload={async (e) => {
+											const { type, data } = e.detail;
+											if (type === 'web') {
+												await uploadWeb(data);
+											} else if (type === 'youtube') {
+												await uploadYoutubeTranscription(data);
+											} else if (type === 'google-drive') {
+												await uploadGoogleDriveFile(data);
+											}
+										}}
+										on:submit={async (e) => {
+											if (e.detail || files.length > 0) {
+												await tick();
+												submitPrompt(
+													($settings?.richTextInput ?? true)
+														? e.detail.replaceAll('\n\n', '\n')
+														: e.detail
+												);
+											}
+										}}
+									/>
+								</div>
 							</div>
 						{/if}
 					</div>

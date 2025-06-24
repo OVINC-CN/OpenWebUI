@@ -37,7 +37,10 @@
 		showChangelog,
 		temporaryChatEnabled,
 		toolServers,
-		showSearch
+		showSearch,
+		showPreview,
+		previewContent,
+		showSidebar
 	} from '$lib/stores';
 
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
@@ -47,6 +50,7 @@
 	import UpdateInfoToast from '$lib/components/layout/UpdateInfoToast.svelte';
 	import { get } from 'svelte/store';
 	import Spinner from '$lib/components/common/Spinner.svelte';
+	import ResultPreview from '$lib/components/chat/ResultPreview.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -55,6 +59,41 @@
 	let localDBChats = [];
 
 	let version;
+	let sidebarWidth = '260px';
+	let mainFr = 1;
+	let previewFr = 1;
+	let isResizing = false;
+
+	function startResize(e) {
+		isResizing = true;
+		document.body.style.cursor = 'col-resize';
+		const startX = e.clientX;
+		const main = document.querySelector('main');
+		const preview = document.querySelector('.preview-panel');
+		const mainRect = main.getBoundingClientRect();
+		const previewRect = preview.getBoundingClientRect();
+		const total = mainRect.width + previewRect.width;
+		function onMouseMove(ev) {
+			const delta = ev.clientX - startX;
+			let newMain = mainRect.width + delta;
+			let newPreview = previewRect.width - delta;
+			// 限制最小宽度
+			if (newMain < 200) newMain = 200;
+			if (newPreview < 200) newPreview = 200;
+			mainFr = newMain / total;
+			previewFr = newPreview / total;
+		}
+		function onMouseUp() {
+			isResizing = false;
+			document.body.style.cursor = '';
+			window.removeEventListener('mousemove', onMouseMove);
+			window.removeEventListener('mouseup', onMouseUp);
+		}
+		window.addEventListener('mousemove', onMouseMove);
+		window.addEventListener('mouseup', onMouseUp);
+	}
+
+	$: gridCols = `${$showSidebar ? '260px' : '0'} ${mainFr}fr ${previewFr}fr`;
 
 	onMount(async () => {
 		if ($user === undefined || $user === null) {
@@ -269,77 +308,26 @@
 {/if}
 
 {#if $user}
-	<div class="app relative">
-		<div
-			class=" text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-900 h-screen max-h-[100dvh] overflow-auto flex flex-row justify-end"
-		>
-			{#if !['user', 'admin'].includes($user?.role)}
-				<AccountPending />
-			{:else if localDBChats.length > 0}
-				<div class="fixed w-full h-full flex z-50">
-					<div
-						class="absolute w-full h-full backdrop-blur-md bg-white/20 dark:bg-gray-900/50 flex justify-center"
-					>
-						<div class="m-auto pb-44 flex flex-col justify-center">
-							<div class="max-w-md">
-								<div class="text-center dark:text-white text-2xl font-medium z-50">
-									Important Update<br /> Action Required for Chat Log Storage
-								</div>
-
-								<div class=" mt-4 text-center text-sm dark:text-gray-200 w-full">
-									{$i18n.t(
-										"Saving chat logs directly to your browser's storage is no longer supported. Please take a moment to download and delete your chat logs by clicking the button below. Don't worry, you can easily re-import your chat logs to the backend through"
-									)}
-									<span class="font-semibold dark:text-white"
-										>{$i18n.t('Settings')} > {$i18n.t('Chats')} > {$i18n.t('Import Chats')}</span
-									>. {$i18n.t(
-										'This ensures that your valuable conversations are securely saved to your backend database. Thank you!'
-									)}
-								</div>
-
-								<div class=" mt-6 mx-auto relative group w-fit">
-									<button
-										class="relative z-20 flex px-5 py-2 rounded-full bg-white border border-gray-100 dark:border-none hover:bg-gray-100 transition font-medium text-sm"
-										on:click={async () => {
-											let blob = new Blob([JSON.stringify(localDBChats)], {
-												type: 'application/json'
-											});
-											saveAs(blob, `chat-export-${Date.now()}.json`);
-
-											const tx = DB.transaction('chats', 'readwrite');
-											await Promise.all([tx.store.clear(), tx.done]);
-											await deleteDB('Chats');
-
-											localDBChats = [];
-										}}
-									>
-										Download & Delete
-									</button>
-
-									<button
-										class="text-xs text-center w-full mt-2 text-gray-400 underline"
-										on:click={async () => {
-											localDBChats = [];
-										}}>{$i18n.t('Close')}</button
-									>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			{/if}
-
+	{#if $showSidebar}
+		<div class="main-layout with-sidebar" style="grid-template-columns: {$showSidebar ? '260px' : '0'} 1fr {$showPreview ? '1fr' : ''};">
 			<Sidebar />
-
-			{#if loaded}
-				<slot />
-			{:else}
-				<div class="w-full flex-1 h-full flex items-center justify-center">
-					<Spinner />
+			<main class="main-content"><slot /></main>
+			{#if $showPreview}
+				<div class="preview-panel">
+					<ResultPreview content={$previewContent} />
 				</div>
 			{/if}
 		</div>
-	</div>
+	{:else}
+		<div class="main-layout no-sidebar" style="grid-template-columns: 1fr {$showPreview ? '1fr' : ''};">
+			<main class="main-content"><slot /></main>
+			{#if $showPreview}
+				<div class="preview-panel">
+					<ResultPreview content={$previewContent} />
+				</div>
+			{/if}
+		</div>
+	{/if}
 {/if}
 
 <style>
@@ -383,5 +371,35 @@
 	pre[class*='language-'] button:hover {
 		cursor: pointer;
 		background-color: #bcbabb;
+	}
+
+	.main-layout.with-sidebar {
+		display: grid;
+		grid-template-columns: 260px 1fr 1fr;
+		height: 100vh;
+		width: 100vw;
+		background: #fafafa;
+	}
+	.main-layout.no-sidebar {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		height: 100vh;
+		width: 100vw;
+		background: #fafafa;
+	}
+	.main-content, .preview-panel {
+		min-width: 0;
+		overflow: auto;
+		height: 100vh;
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		width: 100%;
+		background: #fff;
+		box-sizing: border-box;
+	}
+	.preview-panel {
+		background: #f9f9f9;
+		border-left: 1px solid #e5e7eb;
 	}
 </style>

@@ -35,7 +35,7 @@
 </script>
 
 {#key mounted}
-	<div class="m-auto w-full max-w-6xl px-8 lg:px-20">
+	<div class="m-auto w-full px-8 lg:px-20">
 		<div class="flex justify-start">
 			<div class="flex -space-x-4 mb-0.5" in:fade={{ duration: 200 }}>
 				{#each models as model, modelIdx}
@@ -67,7 +67,7 @@
 
 		{#if $temporaryChatEnabled}
 			<Tooltip
-				content={$i18n.t('This chat won’t appear in history and your messages will not be saved.')}
+				content={$i18n.t("This chat won't appear in history and your messages will not be saved.")}
 				className="w-full flex justify-start mb-0.5"
 				placement="top"
 			>

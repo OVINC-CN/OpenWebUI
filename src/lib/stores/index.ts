@@ -28,7 +28,7 @@ export const USAGE_POOL: Writable<null | string[]> = writable(null);
 export const theme = writable('system');
 
 export const shortCodesToEmojis = writable(
-	Object.entries(emojiShortCodes).reduce((acc, [key, value]) => {
+	Object.entries(emojiShortCodes).reduce((acc: Record<string, string>, [key, value]) => {
 		if (typeof value === 'string') {
 			acc[value] = key;
 		} else {
@@ -62,13 +62,19 @@ export const toolServers = writable([]);
 
 export const banners: Writable<Banner[]> = writable([]);
 
-export const settings: Writable<Settings> = writable({});
+export const settings: Writable<Settings> = writable({
+	chatDirection: 'auto'
+});
 
 export const showSidebar = writable(false);
 export const showSearch = writable(false);
 export const showSettings = writable(false);
 export const showArchivedChats = writable(false);
 export const showChangelog = writable(false);
+
+export const showPreview = writable(true);
+export const previewContent = writable('');
+export const streamTarget = writable('chat');
 
 export const showControls = writable(false);
 export const showOverview = writable(false);
