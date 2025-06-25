@@ -7,7 +7,7 @@
     {
       id: 'bubble-1',
       title: '思考过程',
-      text: '已确定走[超级搜搜]，即将执行',
+      text: '开始修改任务规划',
       highlight: true
     },
     {
@@ -17,6 +17,10 @@
       highlight: false
     }
   ];
+  let selectedId = '';
+  function selectBubble(id) {
+    selectedId = id;
+  }
 </script>
 
 <div class="preview-panel ai-preview flex flex-col h-full min-h-0 w-full max-w-full">
@@ -25,7 +29,12 @@
   </div>
   <div class="preview-content flex flex-col gap-0 flex-1 min-h-0 h-full w-full max-w-full relative justify-center">
     {#each bubbles as bubble, idx (bubble.id)}
-      <div class="ai-bubble-card {bubble.highlight ? 'ai-bubble-highlight' : ''}" id={bubble.id}>
+      <div
+        class="ai-bubble-card {selectedId === bubble.id ? 'ai-bubble-selected' : ''}"
+        id={bubble.id}
+        on:click={() => selectBubble(bubble.id)}
+        tabindex="0"
+      >
         <div class="ai-bubble-title">{bubble.title}</div>
         <div class="ai-bubble-text">{bubble.text}</div>
         <div class="bubble-anchor" id={bubble.id + '-anchor'}></div>
@@ -78,25 +87,28 @@
 }
 .ai-bubble-card {
   background: #fff;
-  border-radius: 2rem;
+  border-radius: 1.5rem;
   box-shadow: 0 4px 32px 0 rgba(80,120,255,0.10);
   padding: 1.5rem 2rem 1.5rem 1.5rem;
   margin: 0;
   position: relative;
   min-width: 220px;
   max-width: 90%;
-  border-left: 5px solid #a78bfa;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  border: 2.5px solid #e5e7eb;
+  transition: border 0.3s, box-shadow 0.3s;
   cursor: pointer;
   z-index: 2;
+  outline: none;
 }
-.ai-bubble-card:hover {
+.ai-bubble-card:focus {
+  box-shadow: 0 0 0 2px #a78bfa44;
+}
+.ai-bubble-selected {
+  border: 2.5px solid transparent;
+  background-clip: padding-box, border-box;
+  background-origin: padding-box, border-box;
+  background-image: linear-gradient(#fff, #fff), linear-gradient(90deg, #a78bfa, #38bdf8 80%);
   box-shadow: 0 8px 40px 0 #a78bfa44, 0 2px 16px 0 #38bdf844;
-  border-left: 5px solid #38bdf8;
-}
-.ai-bubble-highlight {
-  border-left: 5px solid #38bdf8;
-  background: linear-gradient(120deg, #e0e7ef 60%, #fff 100%);
 }
 .ai-bubble-title {
   font-size: 1.12rem;
