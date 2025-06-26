@@ -13,7 +13,8 @@
 		showControls,
 		showSidebar,
 		temporaryChatEnabled,
-		user
+		user,
+		showPreview
 	} from '$lib/stores';
 
 	import { slide } from 'svelte/transition';
@@ -148,6 +149,22 @@
 						>
 							<div class=" m-auto self-center">
 								<PencilSquare className=" size-5" strokeWidth="2" />
+							</div>
+						</button>
+					</Tooltip>
+
+					<Tooltip content={$i18n.t($showPreview ? '隐藏预览面板' : '显示预览面板')}>
+						<button
+							class="flex cursor-pointer px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-850 transition"
+							on:click={() => showPreview.update(v => !v)}
+							aria-label={$i18n.t($showPreview ? '隐藏预览面板' : '显示预览面板')}
+						>
+							<div class="m-auto self-center">
+								{#if $showPreview}
+									<span class="text-sm">隐藏预览面板</span>
+								{:else}
+									<span class="text-sm">显示预览面板</span>
+								{/if}
 							</div>
 						</button>
 					</Tooltip>

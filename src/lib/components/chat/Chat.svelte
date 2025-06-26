@@ -2148,18 +2148,6 @@
 							</div>
 						{:else}
 							<div class="w-full flex flex-col items-center relative">
-								<!-- 按钮绝对定位到欢迎语右上角 -->
-								<button
-									class="absolute right-8 top-8 px-3 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition z-20"
-									style="min-width: 120px;"
-									on:click={() => showPreview.update(v => !v)}
-								>
-									{#if $showPreview}
-										隐藏预览面板
-									{:else}
-										显示预览面板
-									{/if}
-								</button>
 								<div class="w-full flex flex-col items-center">
 									<Placeholder
 										{history}
