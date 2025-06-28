@@ -91,6 +91,7 @@
 	import NotificationToast from '../NotificationToast.svelte';
 	import Spinner from '../common/Spinner.svelte';
 	import { fade } from 'svelte/transition';
+	import ResultPreview from '$lib/components/chat/ResultPreview.svelte';
 
 	export let chatIdProp = '';
 
@@ -142,6 +143,82 @@
 	let chatFiles = [];
 	let files = [];
 	let params = {};
+
+	// lineInfo 类型声明
+	let lineInfo: null | {
+		start: { x: number; y: number };
+		end: { x: number; y: number };
+		previewId: string;
+		messageId: string;
+	} = null;
+
+	let lastBubbleId = null;
+	let paneGroupEl;
+	let messagesAreaEl;
+	let previewContentEl;
+
+	function updateLineInfo(previewId, messageId) {
+		console.log('【调试】updateLineInfo called', previewId, messageId);
+		const previewEl = document.getElementById(previewId);
+		const messageEl = document.getElementById(messageId);
+		console.log('【调试】previewEl:', previewEl, 'messageEl:', messageEl);
+
+		if (!previewEl || !messageEl) {
+			lineInfo = null;
+			console.log('【调试】气泡DOM未找到，lineInfo为null');
+			return;
+		}
+
+		// 获取气泡的边界框
+		const previewRect = previewEl.getBoundingClientRect();
+		const messageRect = messageEl.getBoundingClientRect();
+		console.log('【调试】previewRect:', previewRect, 'messageRect:', messageRect);
+
+		// 计算连线起止点（示例：取中心点）
+		const start = {
+			x: previewRect.left + previewRect.width / 2 + window.scrollX,
+			y: previewRect.top + previewRect.height / 2 + window.scrollY
+		};
+		const end = {
+			x: messageRect.left + messageRect.width / 2 + window.scrollX,
+			y: messageRect.top + messageRect.height / 2 + window.scrollY
+		};
+		lineInfo = { start, end, previewId, messageId };
+		console.log('【调试】lineInfo:', lineInfo);
+	}
+
+	async function handlePreviewBubbleClick(e) {
+		console.log('received preview-bubble-click', e);
+		lastBubbleId = e.detail.id;
+		
+		await tick(); // 等待 DOM 更新
+		updateLineInfo('preview-bubble', e.detail.id);
+	}
+
+	function addScrollAndResizeListeners() {
+		if (messagesAreaEl) messagesAreaEl.addEventListener('scroll', updateLineInfo);
+		if (previewContentEl) previewContentEl.addEventListener('scroll', updateLineInfo);
+		window.addEventListener('resize', updateLineInfo);
+	}
+	function removeScrollAndResizeListeners() {
+		if (messagesAreaEl) messagesAreaEl.removeEventListener('scroll', updateLineInfo);
+		if (previewContentEl) previewContentEl.removeEventListener('scroll', updateLineInfo);
+		window.removeEventListener('resize', updateLineInfo);
+	}
+
+	onMount(async () => {
+		await tick();
+		window.addEventListener('preview-bubble-click', handlePreviewBubbleClick);
+		paneGroupEl = document.querySelector('.pane-group-x');
+		messagesAreaEl = document.querySelector('.messages-area');
+		previewContentEl = document.querySelector('.preview-content');
+		addScrollAndResizeListeners();
+	});
+
+	onDestroy(() => {
+		window.removeEventListener('preview-bubble-click', handlePreviewBubbleClick);
+		removeScrollAndResizeListeners();
+	});
 
 	$: if (chatIdProp) {
 		(async () => {
@@ -513,12 +590,15 @@
 		chatInput?.focus();
 
 		chats.subscribe(() => {});
+
+		window.addEventListener('preview-bubble-click', handlePreviewBubbleClick);
 	});
 
 	onDestroy(() => {
 		chatIdUnsubscriber?.();
 		window.removeEventListener('message', onMessageHandler);
 		$socket?.off('chat-events', chatEventHandler);
+		window.removeEventListener('preview-bubble-click', handlePreviewBubbleClick);
 	});
 
 	// File upload functions
@@ -2034,7 +2114,21 @@
 				/>
 			{/if}
 
-			<PaneGroup direction="horizontal" class="w-full h-full min-w-0">
+			<PaneGroup direction="horizontal" class="pane-group-x" style="position:relative;width:100vw;min-width:100vw;max-width:100vw;overflow:visible;">
+				{#if true}
+					<svg class="absolute" style="left:0;top:0;width:100vw;height:100%;z-index:100;pointer-events:none;" xmlns="http://www.w3.org/2000/svg">
+						<defs>
+							<linearGradient id="bubbleLineGradient" x1="0" y1="0" x2="1" y2="1">
+								<stop offset="0%" stop-color="#6366f1"/>
+								<stop offset="100%" stop-color="#38bdf8"/>
+							</linearGradient>
+						</defs>
+						{#if lineInfo}
+							<path d={lineInfo.path} stroke="red" stroke-width="8" fill="none"/>
+						{/if}
+					</svg>
+					<pre style="position:absolute;top:0;right:0;z-index:999;background:#fff;color:#000;max-width:400px;max-height:300px;overflow:auto;">{JSON.stringify(lineInfo, null, 2)}</pre>
+				{/if}
 				<Pane defaultSize={50} class="h-full flex relative w-full min-w-0 flex-1 flex-col overflow-hidden">
 					<Navbar
 						bind:this={navbarElement}
@@ -2056,10 +2150,10 @@
 						{initNewChat}
 					/>
 
-					<div class="flex flex-col flex-1 w-full min-w-0 @container relative">
+					<div class="main-content-col w-full min-w-0 @container relative">
 						{#if $settings?.landingPageMode === 'chat' || createMessagesList(history, history.currentId).length > 0}
 							<div
-								class="pb-2.5 flex flex-col justify-between w-full flex-1 min-w-0 overflow-auto h-0 z-10 scrollbar-hidden"
+								class="messages-area pb-2.5 flex flex-col justify-between w-full flex-1 min-w-0 overflow-auto h-0 z-10 scrollbar-hidden"
 								id="messages-container"
 								bind:this={messagesContainerElement}
 								on:scroll={(e) => {
@@ -2089,7 +2183,7 @@
 								</div>
 							</div>
 
-							<div class="pb-2 min-w-0">
+							<div class="input-area pb-2 min-w-0">
 								<MessageInput
 									{history}
 									{taskIds}
@@ -2223,3 +2317,45 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+#chat-container {
+  position: relative;
+}
+.pane-group-svg {
+  z-index: 30;
+  pointer-events: none;
+}
+.main-content-col {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.messages-area {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-y: auto;
+}
+.input-area {
+  flex-shrink: 0;
+  min-height: 56px;
+}
+#messages-container {
+  overflow-y: auto;
+  min-height: 0;
+  height: 100%;
+}
+</style>
+
+{#if true} <!-- 强制SVG层始终渲染，便于调试 -->
+  <svg style="position:absolute;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:9999;background:rgba(255,0,0,0.05);" id="debug-svg">
+    {#if lineInfo}
+      <path d="M{lineInfo.start.x},{lineInfo.start.y} C{lineInfo.start.x+100},{lineInfo.start.y} {lineInfo.end.x-100},{lineInfo.end.y} {lineInfo.end.x},{lineInfo.end.y}" stroke="blue" stroke-width="3" fill="none" />
+      <text x="{lineInfo.start.x}" y="{lineInfo.start.y-10}" font-size="16" fill="red">start</text>
+      <text x="{lineInfo.end.x}" y="{lineInfo.end.y-10}" font-size="16" fill="green">end</text>
+    {:else}
+      <text x="50" y="50" font-size="20" fill="gray">lineInfo is null</text>
+    {/if}
+  </svg>
+{/if}

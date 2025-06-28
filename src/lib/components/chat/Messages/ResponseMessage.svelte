@@ -628,236 +628,237 @@
 				{/if}
 			</Name>
 
-			<div>
-				<div class="chat-{message.role} w-full min-w-full markdown-prose">
-					<div>
-						{#if (message?.statusHistory ?? [...(message?.status ? [message?.status] : [])]).length > 0}
-							{@const status = (
-								message?.statusHistory ?? [...(message?.status ? [message?.status] : [])]
-							).at(-1)}
-							{#if !status?.hidden}
-								<div class="status-description flex items-center gap-2 py-0.5">
-									{#if status?.action === 'web_search' && status?.urls}
-										<WebSearchResults {status}>
-											<div class="flex flex-col justify-center -space-y-0.5">
-												<div
-													class="{status?.done === false
-														? 'shimmer'
-														: ''} text-base line-clamp-1 text-wrap"
-												>
-													<!-- $i18n.t("Generating search query") -->
-													<!-- $i18n.t("No search query generated") -->
+			<div
+				id={`chat-bubble-${message.id}`}
+				class="chat-bubble-assistant flex flex-col justify-between px-5 mb-3 w-full rounded-lg group"
+			>
+				<div>
+					{#if (message?.statusHistory ?? [...(message?.status ? [message?.status] : [])]).length > 0}
+						{@const status = (
+							message?.statusHistory ?? [...(message?.status ? [message?.status] : [])]
+						).at(-1)}
+						{#if !status?.hidden}
+							<div class="status-description flex items-center gap-2 py-0.5">
+								{#if status?.action === 'web_search' && status?.urls}
+									<WebSearchResults {status}>
+										<div class="flex flex-col justify-center -space-y-0.5">
+											<div
+												class="{status?.done === false
+													? 'shimmer'
+													: ''} text-base line-clamp-1 text-wrap"
+											>
+												<!-- $i18n.t("Generating search query") -->
+												<!-- $i18n.t("No search query generated") -->
 
-													<!-- $i18n.t('Searched {{count}} sites') -->
-													{#if status?.description.includes('{{count}}')}
-														{$i18n.t(status?.description, {
-															count: status?.urls.length
-														})}
-													{:else if status?.description === 'No search query generated'}
-														{$i18n.t('No search query generated')}
-													{:else if status?.description === 'Generating search query'}
-														{$i18n.t('Generating search query')}
-													{:else}
-														{status?.description}
-													{/if}
-												</div>
-											</div>
-										</WebSearchResults>
-									{:else if status?.action === 'knowledge_search'}
-										<div class="flex flex-col justify-center -space-y-0.5">
-											<div
-												class="{status?.done === false
-													? 'shimmer'
-													: ''} text-gray-500 dark:text-gray-500 text-base line-clamp-1 text-wrap"
-											>
-												{$i18n.t(`Searching Knowledge for "{{searchQuery}}"`, {
-													searchQuery: status.query
-												})}
-											</div>
-										</div>
-									{:else}
-										<div class="flex flex-col justify-center -space-y-0.5">
-											<div
-												class="{status?.done === false
-													? 'shimmer'
-													: ''} text-gray-500 dark:text-gray-500 text-base line-clamp-1 text-wrap"
-											>
-												<!-- $i18n.t(`Searching "{{searchQuery}}"`) -->
-												{#if status?.description.includes('{{searchQuery}}')}
+												<!-- $i18n.t('Searched {{count}} sites') -->
+												{#if status?.description.includes('{{count}}')}
 													{$i18n.t(status?.description, {
-														searchQuery: status?.query
+														count: status?.urls.length
 													})}
 												{:else if status?.description === 'No search query generated'}
 													{$i18n.t('No search query generated')}
 												{:else if status?.description === 'Generating search query'}
 													{$i18n.t('Generating search query')}
-												{:else if status?.description === 'Searching the web'}
-													{$i18n.t('Searching the web...')}
 												{:else}
 													{status?.description}
 												{/if}
 											</div>
 										</div>
+									</WebSearchResults>
+								{:else if status?.action === 'knowledge_search'}
+									<div class="flex flex-col justify-center -space-y-0.5">
+										<div
+											class="{status?.done === false
+												? 'shimmer'
+												: ''} text-gray-500 dark:text-gray-500 text-base line-clamp-1 text-wrap"
+										>
+											{$i18n.t(`Searching Knowledge for "{{searchQuery}}"`, {
+												searchQuery: status.query
+											})}
+										</div>
+									</div>
+								{:else}
+									<div class="flex flex-col justify-center -space-y-0.5">
+										<div
+											class="{status?.done === false
+												? 'shimmer'
+												: ''} text-gray-500 dark:text-gray-500 text-base line-clamp-1 text-wrap"
+										>
+											<!-- $i18n.t(`Searching "{{searchQuery}}"`) -->
+											{#if status?.description.includes('{{searchQuery}}')}
+												{$i18n.t(status?.description, {
+													searchQuery: status?.query
+												})}
+											{:else if status?.description === 'No search query generated'}
+												{$i18n.t('No search query generated')}
+											{:else if status?.description === 'Generating search query'}
+												{$i18n.t('Generating search query')}
+											{:else if status?.description === 'Searching the web'}
+												{$i18n.t('Searching the web...')}
+											{:else}
+												{status?.description}
+											{/if}
+										</div>
+									</div>
+								{/if}
+							</div>
+						{/if}
+					{/if}
+
+					{#if message?.files && message.files?.filter((f) => f.type === 'image').length > 0}
+						<div class="my-1 w-full flex overflow-x-auto gap-2 flex-wrap">
+							{#each message.files as file}
+								<div>
+									{#if file.type === 'image'}
+										<Image src={file.url} alt={message.content} />
+									{:else}
+										<FileItem
+											item={file}
+											url={file.url}
+											name={file.name}
+											type={file.type}
+											size={file?.size}
+											colorClassName="bg-white dark:bg-gray-850 "
+										/>
 									{/if}
 								</div>
-							{/if}
-						{/if}
+							{/each}
+						</div>
+					{/if}
 
-						{#if message?.files && message.files?.filter((f) => f.type === 'image').length > 0}
-							<div class="my-1 w-full flex overflow-x-auto gap-2 flex-wrap">
-								{#each message.files as file}
-									<div>
-										{#if file.type === 'image'}
-											<Image src={file.url} alt={message.content} />
-										{:else}
-											<FileItem
-												item={file}
-												url={file.url}
-												name={file.name}
-												type={file.type}
-												size={file?.size}
-												colorClassName="bg-white dark:bg-gray-850 "
-											/>
-										{/if}
-									</div>
-								{/each}
-							</div>
-						{/if}
+					{#if edit === true}
+						<div class="w-full bg-gray-50 dark:bg-gray-800 rounded-3xl px-5 py-3 my-2">
+							<textarea
+								id="message-edit-{message.id}"
+								bind:this={editTextAreaElement}
+								class=" bg-transparent outline-hidden w-full resize-none"
+								bind:value={editedContent}
+								on:input={(e) => {
+									e.target.style.height = '';
+									e.target.style.height = `${e.target.scrollHeight}px`;
+								}}
+								on:keydown={(e) => {
+									if (e.key === 'Escape') {
+										document.getElementById('close-edit-message-button')?.click();
+									}
 
-						{#if edit === true}
-							<div class="w-full bg-gray-50 dark:bg-gray-800 rounded-3xl px-5 py-3 my-2">
-								<textarea
-									id="message-edit-{message.id}"
-									bind:this={editTextAreaElement}
-									class=" bg-transparent outline-hidden w-full resize-none"
-									bind:value={editedContent}
-									on:input={(e) => {
-										e.target.style.height = '';
-										e.target.style.height = `${e.target.scrollHeight}px`;
-									}}
-									on:keydown={(e) => {
-										if (e.key === 'Escape') {
-											document.getElementById('close-edit-message-button')?.click();
-										}
+									const isCmdOrCtrlPressed = e.metaKey || e.ctrlKey;
+									const isEnterPressed = e.key === 'Enter';
 
-										const isCmdOrCtrlPressed = e.metaKey || e.ctrlKey;
-										const isEnterPressed = e.key === 'Enter';
+									if (isCmdOrCtrlPressed && isEnterPressed) {
+										document.getElementById('confirm-edit-message-button')?.click();
+									}
+								}}
+							/>
 
-										if (isCmdOrCtrlPressed && isEnterPressed) {
-											document.getElementById('confirm-edit-message-button')?.click();
-										}
-									}}
-								/>
+							<div class=" mt-2 mb-1 flex justify-between text-sm font-medium">
+								<div>
+									<button
+										id="save-new-message-button"
+										class=" px-4 py-2 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-200 transition rounded-3xl"
+										on:click={() => {
+											saveAsCopyHandler();
+										}}
+									>
+										{$i18n.t('Save As Copy')}
+									</button>
+								</div>
 
-								<div class=" mt-2 mb-1 flex justify-between text-sm font-medium">
-									<div>
-										<button
-											id="save-new-message-button"
-											class=" px-4 py-2 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-200 transition rounded-3xl"
-											on:click={() => {
-												saveAsCopyHandler();
-											}}
-										>
-											{$i18n.t('Save As Copy')}
-										</button>
-									</div>
+								<div class="flex space-x-1.5">
+									<button
+										id="close-edit-message-button"
+										class="px-4 py-2 bg-white dark:bg-gray-900 hover:bg-gray-100 text-gray-800 dark:text-gray-100 transition rounded-3xl"
+										on:click={() => {
+											cancelEditMessage();
+										}}
+									>
+										{$i18n.t('Cancel')}
+									</button>
 
-									<div class="flex space-x-1.5">
-										<button
-											id="close-edit-message-button"
-											class="px-4 py-2 bg-white dark:bg-gray-900 hover:bg-gray-100 text-gray-800 dark:text-gray-100 transition rounded-3xl"
-											on:click={() => {
-												cancelEditMessage();
-											}}
-										>
-											{$i18n.t('Cancel')}
-										</button>
-
-										<button
-											id="confirm-edit-message-button"
-											class=" px-4 py-2 bg-gray-900 dark:bg-white hover:bg-gray-850 text-gray-100 dark:text-gray-800 transition rounded-3xl"
-											on:click={() => {
-												editMessageConfirmHandler();
-											}}
-										>
-											{$i18n.t('Save')}
-										</button>
-									</div>
+									<button
+										id="confirm-edit-message-button"
+										class=" px-4 py-2 bg-gray-900 dark:bg-white hover:bg-gray-850 text-gray-100 dark:text-gray-800 transition rounded-3xl"
+										on:click={() => {
+											editMessageConfirmHandler();
+										}}
+									>
+										{$i18n.t('Save')}
+									</button>
 								</div>
 							</div>
-						{:else}
-							<div class="w-full flex flex-col relative" id="response-content-container">
-								{#if message.content === '' && !message.error && (message?.statusHistory ?? [...(message?.status ? [message?.status] : [])]).length === 0}
-									<Skeleton />
-								{:else if message.content && message.error !== true}
-									<!-- always show message contents even if there's an error -->
-									<!-- unless message.error === true which is legacy error handling, where the error message is stored in message.content -->
-									<ContentRenderer
-										id={message.id}
-										{history}
-										content={message.content}
-										sources={message.sources}
-										floatingButtons={message?.done && !readOnly}
-										save={!readOnly}
-										preview={!readOnly}
-										{model}
-										onTaskClick={async (e) => {
-											console.log(e);
-										}}
-										onSourceClick={async (id, idx) => {
-											console.log(id, idx);
-											let sourceButton = document.getElementById(`source-${message.id}-${idx}`);
-											const sourcesCollapsible = document.getElementById(
-												`collapsible-${message.id}`
-											);
+						</div>
+					{:else}
+						<div class="w-full flex flex-col relative" id="response-content-container">
+							{#if message.content === '' && !message.error && (message?.statusHistory ?? [...(message?.status ? [message?.status] : [])]).length === 0}
+								<Skeleton />
+							{:else if message.content && message.error !== true}
+								<!-- always show message contents even if there's an error -->
+								<!-- unless message.error === true which is legacy error handling, where the error message is stored in message.content -->
+								<ContentRenderer
+									id={message.id}
+									{history}
+									content={message.content}
+									sources={message.sources}
+									floatingButtons={message?.done && !readOnly}
+									save={!readOnly}
+									preview={!readOnly}
+									{model}
+									onTaskClick={async (e) => {
+										console.log(e);
+									}}
+									onSourceClick={async (id, idx) => {
+										console.log(id, idx);
+										let sourceButton = document.getElementById(`source-${message.id}-${idx}`);
+										const sourcesCollapsible = document.getElementById(
+											`collapsible-${message.id}`
+										);
 
-											if (sourceButton) {
-												sourceButton.click();
-											} else if (sourcesCollapsible) {
-												// Open sources collapsible so we can click the source button
-												sourcesCollapsible
-													.querySelector('div:first-child')
-													.dispatchEvent(new PointerEvent('pointerup', {}));
+										if (sourceButton) {
+											sourceButton.click();
+										} else if (sourcesCollapsible) {
+											// Open sources collapsible so we can click the source button
+											sourcesCollapsible
+												.querySelector('div:first-child')
+												.dispatchEvent(new PointerEvent('pointerup', {}));
 
-												// Wait for next frame to ensure DOM updates
-												await new Promise((resolve) => {
-													requestAnimationFrame(() => {
-														requestAnimationFrame(resolve);
-													});
+											// Wait for next frame to ensure DOM updates
+											await new Promise((resolve) => {
+												requestAnimationFrame(() => {
+													requestAnimationFrame(resolve);
 												});
+											});
 
-												// Try clicking the source button again
-												sourceButton = document.getElementById(`source-${message.id}-${idx}`);
-												sourceButton && sourceButton.click();
-											}
-										}}
-										onAddMessages={({ modelId, parentId, messages }) => {
-											addMessages({ modelId, parentId, messages });
-										}}
-										onSave={({ raw, oldContent, newContent }) => {
-											history.messages[message.id].content = history.messages[
-												message.id
-											].content.replace(raw, raw.replace(oldContent, newContent));
+											// Try clicking the source button again
+											sourceButton = document.getElementById(`source-${message.id}-${idx}`);
+											sourceButton && sourceButton.click();
+										}
+									}}
+									onAddMessages={({ modelId, parentId, messages }) => {
+										addMessages({ modelId, parentId, messages });
+									}}
+									onSave={({ raw, oldContent, newContent }) => {
+										history.messages[message.id].content = history.messages[
+											message.id
+										].content.replace(raw, raw.replace(oldContent, newContent));
 
-											updateChat();
-										}}
-									/>
-								{/if}
+										updateChat();
+									}}
+								/>
+							{/if}
 
-								{#if message?.error}
-									<Error content={message?.error?.content ?? message.content} />
-								{/if}
+							{#if message?.error}
+								<Error content={message?.error?.content ?? message.content} />
+							{/if}
 
-								{#if (message?.sources || message?.citations) && (model?.info?.meta?.capabilities?.citations ?? true)}
-									<Citations id={message?.id} sources={message?.sources ?? message?.citations} />
-								{/if}
+							{#if (message?.sources || message?.citations) && (model?.info?.meta?.capabilities?.citations ?? true)}
+								<Citations id={message?.id} sources={message?.sources ?? message?.citations} />
+							{/if}
 
-								{#if message.code_executions}
-									<CodeExecutions codeExecutions={message.code_executions} />
-								{/if}
-							</div>
-						{/if}
-					</div>
+							{#if message.code_executions}
+								<CodeExecutions codeExecutions={message.code_executions} />
+							{/if}
+						</div>
+					{/if}
 				</div>
 
 				{#if !edit}

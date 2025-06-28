@@ -31,8 +31,14 @@
     {#each bubbles as bubble, idx (bubble.id)}
       <div
         class="ai-bubble-card {selectedId === bubble.id ? 'ai-bubble-selected' : ''}"
-        id={bubble.id}
-        on:click={() => selectBubble(bubble.id)}
+        id={`preview-bubble-${bubble.id}`}
+        on:click={() => {
+          selectBubble(bubble.id);
+          const previewId = `preview-bubble-${bubble.id}`;
+          const messageId = `chat-bubble-${bubble.id}`;
+          console.log('preview bubble clicked', bubble.id, previewId, messageId);
+          window.dispatchEvent(new CustomEvent('preview-bubble-click', { detail: { previewId, messageId } }));
+        }}
         tabindex="0"
       >
         <div class="ai-bubble-title">{bubble.title}</div>
@@ -125,7 +131,7 @@
 }
 .bubble-anchor {
   position: absolute;
-  right: -18px;
+  left: -18px;
   top: 50%;
   width: 16px;
   height: 16px;
