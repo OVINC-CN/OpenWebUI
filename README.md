@@ -1,4 +1,8 @@
-> 该项目是社区驱动的开源 AI 平台 [Open WebUI](https://github.com/open-webui/open-webui) 的定制分支。此版本与 Open WebUI 官方团队没有任何关联，亦非由其维护。
+> ⚠️ **注意：本仓库的 `dev` 分支是开发分支，可能包含不稳定或未发布的功能。强烈建议用户在部署和生产环境中使用不带预发布标签的正式发布版本。**
+
+---
+
+该项目是社区驱动的开源 AI 平台 [Open WebUI](https://github.com/open-webui/open-webui) 的定制分支。此版本与 Open WebUI 官方团队没有任何关联，亦非由其维护。
 
 # Open WebUI 👋
 
