@@ -95,17 +95,6 @@ SMTP_USERNAME=example@qq.com
 SMTP_PASSWORD=password
 ```
 
-### 增强的代码块和其他样式
-
-默认是开启状态，如需关闭请设置环境变量为非 `true` 的值
-
-```
-# 增强的代码块
-STYLE_USE_ENHANCED_CODE_BLOCK=true
-# 输入框右下角额外的 Markdown 编辑器
-STYLE_USE_ENHANCED_MARKDOWN_EDITOR=true
-```
-
 ### 品牌/LOGO定制能力说明
 
 本项目尊重并遵守 [Open WebUI License](https://docs.openwebui.com/license) 的品牌保护条款；我们鼓励社区用户尽量保留原有 Open WebUI 品牌，支持开源生态！
