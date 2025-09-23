@@ -3489,17 +3489,6 @@ LDAP_ATTRIBUTE_FOR_GROUPS = PersistentConfig(
 )
 
 ####################################
-# Style
-####################################
-
-STYLE_USE_ENHANCED_MARKDOWN_EDITOR = os.environ.get(
-    "STYLE_USE_ENHANCED_MARKDOWN_EDITOR", "True"
-).lower()
-STYLE_USE_ENHANCED_CODE_BLOCK = os.environ.get(
-    "STYLE_USE_ENHANCED_CODE_BLOCK", "True"
-).lower()
-
-####################################
 # Credit and Usage
 ####################################
 
