@@ -1040,7 +1040,6 @@
 										<div class="flex items-center justify-between w-full">
 											<div class="pl-[1px] flex items-center gap-2 text-sm dark:text-gray-500">
 												<img
-													crossorigin="anonymous"
 													alt="model profile"
 													class="size-3.5 max-w-[28px] object-cover rounded-full"
 													src={$models.find((model) => model.id === atSelectedModel.id)?.info?.meta
