@@ -41,40 +41,6 @@
 
 		<!-- enhanced start -->
 		<script src="/static/qrcode.min.js?v=202505151942"></script>
-		<meta name="code-pretty" content="true" />
-		<script>
-			(function () {
-				const meta = document.querySelector('meta[name="code-pretty"]');
-				const enabled = meta && meta.content === 'true';
-				if (!enabled) return;
-
-				const link = document.createElement('link');
-				link.rel = 'stylesheet';
-				link.href = '/static/code-pretty.css?v=202505151942';
-				document.head.appendChild(link);
-
-				const s = document.createElement('script');
-				s.src = '/static/code-pretty.js?v=202505151942';
-				document.head.appendChild(s);
-			})();
-		</script>
-		<meta name="enhanced-editor" content="true" />
-		<script>
-			(function () {
-				const meta = document.querySelector('meta[name="enhanced-editor"]');
-				const enabled = meta && meta.content === 'true';
-				if (!enabled) return;
-
-				const link = document.createElement('link');
-				link.rel = 'stylesheet';
-				link.href = '/static/enhanced-editor.css?v=202505151942';
-				document.head.appendChild(link);
-
-				const s = document.createElement('script');
-				s.src = '/static/enhanced-editor.js?v=202505151942';
-				document.head.appendChild(s);
-			})();
-		</script>
 		<!-- enhanced end -->
 
 		<script>
