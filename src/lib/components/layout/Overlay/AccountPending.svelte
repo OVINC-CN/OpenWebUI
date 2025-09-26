@@ -1,4 +1,7 @@
 <script lang="ts">
+	import DOMPurify from 'dompurify';
+	import { marked } from 'marked';
+
 	import { getAdminDetails } from '$lib/apis/auths';
 	import { onMount, getContext } from 'svelte';
 	import { config } from '$lib/stores';
@@ -38,7 +41,11 @@
 					style="white-space: pre-wrap;"
 				>
 					{#if ($config?.ui?.pending_user_overlay_content ?? '').trim() !== ''}
-						{$config.ui.pending_user_overlay_content}
+						{@html marked.parse(
+							DOMPurify.sanitize(
+								($config?.ui?.pending_user_overlay_content ?? '').replace(/\n/g, '<br>')
+							)
+						)}
 					{:else if $config?.features?.enable_signup_verify}
 						{$i18n.t('Please check your email inbox for the activation link.')}
 					{:else}
