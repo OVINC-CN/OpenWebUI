@@ -2191,7 +2191,6 @@ ENABLE_ONEDRIVE_INTEGRATION = PersistentConfig(
     os.getenv("ENABLE_ONEDRIVE_INTEGRATION", "False").lower() == "true",
 )
 
-
 ENABLE_ONEDRIVE_PERSONAL = (
     os.environ.get("ENABLE_ONEDRIVE_PERSONAL", "True").lower() == "true"
 )
@@ -2751,13 +2750,11 @@ WEB_LOADER_ENGINE = PersistentConfig(
     os.environ.get("WEB_LOADER_ENGINE", ""),
 )
 
-
 WEB_LOADER_CONCURRENT_REQUESTS = PersistentConfig(
     "WEB_LOADER_CONCURRENT_REQUESTS",
     "rag.web.loader.concurrent_requests",
     int(os.getenv("WEB_LOADER_CONCURRENT_REQUESTS", "10")),
 )
-
 
 ENABLE_WEB_LOADER_SSL_VERIFICATION = PersistentConfig(
     "ENABLE_WEB_LOADER_SSL_VERIFICATION",
@@ -2770,7 +2767,6 @@ WEB_SEARCH_TRUST_ENV = PersistentConfig(
     "rag.web.search.trust_env",
     os.getenv("WEB_SEARCH_TRUST_ENV", "False").lower() == "true",
 )
-
 
 OLLAMA_CLOUD_WEB_SEARCH_API_KEY = PersistentConfig(
     "OLLAMA_CLOUD_WEB_SEARCH_API_KEY",
@@ -3623,4 +3619,46 @@ EZFP_AMOUNT_CONTROL = PersistentConfig(
     "EZFP_AMOUNT_CONTROL",
     "credit.ezfp.amount_control",
     os.environ.get("EZFP_AMOUNT_CONTROL", ""),
+)
+
+ALIPAY_SERVER_URL = PersistentConfig(
+    "ALIPAY_SERVER_URL",
+    "credit.alipay.server_url",
+    os.environ.get("ALIPAY_SERVER_URL", "https://openapi.alipay.com/gateway.do"),
+)
+
+ALIPAY_APP_ID = PersistentConfig(
+    "ALIPAY_APP_ID",
+    "credit.alipay.app_id",
+    os.environ.get("ALIPAY_APP_ID", ""),
+)
+
+ALIPAY_APP_PRIVATE_KEY = PersistentConfig(
+    "ALIPAY_APP_PRIVATE_KEY",
+    "credit.alipay.app_private_key",
+    os.environ.get("ALIPAY_APP_PRIVATE_KEY", ""),
+)
+
+ALIPAY_ALIPAY_PUBLIC_KEY = PersistentConfig(
+    "ALIPAY_ALIPAY_PUBLIC_KEY",
+    "credit.alipay.alipay_public_key",
+    os.environ.get("ALIPAY_ALIPAY_PUBLIC_KEY", ""),
+)
+
+ALIPAY_CALLBACK_HOST = PersistentConfig(
+    "ALIPAY_CALLBACK_HOST",
+    "credit.alipay.callback_host",
+    os.environ.get("ALIPAY_CALLBACK_HOST", ""),
+)
+
+ALIPAY_AMOUNT_CONTROL = PersistentConfig(
+    "ALIPAY_AMOUNT_CONTROL",
+    "credit.alipay.amount_control",
+    os.environ.get("ALIPAY_AMOUNT_CONTROL", ""),
+)
+
+ALIPAY_PRODUCT_CODE = PersistentConfig(
+    "ALIPAY_PRODUCT_CODE",
+    "credit.alipay.product_code",
+    os.environ.get("ALIPAY_PRODUCT_CODE", ""),
 )

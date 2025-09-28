@@ -201,7 +201,108 @@
 					</div>
 
 					<div class="mb-3">
-						<div class=" mb-2.5 text-base font-medium">{$i18n.t('Payment')}</div>
+						<div class=" mb-2.5 text-base font-medium">{$i18n.t('Alipay')}</div>
+						<hr class=" border-gray-100 dark:border-gray-850 my-2" />
+						<div class="mt-2 flex w-full justify-between">
+							<div class=" self-center text-xs font-medium">{$i18n.t('Alipay Server URL')}</div>
+						</div>
+						<div class="flex mt-2 space-x-2">
+							<input
+								class="w-full rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+								bind:value={config.ALIPAY_SERVER_URL}
+							/>
+						</div>
+						<div class="mt-2 flex w-full justify-between">
+							<div class=" self-center text-xs font-medium">{$i18n.t('Alipay AppID')}</div>
+						</div>
+						<div class="flex mt-2 space-x-2">
+							<input
+								class="w-full rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+								bind:value={config.ALIPAY_APP_ID}
+							/>
+						</div>
+						<div class="mt-2 flex w-full justify-between">
+							<div class=" self-center text-xs font-medium">
+								{$i18n.t('Alipay App Private Key')}
+							</div>
+						</div>
+						<div class="text-xs text-gray-400 dark:text-gray-500">
+							{$i18n.t(
+								'Please use a private key in PKCS#1 format. You can convert it using a format-conversion tool.'
+							)}
+						</div>
+						<div class="flex mt-2 space-x-2">
+							<SensitiveInput
+								outerClassName="w-full flex flex-1 rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+								bind:value={config.ALIPAY_APP_PRIVATE_KEY}
+								required={false}
+							/>
+						</div>
+						<div class="mt-2 flex w-full justify-between">
+							<div class=" self-center text-xs font-medium">{$i18n.t('Alipay Public Key')}</div>
+						</div>
+						<div class="flex mt-2 space-x-2">
+							<SensitiveInput
+								outerClassName="w-full flex flex-1 rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+								bind:value={config.ALIPAY_ALIPAY_PUBLIC_KEY}
+								required={false}
+							/>
+						</div>
+						<div class="mt-2 flex w-full justify-between">
+							<div class=" self-center text-xs font-medium">{$i18n.t('OpenWebUI Host')}</div>
+						</div>
+						<div class="text-xs text-gray-400 dark:text-gray-500">
+							{$i18n.t(
+								'The address of your service must be accessible by Alipay; do not include any paths, only the HTTP protocol and the domain name'
+							)}
+						</div>
+						<div class="flex mt-2 space-x-2">
+							<input
+								class="w-full rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+								bind:value={config.ALIPAY_CALLBACK_HOST}
+							/>
+						</div>
+						<div class="mt-2 flex w-full justify-between">
+							<div class=" self-center text-xs font-medium">{$i18n.t('Alipay Product Code')}</div>
+						</div>
+						<div class="text-xs text-gray-400 dark:text-gray-500">
+							{$i18n.t('Trace ticket qrcode pay to input QR_CODE_OFFLINE')}
+						</div>
+						<div class="flex mt-2 space-x-2">
+							<input
+								class="w-full rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+								bind:value={config.ALIPAY_PRODUCT_CODE}
+							/>
+						</div>
+						<div class="mt-2 flex w-full justify-between">
+							<div class=" self-center text-xs font-medium">{$i18n.t('Charge Amount Control')}</div>
+						</div>
+						<div class="text-xs text-gray-400 dark:text-gray-500">
+							{$i18n.t('The allowed range of recharge amounts; if not set, there is no limit')}
+						</div>
+						<div class="text-xs text-gray-400 dark:text-gray-500">
+							{$i18n.t(
+								'For multiple configurations, use commas (,) to separate them, and use a hyphen (-) for ranges'
+							)}
+						</div>
+						<div class="text-xs text-gray-400 dark:text-gray-500">
+							{$i18n.t('For example: 10-20,30,40-50')}
+						</div>
+						<div class="text-xs text-gray-400 dark:text-gray-500">
+							{$i18n.t(
+								'The above values mean that only 10-20 yuan, 30 yuan, and 40-50 yuan can be recharged.'
+							)}
+						</div>
+						<div class="flex mt-2 space-x-2">
+							<input
+								class="w-full rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+								bind:value={config.ALIPAY_AMOUNT_CONTROL}
+							/>
+						</div>
+					</div>
+
+					<div class="mb-3">
+						<div class=" mb-2.5 text-base font-medium">{$i18n.t('EZFP Payment')}</div>
 						<hr class=" border-gray-100 dark:border-gray-850 my-2" />
 						<div class="mt-2 flex w-full justify-between">
 							<div class=" self-center text-xs font-medium">

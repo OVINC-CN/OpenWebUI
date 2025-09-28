@@ -821,7 +821,7 @@
 								aria-selected={selectedTab === 'credit'}
 								class={`px-0.5 md:px-2.5 py-1 min-w-fit rounded-xl flex-1 md:flex-none flex text-left transition
 								${
-									selectedTab === 'account'
+									selectedTab === 'credit'
 										? ($settings?.highContrastMode ?? false)
 											? 'dark:bg-gray-800 bg-gray-200'
 											: ''

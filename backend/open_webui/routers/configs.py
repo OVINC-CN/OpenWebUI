@@ -514,6 +514,13 @@ class UsageConfigForm(BaseModel):
     EZFP_KEY: Optional[str] = None
     EZFP_CALLBACK_HOST: Optional[str] = None
     EZFP_AMOUNT_CONTROL: Optional[str] = None
+    ALIPAY_SERVER_URL: Optional[str] = None
+    ALIPAY_APP_ID: Optional[str] = None
+    ALIPAY_APP_PRIVATE_KEY: Optional[str] = None
+    ALIPAY_ALIPAY_PUBLIC_KEY: Optional[str] = None
+    ALIPAY_CALLBACK_HOST: Optional[str] = None
+    ALIPAY_AMOUNT_CONTROL: Optional[str] = None
+    ALIPAY_PRODUCT_CODE: Optional[str] = None
 
 
 @router.get("/usage", response_model=UsageConfigForm)
@@ -537,6 +544,13 @@ async def get_usage_config(request: Request, _=Depends(get_admin_user)):
         "EZFP_KEY": request.app.state.config.EZFP_KEY,
         "EZFP_CALLBACK_HOST": request.app.state.config.EZFP_CALLBACK_HOST,
         "EZFP_AMOUNT_CONTROL": request.app.state.config.EZFP_AMOUNT_CONTROL,
+        "ALIPAY_SERVER_URL": request.app.state.config.ALIPAY_SERVER_URL,
+        "ALIPAY_APP_ID": request.app.state.config.ALIPAY_APP_ID,
+        "ALIPAY_APP_PRIVATE_KEY": request.app.state.config.ALIPAY_APP_PRIVATE_KEY,
+        "ALIPAY_ALIPAY_PUBLIC_KEY": request.app.state.config.ALIPAY_ALIPAY_PUBLIC_KEY,
+        "ALIPAY_CALLBACK_HOST": request.app.state.config.ALIPAY_CALLBACK_HOST,
+        "ALIPAY_AMOUNT_CONTROL": request.app.state.config.ALIPAY_AMOUNT_CONTROL,
+        "ALIPAY_PRODUCT_CODE": request.app.state.config.ALIPAY_PRODUCT_CODE,
     }
 
 
@@ -580,6 +594,15 @@ async def set_usage_config(
     request.app.state.config.EZFP_KEY = form_data.EZFP_KEY
     request.app.state.config.EZFP_CALLBACK_HOST = form_data.EZFP_CALLBACK_HOST
     request.app.state.config.EZFP_AMOUNT_CONTROL = form_data.EZFP_AMOUNT_CONTROL
+    request.app.state.config.ALIPAY_SERVER_URL = form_data.ALIPAY_SERVER_URL
+    request.app.state.config.ALIPAY_APP_ID = form_data.ALIPAY_APP_ID
+    request.app.state.config.ALIPAY_APP_PRIVATE_KEY = form_data.ALIPAY_APP_PRIVATE_KEY
+    request.app.state.config.ALIPAY_ALIPAY_PUBLIC_KEY = (
+        form_data.ALIPAY_ALIPAY_PUBLIC_KEY
+    )
+    request.app.state.config.ALIPAY_CALLBACK_HOST = form_data.ALIPAY_CALLBACK_HOST
+    request.app.state.config.ALIPAY_AMOUNT_CONTROL = form_data.ALIPAY_AMOUNT_CONTROL
+    request.app.state.config.ALIPAY_PRODUCT_CODE = form_data.ALIPAY_PRODUCT_CODE
 
     return {
         "CREDIT_NO_CREDIT_MSG": request.app.state.config.CREDIT_NO_CREDIT_MSG,
@@ -600,4 +623,11 @@ async def set_usage_config(
         "EZFP_KEY": request.app.state.config.EZFP_KEY,
         "EZFP_CALLBACK_HOST": request.app.state.config.EZFP_CALLBACK_HOST,
         "EZFP_AMOUNT_CONTROL": request.app.state.config.EZFP_AMOUNT_CONTROL,
+        "ALIPAY_SERVER_URL": request.app.state.config.ALIPAY_SERVER_URL,
+        "ALIPAY_APP_ID": request.app.state.config.ALIPAY_APP_ID,
+        "ALIPAY_APP_PRIVATE_KEY": request.app.state.config.ALIPAY_APP_PRIVATE_KEY,
+        "ALIPAY_ALIPAY_PUBLIC_KEY": request.app.state.config.ALIPAY_ALIPAY_PUBLIC_KEY,
+        "ALIPAY_CALLBACK_HOST": request.app.state.config.ALIPAY_CALLBACK_HOST,
+        "ALIPAY_AMOUNT_CONTROL": request.app.state.config.ALIPAY_AMOUNT_CONTROL,
+        "ALIPAY_PRODUCT_CODE": request.app.state.config.ALIPAY_PRODUCT_CODE,
     }
