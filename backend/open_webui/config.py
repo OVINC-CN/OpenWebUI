@@ -3645,6 +3645,12 @@ ALIPAY_ALIPAY_PUBLIC_KEY = PersistentConfig(
     os.environ.get("ALIPAY_ALIPAY_PUBLIC_KEY", ""),
 )
 
+ALIPAY_CALLBACK_HOST = PersistentConfig(
+    "ALIPAY_CALLBACK_HOST",
+    "credit.alipay.callback_host",
+    os.environ.get("ALIPAY_CALLBACK_HOST", ""),
+)
+
 ALIPAY_AMOUNT_CONTROL = PersistentConfig(
     "ALIPAY_AMOUNT_CONTROL",
     "credit.alipay.amount_control",

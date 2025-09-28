@@ -518,6 +518,7 @@ class UsageConfigForm(BaseModel):
     ALIPAY_APP_ID: Optional[str] = None
     ALIPAY_APP_PRIVATE_KEY: Optional[str] = None
     ALIPAY_ALIPAY_PUBLIC_KEY: Optional[str] = None
+    ALIPAY_CALLBACK_HOST: Optional[str] = None
     ALIPAY_AMOUNT_CONTROL: Optional[str] = None
 
 
@@ -546,6 +547,7 @@ async def get_usage_config(request: Request, _=Depends(get_admin_user)):
         "ALIPAY_APP_ID": request.app.state.config.ALIPAY_APP_ID,
         "ALIPAY_APP_PRIVATE_KEY": request.app.state.config.ALIPAY_APP_PRIVATE_KEY,
         "ALIPAY_ALIPAY_PUBLIC_KEY": request.app.state.config.ALIPAY_ALIPAY_PUBLIC_KEY,
+        "ALIPAY_CALLBACK_HOST": request.app.state.config.ALIPAY_CALLBACK_HOST,
         "ALIPAY_AMOUNT_CONTROL": request.app.state.config.ALIPAY_AMOUNT_CONTROL,
     }
 
@@ -596,6 +598,7 @@ async def set_usage_config(
     request.app.state.config.ALIPAY_ALIPAY_PUBLIC_KEY = (
         form_data.ALIPAY_ALIPAY_PUBLIC_KEY
     )
+    request.app.state.config.ALIPAY_CALLBACK_HOST = form_data.ALIPAY_CALLBACK_HOST
     request.app.state.config.ALIPAY_AMOUNT_CONTROL = form_data.ALIPAY_AMOUNT_CONTROL
 
     return {
@@ -621,5 +624,6 @@ async def set_usage_config(
         "ALIPAY_APP_ID": request.app.state.config.ALIPAY_APP_ID,
         "ALIPAY_APP_PRIVATE_KEY": request.app.state.config.ALIPAY_APP_PRIVATE_KEY,
         "ALIPAY_ALIPAY_PUBLIC_KEY": request.app.state.config.ALIPAY_ALIPAY_PUBLIC_KEY,
+        "ALIPAY_CALLBACK_HOST": request.app.state.config.ALIPAY_CALLBACK_HOST,
         "ALIPAY_AMOUNT_CONTROL": request.app.state.config.ALIPAY_AMOUNT_CONTROL,
     }

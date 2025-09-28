@@ -46,7 +46,7 @@ ghcr.io/ovinc-cn/openwebui:<版本号>
 
 ### 支付宝当面付
 
-配置授权回调地址为 `https://example.com/api/v1/credit/callback/alipay` 其中 `example.com` 替换为你的 WebUI 地址
+配置网关地址和授权回调地址为 `https://example.com/api/v1/credit/callback/alipay` 其中 `example.com` 替换为你的 WebUI 地址
 
 使用支付宝密钥工具生成的私钥无法直接使用，需要通过 “格式转换” 转换为 PKCS1 格式，转换后工具会提示 “已转换为 PKCS1 格式”
 

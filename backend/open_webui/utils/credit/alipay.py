@@ -18,6 +18,7 @@ from open_webui.config import (
     ALIPAY_ALIPAY_PUBLIC_KEY,
     ALIPAY_AMOUNT_CONTROL,
     WEBUI_NAME,
+    ALIPAY_CALLBACK_HOST,
 )
 from open_webui.env import SRC_LOG_LEVELS
 from open_webui.utils.credit.utils import check_amount
@@ -69,6 +70,7 @@ class AlipayClient:
         request_model.total_amount = f"{amount:.2f}"
         request_model.subject = f"{WEBUI_NAME} Credit"
         request = AlipayTradePrecreateRequest(biz_model=request_model)
+        request.notify_url = ALIPAY_CALLBACK_HOST.value
         # do request
         try:
             response_content = self._client.execute(request)

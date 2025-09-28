@@ -428,6 +428,7 @@ from open_webui.config import (
     ALIPAY_APP_PRIVATE_KEY,
     ALIPAY_APP_ID,
     ALIPAY_SERVER_URL,
+    ALIPAY_CALLBACK_HOST,
 )
 from open_webui.env import (
     LICENSE_KEY,
@@ -1201,6 +1202,7 @@ app.state.config.ALIPAY_APP_ID = ALIPAY_APP_ID
 app.state.config.ALIPAY_APP_PRIVATE_KEY = ALIPAY_APP_PRIVATE_KEY
 app.state.config.ALIPAY_ALIPAY_PUBLIC_KEY = ALIPAY_ALIPAY_PUBLIC_KEY
 app.state.config.ALIPAY_AMOUNT_CONTROL = ALIPAY_AMOUNT_CONTROL
+app.state.config.ALIPAY_CALLBACK_HOST = ALIPAY_CALLBACK_HOST
 
 ########################################
 #

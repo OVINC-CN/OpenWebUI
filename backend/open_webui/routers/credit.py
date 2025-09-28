@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import time
 import uuid
@@ -160,6 +161,9 @@ async def ticket_callback_redirect() -> RedirectResponse:
 @router.post("/callback/alipay", response_class=PlainTextResponse)
 async def alipay_callback(request: Request) -> str:
     callback = await request.json()
+    logger = logging.getLogger(__name__)
+    logger.setLevel("INFO")
+    logger.info(json.dumps(callback))
     if not AlipayClient().verify(callback):
         return "invalid signature"
 
