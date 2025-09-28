@@ -46,7 +46,7 @@ ghcr.io/ovinc-cn/openwebui:<版本号>
 
 ### 支付宝当面付/订单码支付
 
-推荐使用 “订单码支付” 功能，“当面付” 处于产品调整中，后续支付宝可能会下线这个支付方式
+推荐使用 [“订单码支付”](https://open.alipay.com/api/detail?code=I1080300001000068149&index=0) 功能，[“当面付”](https://open.alipay.com/api/detail?code=I1080300001000041016&index=0) 处于产品调整中，后续支付宝可能会下线这个支付方式
 
 配置网关地址和授权回调地址为 `https://example.com/api/v1/credit/callback/alipay` 其中 `example.com` 替换为你的 WebUI 地址
 
