@@ -1593,6 +1593,7 @@
 	"Text-to-Speech Engine": "",
 	"Thanks for your feedback!": "",
 	"The above values mean that only 10-20 yuan, 30 yuan, and 40-50 yuan can be recharged.": "",
+	"The address of your service must be accessible by Alipay; do not include any paths, only the HTTP protocol and the domain name": "",
 	"The address of your service must be accessible by Epay; do not include any paths, only the HTTP protocol and the domain name": "",
 	"The allowed range of recharge amounts; if not set, there is no limit": "",
 	"The Application Account DN you bind with for search": "",

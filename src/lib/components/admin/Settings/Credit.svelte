@@ -253,7 +253,7 @@
 						</div>
 						<div class="text-xs text-gray-400 dark:text-gray-500">
 							{$i18n.t(
-								'The address of your service must be accessible by Epay; do not include any paths, only the HTTP protocol and the domain name'
+								'The address of your service must be accessible by Alipay; do not include any paths, only the HTTP protocol and the domain name'
 							)}
 						</div>
 						<div class="flex mt-2 space-x-2">

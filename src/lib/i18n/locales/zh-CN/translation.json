@@ -1591,6 +1591,7 @@
 	"Text-to-Speech Engine": "文本转语音引擎",
 	"Thanks for your feedback!": "感谢您的反馈！",
 	"The above values mean that only 10-20 yuan, 30 yuan, and 40-50 yuan can be recharged.": "上面的值表示允许充值 10-20元，30元，40-50元",
+	"The address of your service must be accessible by Alipay; do not include any paths, only the HTTP protocol and the domain name": "你的服务的地址，需要支付宝能正常访问的，不需要携带路径，HTTP协议加域名即可",
 	"The address of your service must be accessible by Epay; do not include any paths, only the HTTP protocol and the domain name": "你的服务的地址，需要易支付能正常访问的，不需要携带路径，HTTP协议加域名即可",
 	"The allowed range of recharge amounts; if not set, there is no limit": "允许充值的金额范围，不设置则不限制",
 	"The Application Account DN you bind with for search": "您所绑定用于搜索的 Application Account DN",
