@@ -160,7 +160,7 @@ async def ticket_callback_redirect() -> RedirectResponse:
 
 @router.post("/callback/alipay", response_class=PlainTextResponse)
 async def alipay_callback(request: Request) -> str:
-    callback = await request.json()
+    callback = dict(await request.form())
     logger = logging.getLogger(__name__)
     logger.setLevel("INFO")
     logger.info(json.dumps(callback))

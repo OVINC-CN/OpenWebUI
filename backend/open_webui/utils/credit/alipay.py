@@ -54,7 +54,7 @@ class AlipayClient:
                 self._client_config.alipay_public_key, payload_content, sign
             )
         except Exception as err:
-            logger.exception("alipay verify error: %s", err)
+            logger.error("alipay verify error: %s", err)
             return False
 
     async def create_trade(self, out_trade_no: str, amount: float) -> dict:
@@ -70,7 +70,9 @@ class AlipayClient:
         request_model.total_amount = f"{amount:.2f}"
         request_model.subject = f"{WEBUI_NAME} Credit"
         request = AlipayTradePrecreateRequest(biz_model=request_model)
-        request.notify_url = ALIPAY_CALLBACK_HOST.value
+        request.notify_url = (
+            f"{ALIPAY_CALLBACK_HOST.value.rstrip('/')}/api/v1/credit/callback/alipay"
+        )
         # do request
         try:
             response_content = self._client.execute(request)
