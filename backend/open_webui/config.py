@@ -3656,3 +3656,9 @@ ALIPAY_AMOUNT_CONTROL = PersistentConfig(
     "credit.alipay.amount_control",
     os.environ.get("ALIPAY_AMOUNT_CONTROL", ""),
 )
+
+ALIPAY_PRODUCT_CODE = PersistentConfig(
+    "ALIPAY_PRODUCT_CODE",
+    "credit.alipay.product_code",
+    os.environ.get("ALIPAY_PRODUCT_CODE", ""),
+)

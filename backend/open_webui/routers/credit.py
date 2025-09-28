@@ -131,6 +131,7 @@ async def create_ticket(
 @router.get("/callback", response_class=PlainTextResponse)
 async def ticket_callback(request: Request) -> str:
     callback = dict(request.query_params)
+    log.info("ezfp callback: %s", json.dumps(callback))
     if not ezfp_client.verify(callback):
         return "invalid signature"
 
@@ -161,9 +162,7 @@ async def ticket_callback_redirect() -> RedirectResponse:
 @router.post("/callback/alipay", response_class=PlainTextResponse)
 async def alipay_callback(request: Request) -> str:
     callback = dict(await request.form())
-    logger = logging.getLogger(__name__)
-    logger.setLevel("INFO")
-    logger.info(json.dumps(callback))
+    log.info("alipay callback: %s", json.dumps(callback))
     if not AlipayClient().verify(callback):
         return "invalid signature"
 

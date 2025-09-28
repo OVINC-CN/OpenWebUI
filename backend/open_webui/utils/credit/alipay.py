@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import unquote
 
 from alipay.aop.api.AlipayClientConfig import AlipayClientConfig
 from alipay.aop.api.DefaultAlipayClient import DefaultAlipayClient
@@ -19,6 +20,7 @@ from open_webui.config import (
     ALIPAY_AMOUNT_CONTROL,
     WEBUI_NAME,
     ALIPAY_CALLBACK_HOST,
+    ALIPAY_PRODUCT_CODE,
 )
 from open_webui.env import SRC_LOG_LEVELS
 from open_webui.utils.credit.utils import check_amount
@@ -45,13 +47,17 @@ class AlipayClient:
         if not sign:
             return False
         payload_filtered = [
-            f"{k}={v}" for k, v in payload.items() if k not in ["sign", "sign_type"]
+            f"{k}={unquote(v)}"
+            for k, v in payload.items()
+            if k not in ["sign", "sign_type"]
         ]
         payload_filtered.sort()
         payload_content = "&".join(payload_filtered)
         try:
             return verify_with_rsa(
-                self._client_config.alipay_public_key, payload_content, sign
+                self._client_config.alipay_public_key,
+                payload_content.encode(self._client_config.charset),
+                sign,
             )
         except Exception as err:
             logger.error("alipay verify error: %s", err)
@@ -69,6 +75,8 @@ class AlipayClient:
         request_model.out_trade_no = out_trade_no
         request_model.total_amount = f"{amount:.2f}"
         request_model.subject = f"{WEBUI_NAME} Credit"
+        if ALIPAY_PRODUCT_CODE.value:
+            request_model.product_code = ALIPAY_PRODUCT_CODE.value
         request = AlipayTradePrecreateRequest(biz_model=request_model)
         request.notify_url = (
             f"{ALIPAY_CALLBACK_HOST.value.rstrip('/')}/api/v1/credit/callback/alipay"

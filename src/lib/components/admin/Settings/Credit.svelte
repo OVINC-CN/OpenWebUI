@@ -263,6 +263,18 @@
 							/>
 						</div>
 						<div class="mt-2 flex w-full justify-between">
+							<div class=" self-center text-xs font-medium">{$i18n.t('Alipay Product Code')}</div>
+						</div>
+						<div class="text-xs text-gray-400 dark:text-gray-500">
+							{$i18n.t('Trace ticket qrcode pay to input QR_CODE_OFFLINE')}
+						</div>
+						<div class="flex mt-2 space-x-2">
+							<input
+								class="w-full rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+								bind:value={config.ALIPAY_PRODUCT_CODE}
+							/>
+						</div>
+						<div class="mt-2 flex w-full justify-between">
 							<div class=" self-center text-xs font-medium">{$i18n.t('Charge Amount Control')}</div>
 						</div>
 						<div class="text-xs text-gray-400 dark:text-gray-500">

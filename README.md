@@ -44,7 +44,7 @@ ghcr.io/ovinc-cn/openwebui:<版本号>
 
 ## 拓展配置
 
-### 支付宝当面付
+### 支付宝当面付/订单码支付
 
 配置网关地址和授权回调地址为 `https://example.com/api/v1/credit/callback/alipay` 其中 `example.com` 替换为你的 WebUI 地址
 

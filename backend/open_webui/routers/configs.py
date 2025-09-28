@@ -520,6 +520,7 @@ class UsageConfigForm(BaseModel):
     ALIPAY_ALIPAY_PUBLIC_KEY: Optional[str] = None
     ALIPAY_CALLBACK_HOST: Optional[str] = None
     ALIPAY_AMOUNT_CONTROL: Optional[str] = None
+    ALIPAY_PRODUCT_CODE: Optional[str] = None
 
 
 @router.get("/usage", response_model=UsageConfigForm)
@@ -549,6 +550,7 @@ async def get_usage_config(request: Request, _=Depends(get_admin_user)):
         "ALIPAY_ALIPAY_PUBLIC_KEY": request.app.state.config.ALIPAY_ALIPAY_PUBLIC_KEY,
         "ALIPAY_CALLBACK_HOST": request.app.state.config.ALIPAY_CALLBACK_HOST,
         "ALIPAY_AMOUNT_CONTROL": request.app.state.config.ALIPAY_AMOUNT_CONTROL,
+        "ALIPAY_PRODUCT_CODE": request.app.state.config.ALIPAY_PRODUCT_CODE,
     }
 
 
@@ -600,6 +602,7 @@ async def set_usage_config(
     )
     request.app.state.config.ALIPAY_CALLBACK_HOST = form_data.ALIPAY_CALLBACK_HOST
     request.app.state.config.ALIPAY_AMOUNT_CONTROL = form_data.ALIPAY_AMOUNT_CONTROL
+    request.app.state.config.ALIPAY_PRODUCT_CODE = form_data.ALIPAY_PRODUCT_CODE
 
     return {
         "CREDIT_NO_CREDIT_MSG": request.app.state.config.CREDIT_NO_CREDIT_MSG,
@@ -626,4 +629,5 @@ async def set_usage_config(
         "ALIPAY_ALIPAY_PUBLIC_KEY": request.app.state.config.ALIPAY_ALIPAY_PUBLIC_KEY,
         "ALIPAY_CALLBACK_HOST": request.app.state.config.ALIPAY_CALLBACK_HOST,
         "ALIPAY_AMOUNT_CONTROL": request.app.state.config.ALIPAY_AMOUNT_CONTROL,
+        "ALIPAY_PRODUCT_CODE": request.app.state.config.ALIPAY_PRODUCT_CODE,
     }
