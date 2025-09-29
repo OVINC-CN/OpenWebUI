@@ -215,3 +215,18 @@ def calculate_image_token(model_id: str, image: ImageURL) -> int:
     tiles = (short_side + 511) / 512 * ((other_side + 511) / 512)
 
     return math.ceil(tiles * tile_tokens + base_tokens)
+
+
+def check_amount(amount: float, amount_control: str) -> bool:
+    if not amount_control:
+        return True
+    checks = amount_control.split(",")
+    for check in checks:
+        values = check.strip().split("-")
+        if len(values) == 2:
+            if float(values[0].strip()) <= amount <= float(values[1].strip()):
+                return True
+        if len(values) == 1:
+            if float(values[0].strip()) == amount:
+                return True
+    return False

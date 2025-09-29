@@ -1254,6 +1254,11 @@ USER_PERMISSIONS_WORKSPACE_MODELS_ALLOW_PUBLIC_SHARING = (
     == "true"
 )
 
+USER_PERMISSIONS_NOTES_ALLOW_PUBLIC_SHARING = (
+    os.environ.get("USER_PERMISSIONS_NOTES_ALLOW_PUBLIC_SHARING", "False").lower()
+    == "true"
+)
+
 USER_PERMISSIONS_WORKSPACE_KNOWLEDGE_ALLOW_PUBLIC_SHARING = (
     os.environ.get(
         "USER_PERMISSIONS_WORKSPACE_KNOWLEDGE_ALLOW_PUBLIC_SHARING", "False"
@@ -1388,6 +1393,7 @@ DEFAULT_USER_PERMISSIONS = {
         "public_knowledge": USER_PERMISSIONS_WORKSPACE_KNOWLEDGE_ALLOW_PUBLIC_SHARING,
         "public_prompts": USER_PERMISSIONS_WORKSPACE_PROMPTS_ALLOW_PUBLIC_SHARING,
         "public_tools": USER_PERMISSIONS_WORKSPACE_TOOLS_ALLOW_PUBLIC_SHARING,
+        "public_notes": USER_PERMISSIONS_NOTES_ALLOW_PUBLIC_SHARING,
     },
     "chat": {
         "controls": USER_PERMISSIONS_CHAT_CONTROLS,
@@ -2021,16 +2027,23 @@ if VECTOR_DB == "chroma":
 # this uses the model defined in the Dockerfile ENV variable. If you dont use docker or docker based deployments such as k8s, the default embedding model will be used (sentence-transformers/all-MiniLM-L6-v2)
 
 # Milvus
-
 MILVUS_URI = os.environ.get("MILVUS_URI", f"{DATA_DIR}/vector_db/milvus.db")
 MILVUS_DB = os.environ.get("MILVUS_DB", "default")
 MILVUS_TOKEN = os.environ.get("MILVUS_TOKEN", None)
-
 MILVUS_INDEX_TYPE = os.environ.get("MILVUS_INDEX_TYPE", "HNSW")
 MILVUS_METRIC_TYPE = os.environ.get("MILVUS_METRIC_TYPE", "COSINE")
 MILVUS_HNSW_M = int(os.environ.get("MILVUS_HNSW_M", "16"))
 MILVUS_HNSW_EFCONSTRUCTION = int(os.environ.get("MILVUS_HNSW_EFCONSTRUCTION", "100"))
 MILVUS_IVF_FLAT_NLIST = int(os.environ.get("MILVUS_IVF_FLAT_NLIST", "128"))
+MILVUS_DISKANN_MAX_DEGREE = int(os.environ.get("MILVUS_DISKANN_MAX_DEGREE", "56"))
+MILVUS_DISKANN_SEARCH_LIST_SIZE = int(
+    os.environ.get("MILVUS_DISKANN_SEARCH_LIST_SIZE", "100")
+)
+ENABLE_MILVUS_MULTITENANCY_MODE = (
+    os.environ.get("ENABLE_MILVUS_MULTITENANCY_MODE", "true").lower() == "true"
+)
+# Hyphens not allowed, need to use underscores in collection names
+MILVUS_COLLECTION_PREFIX = os.environ.get("MILVUS_COLLECTION_PREFIX", "open_webui")
 
 # Qdrant
 QDRANT_URI = os.environ.get("QDRANT_URI", None)
@@ -2190,7 +2203,6 @@ ENABLE_ONEDRIVE_INTEGRATION = PersistentConfig(
     "onedrive.enable",
     os.getenv("ENABLE_ONEDRIVE_INTEGRATION", "False").lower() == "true",
 )
-
 
 ENABLE_ONEDRIVE_PERSONAL = (
     os.environ.get("ENABLE_ONEDRIVE_PERSONAL", "True").lower() == "true"
@@ -2751,13 +2763,11 @@ WEB_LOADER_ENGINE = PersistentConfig(
     os.environ.get("WEB_LOADER_ENGINE", ""),
 )
 
-
 WEB_LOADER_CONCURRENT_REQUESTS = PersistentConfig(
     "WEB_LOADER_CONCURRENT_REQUESTS",
     "rag.web.loader.concurrent_requests",
     int(os.getenv("WEB_LOADER_CONCURRENT_REQUESTS", "10")),
 )
-
 
 ENABLE_WEB_LOADER_SSL_VERIFICATION = PersistentConfig(
     "ENABLE_WEB_LOADER_SSL_VERIFICATION",
@@ -2770,7 +2780,6 @@ WEB_SEARCH_TRUST_ENV = PersistentConfig(
     "rag.web.search.trust_env",
     os.getenv("WEB_SEARCH_TRUST_ENV", "False").lower() == "true",
 )
-
 
 OLLAMA_CLOUD_WEB_SEARCH_API_KEY = PersistentConfig(
     "OLLAMA_CLOUD_WEB_SEARCH_API_KEY",
@@ -3623,4 +3632,46 @@ EZFP_AMOUNT_CONTROL = PersistentConfig(
     "EZFP_AMOUNT_CONTROL",
     "credit.ezfp.amount_control",
     os.environ.get("EZFP_AMOUNT_CONTROL", ""),
+)
+
+ALIPAY_SERVER_URL = PersistentConfig(
+    "ALIPAY_SERVER_URL",
+    "credit.alipay.server_url",
+    os.environ.get("ALIPAY_SERVER_URL", "https://openapi.alipay.com/gateway.do"),
+)
+
+ALIPAY_APP_ID = PersistentConfig(
+    "ALIPAY_APP_ID",
+    "credit.alipay.app_id",
+    os.environ.get("ALIPAY_APP_ID", ""),
+)
+
+ALIPAY_APP_PRIVATE_KEY = PersistentConfig(
+    "ALIPAY_APP_PRIVATE_KEY",
+    "credit.alipay.app_private_key",
+    os.environ.get("ALIPAY_APP_PRIVATE_KEY", ""),
+)
+
+ALIPAY_ALIPAY_PUBLIC_KEY = PersistentConfig(
+    "ALIPAY_ALIPAY_PUBLIC_KEY",
+    "credit.alipay.alipay_public_key",
+    os.environ.get("ALIPAY_ALIPAY_PUBLIC_KEY", ""),
+)
+
+ALIPAY_CALLBACK_HOST = PersistentConfig(
+    "ALIPAY_CALLBACK_HOST",
+    "credit.alipay.callback_host",
+    os.environ.get("ALIPAY_CALLBACK_HOST", ""),
+)
+
+ALIPAY_AMOUNT_CONTROL = PersistentConfig(
+    "ALIPAY_AMOUNT_CONTROL",
+    "credit.alipay.amount_control",
+    os.environ.get("ALIPAY_AMOUNT_CONTROL", ""),
+)
+
+ALIPAY_PRODUCT_CODE = PersistentConfig(
+    "ALIPAY_PRODUCT_CODE",
+    "credit.alipay.product_code",
+    os.environ.get("ALIPAY_PRODUCT_CODE", ""),
 )

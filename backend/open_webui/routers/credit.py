@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import time
 import uuid
@@ -11,7 +12,7 @@ from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import PlainTextResponse, RedirectResponse, Response
 from pydantic import BaseModel, Field
 
-from open_webui.config import EZFP_CALLBACK_HOST
+from open_webui.config import EZFP_CALLBACK_HOST, ALIPAY_APP_ID
 from open_webui.env import SRC_LOG_LEVELS
 from open_webui.models.credits import (
     TradeTicketModel,
@@ -24,6 +25,7 @@ from open_webui.models.credits import (
 from open_webui.models.models import Models, ModelPriceForm
 from open_webui.models.users import UserModel, Users
 from open_webui.utils.auth import get_verified_user, get_admin_user
+from open_webui.utils.credit.alipay import AlipayClient
 from open_webui.utils.credit.ezfp import ezfp_client
 from open_webui.utils.models import get_all_models
 
@@ -107,25 +109,29 @@ async def create_ticket(
     request: Request, form_data: dict, user: UserModel = Depends(get_verified_user)
 ) -> TradeTicketModel:
     out_trade_no = (
-        f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.{uuid.uuid4().hex}"
+        f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex}"
     )
-    return TradeTickets.insert_new_ticket(
-        id=out_trade_no,
-        user_id=user.id,
-        amount=form_data["amount"],
-        detail=await ezfp_client.create_trade(
+    if form_data["pay_type"] == "alipay" and ALIPAY_APP_ID.value:
+        detail = await AlipayClient().create_trade(
+            out_trade_no=out_trade_no, amount=form_data["amount"]
+        )
+    else:
+        detail = await ezfp_client.create_trade(
             pay_type=form_data["pay_type"],
             out_trade_no=out_trade_no,
             amount=form_data["amount"],
             client_ip=request.client.host,
             ua=request.headers.get("User-Agent"),
-        ),
+        )
+    return TradeTickets.insert_new_ticket(
+        id=out_trade_no, user_id=user.id, amount=form_data["amount"], detail=detail
     )
 
 
 @router.get("/callback", response_class=PlainTextResponse)
 async def ticket_callback(request: Request) -> str:
     callback = dict(request.query_params)
+    log.info("ezfp callback: %s", json.dumps(callback))
     if not ezfp_client.verify(callback):
         return "invalid signature"
 
@@ -151,6 +157,32 @@ async def ticket_callback(request: Request) -> str:
 @router.get("/callback/redirect", response_class=RedirectResponse)
 async def ticket_callback_redirect() -> RedirectResponse:
     return RedirectResponse(url=EZFP_CALLBACK_HOST.value, status_code=302)
+
+
+@router.post("/callback/alipay", response_class=PlainTextResponse)
+async def alipay_callback(request: Request) -> str:
+    callback = dict(await request.form())
+    log.info("alipay callback: %s", json.dumps(callback))
+    if not AlipayClient().verify(callback):
+        return "invalid signature"
+
+    # payment failed
+    if callback["trade_status"] != "TRADE_SUCCESS":
+        return "success"
+
+    # find ticket
+    ticket = TradeTickets.get_ticket_by_id(callback["out_trade_no"])
+    if not ticket:
+        return "no ticket fount"
+
+    # already callback
+    if ticket.detail.get("callback"):
+        return "success"
+
+    ticket.detail["callback"] = callback
+    TradeTickets.update_credit_by_id(ticket.id, ticket.detail)
+
+    return "success"
 
 
 @router.get("/models/price")

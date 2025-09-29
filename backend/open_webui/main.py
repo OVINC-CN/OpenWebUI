@@ -423,6 +423,13 @@ from open_webui.config import (
     EZFP_PAY_PRIORITY,
     USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE,
     USAGE_CUSTOM_PRICE_CONFIG,
+    ALIPAY_AMOUNT_CONTROL,
+    ALIPAY_ALIPAY_PUBLIC_KEY,
+    ALIPAY_APP_PRIVATE_KEY,
+    ALIPAY_APP_ID,
+    ALIPAY_SERVER_URL,
+    ALIPAY_PRODUCT_CODE,
+    ALIPAY_CALLBACK_HOST,
 )
 from open_webui.env import (
     LICENSE_KEY,
@@ -1191,6 +1198,13 @@ app.state.config.EZFP_PID = EZFP_PID
 app.state.config.EZFP_KEY = EZFP_KEY
 app.state.config.EZFP_CALLBACK_HOST = EZFP_CALLBACK_HOST
 app.state.config.EZFP_AMOUNT_CONTROL = EZFP_AMOUNT_CONTROL
+app.state.config.ALIPAY_SERVER_URL = ALIPAY_SERVER_URL
+app.state.config.ALIPAY_APP_ID = ALIPAY_APP_ID
+app.state.config.ALIPAY_APP_PRIVATE_KEY = ALIPAY_APP_PRIVATE_KEY
+app.state.config.ALIPAY_ALIPAY_PUBLIC_KEY = ALIPAY_ALIPAY_PUBLIC_KEY
+app.state.config.ALIPAY_AMOUNT_CONTROL = ALIPAY_AMOUNT_CONTROL
+app.state.config.ALIPAY_CALLBACK_HOST = ALIPAY_CALLBACK_HOST
+app.state.config.ALIPAY_PRODUCT_CODE = ALIPAY_PRODUCT_CODE
 
 ########################################
 #
@@ -1607,7 +1621,7 @@ async def chat_completion(
         finally:
             try:
                 if mcp_clients := metadata.get("mcp_clients"):
-                    for client in mcp_clients:
+                    for client in mcp_clients.values():
                         await client.disconnect()
             except Exception as e:
                 log.debug(f"Error cleaning up: {e}")
@@ -1964,37 +1978,32 @@ if len(app.state.config.TOOL_SERVER_CONNECTIONS) > 0:
                     f"mcp:{server_id}", OAuthClientInformationFull(**oauth_client_info)
                 )
 
-
-# SessionMiddleware is used by authlib for oauth
-if len(OAUTH_PROVIDERS) > 0:
-    try:
-        if REDIS_URL:
-            redis_session_store = RedisStore(
-                url=REDIS_URL,
-                prefix=(
-                    f"{REDIS_KEY_PREFIX}:session:" if REDIS_KEY_PREFIX else "session:"
-                ),
-            )
-
-            app.add_middleware(SessionAutoloadMiddleware)
-            app.add_middleware(
-                StarSessionsMiddleware,
-                store=redis_session_store,
-                cookie_name="oui-session",
-                cookie_same_site=WEBUI_SESSION_COOKIE_SAME_SITE,
-                cookie_https_only=WEBUI_SESSION_COOKIE_SECURE,
-            )
-            log.info("Using Redis for session")
-        else:
-            raise ValueError("No Redis URL provided")
-    except Exception as e:
-        app.add_middleware(
-            SessionMiddleware,
-            secret_key=WEBUI_SECRET_KEY,
-            session_cookie="oui-session",
-            same_site=WEBUI_SESSION_COOKIE_SAME_SITE,
-            https_only=WEBUI_SESSION_COOKIE_SECURE,
+try:
+    if REDIS_URL:
+        redis_session_store = RedisStore(
+            url=REDIS_URL,
+            prefix=(f"{REDIS_KEY_PREFIX}:session:" if REDIS_KEY_PREFIX else "session:"),
         )
+
+        app.add_middleware(SessionAutoloadMiddleware)
+        app.add_middleware(
+            StarSessionsMiddleware,
+            store=redis_session_store,
+            cookie_name="owui-session",
+            cookie_same_site=WEBUI_SESSION_COOKIE_SAME_SITE,
+            cookie_https_only=WEBUI_SESSION_COOKIE_SECURE,
+        )
+        log.info("Using Redis for session")
+    else:
+        raise ValueError("No Redis URL provided")
+except Exception as e:
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=WEBUI_SECRET_KEY,
+        session_cookie="owui-session",
+        same_site=WEBUI_SESSION_COOKIE_SAME_SITE,
+        https_only=WEBUI_SESSION_COOKIE_SECURE,
+    )
 
 
 @app.get("/oauth/clients/{client_id}/authorize")
