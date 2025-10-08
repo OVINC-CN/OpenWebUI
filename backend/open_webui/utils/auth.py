@@ -7,7 +7,7 @@ import hmac
 import hashlib
 import requests
 import os
-
+import bcrypt
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.asymmetric import ed25519
@@ -48,11 +48,8 @@ from open_webui.env import (
 
 from fastapi import BackgroundTasks, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from passlib.context import CryptContext
 
 from open_webui.utils.redis import get_redis_connection, get_sentinels_from_env
-
-logging.getLogger("passlib").setLevel(logging.ERROR)
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OAUTH"])
@@ -174,17 +171,23 @@ def get_license_data(app, key):
 
 
 bearer_security = HTTPBearer(auto_error=False)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-def verify_password(plain_password, hashed_password):
+def get_password_hash(password: str) -> str:
+    """Hash a password using bcrypt"""
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against its hash"""
     return (
-        pwd_context.verify(plain_password, hashed_password) if hashed_password else None
+        bcrypt.checkpw(
+            plain_password.encode("utf-8"),
+            hashed_password.encode("utf-8"),
+        )
+        if hashed_password
+        else None
     )
-
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
 
 
 def create_token(data: dict, expires_delta: Union[timedelta, None] = None) -> str:

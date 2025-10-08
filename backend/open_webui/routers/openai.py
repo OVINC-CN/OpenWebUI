@@ -191,6 +191,9 @@ async def get_headers_and_cookies(
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
+    if config.get("headers") and isinstance(config.get("headers"), dict):
+        headers = {**headers, **config.get("headers")}
+
     return headers, cookies
 
 
