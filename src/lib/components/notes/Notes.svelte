@@ -340,8 +340,8 @@
 				showDeleteConfirm = false;
 			}}
 		>
-			<div class=" text-sm text-gray-500 truncate">
-				{$i18n.t('This will delete')} <span class="  font-semibold">{selectedNote.title}</span>.
+			<div class="text-xs text-gray-600 dark:text-gray-400 truncate">
+				{$i18n.t('This will delete')} <span class="font-semibold">{selectedNote.title}</span>.
 			</div>
 		</DeleteConfirmDialog>
 

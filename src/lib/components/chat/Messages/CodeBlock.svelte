@@ -17,6 +17,8 @@
 	import ChevronUpDown from '$lib/components/icons/ChevronUpDown.svelte';
 	import CommandLine from '$lib/components/icons/CommandLine.svelte';
 	import Cube from '$lib/components/icons/Cube.svelte';
+	import Clipboard from '$lib/components/icons/Clipboard.svelte';
+	import FloppyDisk from '$lib/components/icons/FloppyDisk.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -404,13 +406,13 @@
 
 <div>
 	<div
-		class="relative {className} flex flex-col rounded-3xl border border-gray-100 dark:border-gray-850 my-0.5"
+		class="relative {className} flex flex-col rounded-lg border border-gray-100 dark:border-gray-800 my-0.5"
 		dir="ltr"
 	>
 		{#if lang === 'mermaid'}
 			{#if mermaidHtml}
 				<SvgPanZoom
-					className=" rounded-3xl max-h-fit overflow-hidden"
+					className=" rounded-lg max-h-fit overflow-hidden"
 					svg={mermaidHtml}
 					content={_token.text}
 				/>
@@ -420,7 +422,7 @@
 		{:else if lang === 'vega' || lang === 'vega-lite'}
 			{#if vegaHtml}
 				<SvgPanZoom
-					className="rounded-3xl max-h-fit overflow-hidden"
+					className="rounded-lg max-h-fit overflow-hidden"
 					svg={vegaHtml}
 					content={_token.text}
 				/>
@@ -429,17 +431,17 @@
 			{/if}
 		{:else}
 			<div
-				class="absolute left-0 right-0 py-2.5 pr-3 text-text-300 pl-4.5 text-xs font-medium dark:text-white"
+				class="absolute left-0 right-0 py-3.5 pr-3 text-text-300 pl-4.5 text-xs font-medium dark:text-white"
 			>
 				{lang}
 			</div>
 
 			<div
-				class="sticky {stickyButtonsClassName} left-0 right-0 py-2 pr-3 flex items-center justify-end w-full z-10 text-xs text-black dark:text-white"
+				class="sticky {stickyButtonsClassName} left-0 right-0 py-3.5 pr-3 flex items-center justify-end w-full z-10 text-xs text-gray-700 dark:text-gray-300"
 			>
 				<div class="flex items-center gap-0.5">
 					<button
-						class="flex gap-1 items-center bg-none border-none transition rounded-md px-1.5 py-0.5 bg-white dark:bg-black"
+						class="flex gap-1 items-center bg-none border-none transition rounded-md px-1.5 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-800"
 						on:click={collapseCodeBlock}
 					>
 						<div class=" -translate-y-[0.5px]">
@@ -454,19 +456,23 @@
 					{#if ($config?.features?.enable_code_execution ?? true) && (lang.toLowerCase() === 'python' || lang.toLowerCase() === 'py' || (lang === '' && checkPythonCode(code)))}
 						{#if executing}
 							<div
-								class="run-code-button bg-none border-none p-0.5 cursor-not-allowed bg-white dark:bg-black"
+								class="flex gap-1 items-center run-code-button bg-none border-none p-0.5 cursor-not-allowed"
 							>
-								{$i18n.t('Running')}
+								<CommandLine className="size-3" />
+								<div>
+									{$i18n.t('Running')}
+								</div>
 							</div>
 						{:else if run}
 							<button
-								class="flex gap-1 items-center run-code-button bg-none border-none transition rounded-md px-1.5 py-0.5 bg-white dark:bg-black"
+								class="flex gap-1 items-center run-code-button bg-none border-none transition rounded-md px-1.5 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-800"
 								on:click={async () => {
 									code = _code;
 									await tick();
 									executePython(code);
 								}}
 							>
+								<CommandLine className="size-3" />
 								<div>
 									{$i18n.t('Run')}
 								</div>
@@ -476,21 +482,29 @@
 
 					{#if save}
 						<button
-							class="save-code-button bg-none border-none transition rounded-md px-1.5 py-0.5 bg-white dark:bg-black"
+							class="flex gap-1 items-center save-code-button bg-none border-none transition rounded-md px-1.5 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-800"
 							on:click={saveCode}
 						>
-							{saved ? $i18n.t('Saved') : $i18n.t('Save')}
+							<FloppyDisk className="size-3" />
+							<div>
+								{saved ? $i18n.t('Saved') : $i18n.t('Save')}
+							</div>
 						</button>
 					{/if}
 
 					<button
-						class="copy-code-button bg-none border-none transition rounded-md px-1.5 py-0.5 bg-white dark:bg-black"
-						on:click={copyCode}>{copied ? $i18n.t('Copied') : $i18n.t('Copy')}</button
+						class="flex gap-1 items-center copy-code-button bg-none border-none transition rounded-md px-1.5 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-800"
+						on:click={copyCode}
 					>
+						<Clipboard className="size-3" />
+						<div>
+							{copied ? $i18n.t('Copied') : $i18n.t('Copy')}
+						</div>
+					</button>
 
 					{#if preview && ['html', 'svg'].includes(lang)}
 						<button
-							class="flex gap-1 items-center run-code-button bg-none border-none transition rounded-md px-1.5 py-0.5 bg-white dark:bg-black"
+							class="flex gap-1 items-center run-code-button bg-none border-none transition rounded-md px-1.5 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-800"
 							on:click={previewCode}
 						>
 							<div>
@@ -501,14 +515,14 @@
 				</div>
 			</div>
 
-			<div
-				class="language-{lang} rounded-t-3xl -mt-9 {editorClassName
-					? editorClassName
-					: executing || stdout || stderr || result
-						? ''
-						: 'rounded-b-3xl'} overflow-hidden"
-			>
-				<div class=" pt-8 bg-white dark:bg-black"></div>
+		<div
+			class="language-{lang} rounded-t-lg -mt-9 {editorClassName
+				? editorClassName
+				: executing || stdout || stderr || result
+					? ''
+					: 'rounded-b-lg'} overflow-hidden"
+		>
+				<div class=" pt-10"></div>
 
 				{#if !collapsed}
 					{#if edit}
@@ -531,22 +545,22 @@
 								stderr ||
 								result) &&
 								'border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;'}"><code
-								class="language-{lang} rounded-t-none whitespace-pre text-sm"
+								class="language-{lang} rounded-t-none whitespace-pre"
 								>{@html hljs.highlightAuto(code, hljs.getLanguage(lang)?.aliases).value ||
 									code}</code
 							></pre>
 					{/if}
-				{:else}
-					<div
-						class="bg-white dark:bg-black dark:text-white rounded-b-3xl! pt-0.5 pb-3 px-4 flex flex-col gap-2 text-xs"
-					>
-						<span class="text-gray-500 italic">
-							{$i18n.t('{{COUNT}} hidden lines', {
-								COUNT: code.split('\n').length
-							})}
-						</span>
-					</div>
-				{/if}
+			{:else}
+				<div
+					class="rounded-b-lg pt-0.5 pb-3 px-4 flex flex-col gap-2 text-xs"
+				>
+					<span class="text-gray-500 dark:text-gray-400 italic">
+						{$i18n.t('{{COUNT}} hidden lines', {
+							COUNT: code.split('\n').length
+						})}
+					</span>
+				</div>
+			{/if}
 			</div>
 
 			{#if !collapsed}
@@ -555,10 +569,10 @@
 					class="bg-gray-50 dark:bg-black dark:text-white max-w-full overflow-x-auto scrollbar-hidden"
 				/>
 
-				{#if executing || stdout || stderr || result || files}
-					<div
-						class="bg-gray-50 dark:bg-black dark:text-white rounded-b-3xl! py-4 px-4 flex flex-col gap-2"
-					>
+			{#if executing || stdout || stderr || result || files}
+				<div
+					class="bg-gray-50 dark:bg-black dark:text-white rounded-b-lg py-4 px-4 flex flex-col gap-2"
+				>
 						{#if executing}
 							<div class=" ">
 								<div class=" text-gray-500 text-xs mb-1">{$i18n.t('STDOUT/STDERR')}</div>

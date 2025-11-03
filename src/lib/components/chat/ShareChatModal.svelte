@@ -31,8 +31,8 @@
 		const _chat = chat.chat;
 		console.log('share', _chat);
 
-		toast.success($i18n.t('Redirecting you to Open WebUI Community'));
-		const url = 'https://openwebui.com';
+		toast.success($i18n.t('Redirecting you to Cheny Community'));
+		const url = 'https://cheny.com';
 		// const url = 'http://localhost:5173';
 
 		const tab = await window.open(`${url}/chats/upload`, '_blank');
@@ -83,21 +83,21 @@
 
 <Modal bind:show size="md">
 	<div>
-		<div class=" flex justify-between dark:text-gray-300 px-5 pt-4 pb-0.5">
-			<div class=" text-lg font-medium self-center">{$i18n.t('Share Chat')}</div>
+		<div class="flex items-center justify-between px-4 pt-3.5 pb-1.5">
+			<div class="text-sm font-medium text-gray-900 dark:text-gray-100">{$i18n.t('Share Chat')}</div>
 			<button
-				class="self-center"
+				class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
 				on:click={() => {
 					show = false;
 				}}
 			>
-				<XMark className={'size-5'} />
+				<XMark className={'size-4'} />
 			</button>
 		</div>
 
 		{#if chat}
-			<div class="px-5 pt-4 pb-5 w-full flex flex-col justify-center">
-				<div class=" text-sm dark:text-gray-300 mb-1">
+			<div class="px-4 pt-3 pb-3.5 w-full flex flex-col justify-center">
+				<div class="text-xs text-gray-600 dark:text-gray-400 mb-2">
 					{#if chat.share_id}
 						<a href="/s/{chat.share_id}" target="_blank"
 							>{$i18n.t('You have shared this chat')}
@@ -124,23 +124,23 @@
 				</div>
 
 				<div class="flex justify-end">
-					<div class="flex flex-col items-end space-x-1 mt-3">
-						<div class="flex gap-1">
+					<div class="flex flex-col items-end space-x-1 mt-2">
+						<div class="flex gap-1.5">
 							{#if $config?.features.enable_community_sharing}
 								<button
-									class="self-center flex items-center gap-1 px-3.5 py-2 text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-850 dark:text-white dark:hover:bg-gray-800 transition rounded-full"
+									class="self-center flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-850 dark:text-white dark:hover:bg-gray-800 transition rounded-full"
 									type="button"
 									on:click={() => {
 										shareChat();
 										show = false;
 									}}
 								>
-									{$i18n.t('Share to Open WebUI Community')}
+									{$i18n.t('Share to Cheny Community')}
 								</button>
 							{/if}
 
 							<button
-								class="self-center flex items-center gap-1 px-3.5 py-2 text-sm font-medium bg-black hover:bg-gray-900 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full"
+								class="self-center flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-black hover:bg-gray-900 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full"
 								type="button"
 								id="copy-and-share-chat-button"
 								on:click={async () => {

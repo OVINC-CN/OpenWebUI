@@ -337,8 +337,8 @@
 		deleteChatHandler(id);
 	}}
 >
-	<div class=" text-sm text-gray-500 flex-1 line-clamp-3">
-		{$i18n.t('This will delete')} <span class="  font-semibold">{title}</span>.
+	<div class="text-xs text-gray-600 dark:text-gray-400 flex-1 line-clamp-3">
+		{$i18n.t('This will delete')} <span class="font-semibold">{title}</span>.
 	</div>
 </DeleteConfirmDialog>
 
@@ -364,7 +364,7 @@
 	{#if confirmEdit}
 		<div
 			id="sidebar-chat-item"
-			class=" w-full flex justify-between rounded-xl px-[11px] py-[6px] {id === $chatId ||
+			class=" w-full flex justify-between rounded-xl px-[11px] py-[4px] {id === $chatId ||
 			confirmEdit
 				? 'bg-gray-100 dark:bg-gray-900 selected'
 				: selected
@@ -417,7 +417,7 @@
 	{:else}
 		<a
 			id="sidebar-chat-item"
-			class=" w-full flex justify-between rounded-xl px-[11px] py-[6px] {id === $chatId ||
+			class=" w-full flex justify-between rounded-xl px-[11px] py-[4px] {id === $chatId ||
 			confirmEdit
 				? 'bg-gray-100 dark:bg-gray-900 selected'
 				: selected

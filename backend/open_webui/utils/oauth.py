@@ -241,7 +241,7 @@ async def get_oauth_client_info_with_dynamic_client_registration(
         ).rstrip("/")
 
         oauth_client_metadata = OAuthClientMetadata(
-            client_name="Open WebUI",
+            client_name="Cheny",
             redirect_uris=[f"{redirect_base_url}/oauth/clients/{client_id}/callback"],
             grant_types=["authorization_code", "refresh_token"],
             response_types=["code"],
@@ -973,7 +973,7 @@ class OAuthManager:
         log.debug(f"User oauth groups: {user_oauth_groups}")
         log.debug(f"User's current groups: {[g.name for g in user_current_groups]}")
         log.debug(
-            f"All groups available in OpenWebUI: {[g.name for g in all_available_groups]}"
+            f"All groups available in Cheny: {[g.name for g in all_available_groups]}"
         )
 
         # Remove groups that user is no longer a part of

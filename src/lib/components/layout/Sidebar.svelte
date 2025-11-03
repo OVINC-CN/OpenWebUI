@@ -1085,7 +1085,7 @@
 									name={$i18n.t('Pinned')}
 								>
 									<div
-										class="ml-3 pl-1 mt-[1px] flex flex-col overflow-y-auto scrollbar-hidden border-s border-gray-100 dark:border-gray-900 text-gray-900 dark:text-gray-200"
+										class="ml-3 pl-1 mt-[1px] flex flex-col gap-1 overflow-y-auto scrollbar-hidden border-s border-gray-100 dark:border-gray-900 text-gray-900 dark:text-gray-200"
 									>
 										{#each $pinnedChats as chat, idx (`pinned-chat-${chat?.id ?? idx}`)}
 											<ChatItem
@@ -1116,7 +1116,7 @@
 					{/if}
 
 					<div class=" flex-1 flex flex-col overflow-y-auto scrollbar-hidden">
-						<div class="pt-1.5">
+						<div class="pt-1.5 flex flex-col gap-1">
 							{#if $chats}
 								{#each $chats as chat, idx (`chat-${chat?.id ?? idx}`)}
 									{#if idx === 0 || (idx > 0 && chat.time_range !== $chats[idx - 1].time_range)}

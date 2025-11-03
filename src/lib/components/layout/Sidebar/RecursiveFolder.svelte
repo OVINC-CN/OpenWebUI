@@ -429,7 +429,7 @@
 		deleteHandler();
 	}}
 >
-	<div class=" text-sm text-gray-700 dark:text-gray-300 flex-1 line-clamp-3">
+	<div class="text-xs text-gray-600 dark:text-gray-400 flex-1 line-clamp-3">
 		{@html DOMPurify.sanitize(
 			$i18n.t('This will delete <strong>{{NAME}}</strong> and <strong>all its contents</strong>.', {
 				NAME: folders[folderId].name

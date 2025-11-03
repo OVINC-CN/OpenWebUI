@@ -78,19 +78,58 @@ textarea::placeholder {
 }
 
 .markdown-prose {
-	@apply prose dark:prose-invert prose-blockquote:border-s-gray-100 prose-blockquote:dark:border-gray-800 prose-blockquote:border-s-2 prose-blockquote:not-italic prose-blockquote:font-normal  prose-headings:font-semibold prose-hr:my-4 prose-hr:border-gray-50 prose-hr:dark:border-gray-850 prose-p:my-0 prose-img:my-1 prose-headings:my-1 prose-pre:my-0 prose-table:my-0 prose-blockquote:my-0 prose-ul:-my-0 prose-ol:-my-0 prose-li:-my-0 whitespace-pre-line;
+	@apply prose dark:prose-invert prose-blockquote:border-s-gray-100 prose-blockquote:dark:border-gray-800 prose-blockquote:border-s-2 prose-blockquote:not-italic prose-blockquote:font-normal prose-blockquote:pl-4 prose-blockquote:before:content-none prose-blockquote:after:content-none prose-headings:font-semibold prose-hr:my-6 prose-hr:border-gray-50 prose-hr:dark:border-gray-850 prose-p:my-1 prose-p:leading-7 prose-img:my-2 prose-headings:my-3 prose-h1:text-[1.375rem] prose-h1:leading-tight prose-h1:mb-5 prose-h2:text-[1.15rem] prose-h2:leading-tight prose-h3:text-[1.05rem] prose-h3:leading-snug prose-h4:text-[0.95rem] prose-h4:leading-snug prose-h5:text-[0.9rem] prose-h5:leading-normal prose-h5:font-medium prose-h5:my-2 prose-h6:text-[0.875rem] prose-h6:leading-normal prose-h6:font-medium prose-h6:my-2 prose-pre:my-3 prose-table:my-3 prose-blockquote:my-2 prose-ul:my-2.5 prose-ol:my-2.5 prose-li:my-1.5 prose-code:text-[0.9em] prose-code:font-normal whitespace-pre-line text-[14px] max-w-none;
 }
 
 .markdown-prose-sm {
-	@apply text-sm prose dark:prose-invert prose-blockquote:border-s-gray-100 prose-blockquote:dark:border-gray-800 prose-blockquote:border-s-2 prose-blockquote:not-italic prose-blockquote:font-normal  prose-headings:font-semibold prose-hr:my-2  prose-hr:border-gray-50 prose-hr:dark:border-gray-850 prose-p:my-0 prose-img:my-1 prose-headings:my-1 prose-pre:my-0 prose-table:my-0 prose-blockquote:my-0 prose-ul:-my-0 prose-ol:-my-0 prose-li:-my-0 whitespace-pre-line;
+	@apply prose-sm dark:prose-invert prose-blockquote:border-s-gray-100 prose-blockquote:dark:border-gray-800 prose-blockquote:border-s-2 prose-blockquote:not-italic prose-blockquote:font-normal prose-blockquote:pl-3 prose-blockquote:before:content-none prose-blockquote:after:content-none prose-headings:font-semibold prose-hr:my-4 prose-hr:border-gray-50 prose-hr:dark:border-gray-850 prose-p:my-2 prose-p:leading-6 prose-img:my-2 prose-headings:my-2.5 prose-h1:text-[1.25rem] prose-h1:leading-tight prose-h1:mb-4 prose-h2:text-[1.05rem] prose-h2:leading-tight prose-h3:text-[0.95rem] prose-h3:leading-snug prose-h4:text-[0.9rem] prose-h4:leading-snug prose-h5:text-[0.85rem] prose-h5:leading-normal prose-h5:font-medium prose-h5:my-1.5 prose-h6:text-[0.8rem] prose-h6:leading-normal prose-h6:font-medium prose-h6:my-1.5 prose-pre:my-2 prose-table:my-2 prose-blockquote:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-code:text-[0.9em] prose-code:font-normal whitespace-pre-line text-[13px] max-w-none;
 }
 
 .markdown-prose-xs {
-	@apply text-xs prose dark:prose-invert prose-blockquote:border-s-gray-100 prose-blockquote:dark:border-gray-800 prose-blockquote:border-s-2 prose-blockquote:not-italic prose-blockquote:font-normal  prose-headings:font-semibold prose-hr:my-0.5  prose-hr:border-gray-50 prose-hr:dark:border-gray-850 prose-p:my-0 prose-img:my-1 prose-headings:my-1 prose-pre:my-0 prose-table:my-0 prose-blockquote:my-0 prose-ul:-my-0 prose-ol:-my-0 prose-li:-my-0 whitespace-pre-line;
+	@apply prose-sm dark:prose-invert prose-blockquote:border-s-gray-100 prose-blockquote:dark:border-gray-800 prose-blockquote:border-s-2 prose-blockquote:not-italic prose-blockquote:font-normal prose-blockquote:pl-2.5 prose-blockquote:before:content-none prose-blockquote:after:content-none prose-headings:font-semibold prose-hr:my-2 prose-hr:border-gray-50 prose-hr:dark:border-gray-850 prose-p:my-1.5 prose-p:leading-5 prose-img:my-1 prose-headings:my-1.5 prose-h1:text-[1.05rem] prose-h1:leading-tight prose-h1:mb-3 prose-h2:text-[0.95rem] prose-h2:leading-tight prose-h3:text-[0.875rem] prose-h3:leading-snug prose-h4:text-[0.825rem] prose-h4:leading-snug prose-h5:text-[0.8rem] prose-h5:leading-normal prose-h5:font-medium prose-h5:my-1 prose-h6:text-[0.75rem] prose-h6:leading-normal prose-h6:font-medium prose-h6:my-1 prose-pre:my-1.5 prose-table:my-1.5 prose-blockquote:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5 prose-li:my-0.5 prose-code:text-[0.9em] prose-code:font-normal whitespace-pre-line text-xs max-w-none;
 }
 
 .markdown a {
 	@apply underline;
+}
+
+.markdown-prose blockquote::before,
+.markdown-prose blockquote::after,
+.markdown-prose-sm blockquote::before,
+.markdown-prose-sm blockquote::after,
+.markdown-prose-xs blockquote::before,
+.markdown-prose-xs blockquote::after {
+	content: none !important;
+}
+
+.markdown-prose blockquote,
+.markdown-prose-sm blockquote,
+.markdown-prose-xs blockquote {
+	quotes: none !important;
+}
+
+/* 图片样式优化 */
+.markdown-prose img,
+.markdown-prose-sm img,
+.markdown-prose-xs img {
+	border-radius: 0.5rem;
+	margin: 0.75rem 0;
+}
+
+/* 代码块背景优化 */
+.hljs,
+.hljs * {
+	font-size: 14px !important;
+	font-weight: 400 !important;
+	font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', 'Courier New', monospace !important;
+}
+
+.hljs {
+	background: #f8f9fa !important;
+}
+
+.dark .hljs {
+	background: #1a1a1a !important;
 }
 
 .font-primary {
@@ -112,6 +151,7 @@ textarea::placeholder {
 
 li p {
 	display: inline;
+	line-height: 1.75;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -129,8 +169,8 @@ li p {
 }
 
 ::-webkit-scrollbar {
-	height: 0.8rem;
-	width: 0.8rem;
+	height: 0.4rem;
+	width: 0.4rem;
 }
 
 ::-webkit-scrollbar-track {
@@ -284,10 +324,41 @@ input[type='number'] {
 
 .cm-gutters {
 	@apply !bg-white dark:!bg-black !border-none;
+	font-size: 12px !important;
+	color: #9ca3af !important;
+}
+
+.dark .cm-gutters {
+	color: #6b7280 !important;
+}
+
+.cm-lineNumbers .cm-gutterElement {
+	font-size: 11px !important;
 }
 
 .cm-editor {
 	@apply bg-white dark:bg-black;
+}
+
+.cm-editor,
+.cm-content,
+.cm-line {
+	font-size: 12px !important;
+	font-weight: 400 !important;
+	font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', 'Courier New', monospace !important;
+	color: #6b7280 !important;
+}
+
+.dark .cm-editor,
+.dark .cm-content,
+.dark .cm-line {
+	color: #9ca3af !important;
+}
+
+.cm-content * {
+	font-size: inherit !important;
+	font-weight: inherit !important;
+	font-family: inherit !important;
 }
 
 .tippy-box[data-theme~='dark'] {
@@ -299,12 +370,33 @@ input[type='number'] {
 }
 
 .codespan {
-	color: #eb5757;
-	border-width: 0px;
-	padding: 3px 8px;
-	font-size: 0.8em;
-	font-weight: 600;
-	@apply rounded-md dark:bg-gray-800 bg-gray-100 mx-0.5;
+	color: #c7254e;
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	padding: 1px 5px;
+	font-size: 0.85em;
+	font-weight: 400;
+	line-height: 1.4;
+	font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', 'Courier New', monospace;
+	background: rgba(249, 242, 244, 0.9);
+	@apply rounded mx-0.5;
+	transition: all 0.15s ease;
+	vertical-align: baseline;
+}
+
+.dark .codespan {
+	color: #f5a9d0;
+	border-color: rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.05);
+}
+
+.codespan:hover {
+	background: rgba(249, 242, 244, 1);
+	border-color: rgba(0, 0, 0, 0.12);
+}
+
+.dark .codespan:hover {
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.15);
 }
 
 .svelte-flow {
@@ -517,7 +609,7 @@ input[type='number'] {
 
 .tiptap pre > code {
 	border-radius: 0.4rem;
-	font-size: 0.85rem;
+	font-size: 14px;
 	padding: 0.25em 0.3em;
 
 	@apply dark:bg-gray-800 bg-gray-50;
@@ -526,6 +618,7 @@ input[type='number'] {
 .tiptap pre {
 	border-radius: 0.5rem;
 	font-family: 'JetBrainsMono', monospace;
+	font-size: 14px;
 	margin: 1.5rem 0;
 	padding: 0.75rem 1rem;
 
@@ -595,28 +688,31 @@ input[type='number'] {
 
 /* Table styling for tiptap editors */
 .tiptap table {
-	@apply w-full text-sm text-left text-gray-500 dark:text-gray-400 max-w-full;
+	@apply w-full text-left text-gray-700 dark:text-gray-300 max-w-full border-collapse;
+	font-size: 14px;
 }
 
 .tiptap thead {
-	@apply text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-850 dark:text-gray-400 border-none;
-}
-
-.tiptap th,
-.tiptap td {
-	@apply px-3 py-1.5 border border-gray-100 dark:border-gray-850;
+	@apply text-gray-900 dark:text-gray-100;
+	font-size: 14px;
 }
 
 .tiptap th {
-	@apply cursor-pointer text-left text-xs text-gray-700 dark:text-gray-400 font-semibold uppercase bg-gray-50 dark:bg-gray-850;
+	@apply px-3 py-2 cursor-pointer text-left font-semibold text-gray-900 dark:text-gray-100;
+	border-bottom: 1px solid;
+	@apply border-gray-200 dark:border-gray-700;
+	font-size: 14px;
 }
 
 .tiptap td {
-	@apply text-gray-900 dark:text-white w-max;
+	@apply px-3 py-2 text-gray-700 dark:text-gray-300;
+	border-bottom: 1px solid;
+	@apply border-gray-100 dark:border-gray-800;
+	font-size: 14px;
 }
 
-.tiptap tr {
-	@apply bg-white dark:bg-gray-900 dark:border-gray-850 text-xs;
+.tiptap tbody tr:last-child td {
+	border-bottom: none;
 }
 
 .tippy-box[data-theme~='transparent'] {

@@ -6,8 +6,8 @@
 	import * as FocusTrap from 'focus-trap';
 	export let show = true;
 	export let size = 'md';
-	export let containerClassName = 'p-3';
-	export let className = 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-4xl';
+	export let containerClassName = 'p-4';
+	export let className = 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-xl';
 
 	let modalElement = null;
 	let mounted = false;

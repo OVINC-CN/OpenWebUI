@@ -1,17 +1,17 @@
 > 注意：此仓库的 `dev` 分支是开发分支，可能包含不稳定或未发布的功能。强烈建议用户在部署和生产环境中使用无预发布标签的正式版本。  
-> 该项目是社区驱动的开源 AI 平台 [Open WebUI](https://github.com/open-webui/open-webui) 的定制分支。此版本与 Open WebUI 官方团队没有任何关联，亦非由其维护。
+> 该项目是社区驱动的开源 AI 平台 [Cheny](https://github.com/open-webui/open-webui) 的定制分支。此版本与 Cheny 官方团队没有任何关联，亦非由其维护。
 
-# Open WebUI 👋
+# Cheny 👋
 
-官方文档: [Open WebUI Documentation](https://docs.openwebui.com/).  
+官方文档: [Cheny Documentation](https://docs.cheny.com/).  
 官方更新日志: [CHANGELOG.md](./CHANGELOG.md)
 
 ## 部署方式
 
-部署二开版本只需要替换镜像和版本，其他的部署与官方版本没有差别，版本号请在 [Release](https://github.com/ovinc-cn/openwebui/releases/latest) 中查看
+部署二开版本只需要替换镜像和版本，其他的部署与官方版本没有差别，版本号请在 [Release](https://github.com/ovinc-cn/cheny/releases/latest) 中查看
 
 ```
-ghcr.io/ovinc-cn/openwebui:<版本号>
+ghcr.io/ovinc-cn/cheny:<版本号>
 ```
 
 ## 拓展特性
@@ -107,10 +107,10 @@ SMTP_PASSWORD=password
 
 ### 品牌/LOGO定制能力说明
 
-本项目尊重并遵守 [Open WebUI License](https://docs.openwebui.com/license) 的品牌保护条款；我们鼓励社区用户尽量保留原有 Open WebUI 品牌，支持开源生态！
+本项目尊重并遵守 [Cheny License](https://docs.cheny.com/license) 的品牌保护条款；我们鼓励社区用户尽量保留原有 Cheny 品牌，支持开源生态！
 
 如需自定义品牌标识（如 LOGO、名称等）：
 
-- 请务必确保您的实际部署满足 License 所要求的用户规模、授权条件等（详见 [官方说明#9](https://docs.openwebui.com/license#9-what-about-forks-can-i-start-one-and-remove-all-open-webui-mentions)）。
+- 请务必确保您的实际部署满足 License 所要求的用户规模、授权条件等（详见 [官方说明#9](https://docs.cheny.com/license#9-what-about-forks-can-i-start-one-and-remove-all-open-webui-mentions)）。
 - 未经授权的商用或大规模去除品牌属于违规，由使用者自行承担法律风险。
 - 具体自定义方法见 [docs/BRANDING.md](./docs/BRANDING.md)。

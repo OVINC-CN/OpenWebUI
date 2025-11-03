@@ -332,31 +332,6 @@
 </script>
 
 {#if loaded}
-	{#if onBack}
-		<button
-			class="flex space-x-1"
-			on:click={() => {
-				onBack();
-			}}
-		>
-			<div class=" self-center">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 20 20"
-					fill="currentColor"
-					class="h-4 w-4"
-				>
-					<path
-						fill-rule="evenodd"
-						d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z"
-						clip-rule="evenodd"
-					/>
-				</svg>
-			</div>
-			<div class=" self-center text-sm font-medium">{$i18n.t('Back')}</div>
-		</button>
-	{/if}
-
 	<div class="w-full max-h-full flex justify-center">
 		<input
 			bind:this={filesInputElement}
@@ -428,120 +403,124 @@
 
 		{#if !edit || (edit && model)}
 			<form
-				class="flex flex-col md:flex-row w-full gap-3 md:gap-6"
+				class="flex flex-col w-full"
 				on:submit|preventDefault={() => {
 					submitHandler();
 				}}
 			>
-				<div class="self-center md:self-start flex justify-center my-2 shrink-0">
-					<div class="self-center">
+				<div class="w-full">
+					<!-- 返回按钮 -->
+					{#if onBack}
 						<button
-							class="rounded-xl flex shrink-0 items-center {info.meta.profile_image_url !==
-							`${WEBUI_BASE_URL}/static/favicon.png`
-								? 'bg-transparent'
-								: 'bg-white'} shadow-xl group relative"
+							class="flex items-center gap-1.5 mb-6 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition"
 							type="button"
 							on:click={() => {
-								filesInputElement.click();
+								onBack();
 							}}
 						>
-							{#if info.meta.profile_image_url}
-								<img
-									src={info.meta.profile_image_url}
-									alt="model profile"
-									class="rounded-xl size-72 md:size-60 object-cover shrink-0"
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+								class="h-4 w-4"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z"
+									clip-rule="evenodd"
 								/>
-							{:else}
-								<img
-									src="{WEBUI_BASE_URL}/static/favicon.png"
-									alt="model profile"
-									class=" rounded-xl size-72 md:size-60 object-cover shrink-0"
-								/>
-							{/if}
-
-							<div class="absolute bottom-0 right-0 z-10">
-								<div class="m-1.5">
-									<div
-										class="shadow-xl p-1 rounded-full border-2 border-white bg-gray-800 text-white group-hover:bg-gray-600 transition dark:border-black dark:bg-white dark:group-hover:bg-gray-200 dark:text-black"
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 16 16"
-											fill="currentColor"
-											class="size-5"
-										>
-											<path
-												fill-rule="evenodd"
-												d="M2 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4Zm10.5 5.707a.5.5 0 0 0-.146-.353l-1-1a.5.5 0 0 0-.708 0L9.354 9.646a.5.5 0 0 1-.708 0L6.354 7.354a.5.5 0 0 0-.708 0l-2 2a.5.5 0 0 0-.146.353V12a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V9.707ZM12 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"
-												clip-rule="evenodd"
-											/>
-										</svg>
-									</div>
-								</div>
-							</div>
-
-							<div
-								class="absolute top-0 bottom-0 left-0 right-0 bg-white dark:bg-black rounded-lg opacity-0 group-hover:opacity-20 transition"
-							></div>
+							</svg>
+							<span class="font-medium">{$i18n.t('Back')}</span>
 						</button>
+					{/if}
 
-						<div class="flex w-full mt-1 justify-end">
+					<!-- 模型图标和基本信息 - OpenAI 风格 -->
+					<div class="flex items-start gap-4 mb-6">
+						<!-- 图标区域 -->
+						<div class="shrink-0">
 							<button
-								class="px-2 py-1 text-gray-500 rounded-lg text-xs"
-								on:click={() => {
-									info.meta.profile_image_url = `${WEBUI_BASE_URL}/static/favicon.png`;
-								}}
+								class="rounded-xl flex shrink-0 items-center {info.meta.profile_image_url !==
+								`${WEBUI_BASE_URL}/static/favicon.png`
+									? 'bg-transparent'
+									: 'bg-gray-50 dark:bg-gray-900'} group relative overflow-hidden transition"
 								type="button"
+								on:click={() => {
+									filesInputElement.click();
+								}}
 							>
-								{$i18n.t('Reset Image')}</button
-							>
-						</div>
-					</div>
-				</div>
+								{#if info.meta.profile_image_url}
+									<img
+										src={info.meta.profile_image_url}
+										alt="model profile"
+										class="rounded-xl size-20 object-cover shrink-0"
+									/>
+								{:else}
+									<img
+										src="{WEBUI_BASE_URL}/static/favicon.png"
+										alt="model profile"
+										class="rounded-xl size-20 object-cover shrink-0 p-3"
+									/>
+								{/if}
 
-				<div class="w-full">
-					<div class="mt-2 my-2 flex flex-col">
-						<div class="flex-1">
-							<div>
+								<!-- 悬停编辑提示 -->
+								<div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 20 20"
+										fill="currentColor"
+										class="size-6 text-white"
+									>
+										<path
+											d="m2.695 14.762-1.262 3.155a.5.5 0 0 0 .65.65l3.155-1.262a4 4 0 0 0 1.343-.886L17.5 5.501a2.121 2.121 0 0 0-3-3L3.58 13.419a4 4 0 0 0-.885 1.343Z"
+										/>
+									</svg>
+								</div>
+							</button>
+						</div>
+
+						<!-- 标题和基本信息 -->
+						<div class="flex-1 min-w-0">
+							<div class="space-y-2">
 								<input
-									class="text-3xl font-semibold w-full bg-transparent outline-hidden"
+									class="text-2xl font-semibold w-full bg-transparent outline-none placeholder:text-gray-400"
 									placeholder={$i18n.t('Model Name')}
 									bind:value={name}
 									required
 								/>
-							</div>
-						</div>
-
-						<div class="flex-1">
-							<div>
 								<input
-									class="text-xs w-full bg-transparent text-gray-500 outline-hidden"
+									class="text-sm w-full bg-transparent text-gray-500 outline-none placeholder:text-gray-400"
 									placeholder={$i18n.t('Model ID')}
 									bind:value={id}
 									disabled={edit}
 									required
 								/>
-							</div>
-						</div>
-
-						<div class="flex-1">
-							<div>
-								<input
-									class="text-xs w-full bg-transparent text-gray-500 outline-hidden"
-									placeholder={$i18n.t('Model Logo URL')}
-									bind:value={info.meta.profile_image_url}
-								/>
+								<div class="flex items-center gap-2">
+									<span class="text-xs text-gray-500">{$i18n.t('Model Logo URL')}</span>
+									<input
+										class="text-xs flex-1 bg-transparent text-gray-500 outline-none placeholder:text-gray-400 border-b border-transparent hover:border-gray-300 dark:hover:border-gray-700 focus:border-gray-400 dark:focus:border-gray-600 transition"
+										placeholder="https://..."
+										bind:value={info.meta.profile_image_url}
+									/>
+									<button
+										class="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition"
+										on:click={() => {
+											info.meta.profile_image_url = `${WEBUI_BASE_URL}/static/favicon.png`;
+										}}
+										type="button"
+									>
+										{$i18n.t('Reset Image')}
+									</button>
+								</div>
 							</div>
 						</div>
 					</div>
 
 					{#if preset}
-						<div class="my-1">
-							<div class=" text-sm font-semibold mb-1">{$i18n.t('Base Model (From)')}</div>
-
+						<div class="mb-6">
+							<div class="text-sm font-semibold mb-2">{$i18n.t('Base Model (From)')}</div>
 							<div>
 								<select
-									class="text-sm w-full bg-transparent outline-hidden"
+									class="text-sm w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg outline-none hover:border-gray-300 dark:hover:border-gray-700 focus:border-gray-400 dark:focus:border-gray-600 transition"
 									placeholder={$i18n.t('Select a base model (e.g. llama3, gpt-4o)')}
 									bind:value={info.base_model_id}
 									on:change={(e) => {
@@ -549,11 +528,11 @@
 									}}
 									required
 								>
-									<option value={null} class=" text-gray-900"
+									<option value={null} class="text-gray-900"
 										>{$i18n.t('Select a base model')}</option
 									>
 									{#each $models.filter((m) => (model ? m.id !== model.id : true) && !m?.preset && m?.owned_by !== 'arena' && !(m?.direct ?? false)) as model}
-										<option value={model.id} class=" text-gray-900">{model.name}</option>
+										<option value={model.id} class="text-gray-900">{model.name}</option>
 									{/each}
 								</select>
 							</div>
@@ -561,95 +540,95 @@
 					{/if}
 
 					{#if !preset}
-						<div class="my-1">
-							<div class="mb-1 flex w-full justify-between items-center">
-								<div class=" self-center text-sm font-semibold">{$i18n.t('Price')}</div>
+						<div class="mb-6">
+							<div class="text-sm font-semibold mb-2">{$i18n.t('Price')}</div>
+							<div class="space-y-0.5 mb-2">
+								<div class="text-xs text-orange-600">{$i18n.t('Unit: 1M tokens or 1M requests')}</div>
+								<div class="text-xs text-gray-500">
+									{$i18n.t('Request price has higher priority than token price')}
+								</div>
 							</div>
-						</div>
-						<div class="my-2">
-							<div class="text-xs text-orange-600">{$i18n.t('Unit: 1M tokens or 1M requests')}</div>
-							<div class="text-xs text-gray-500">
-								{$i18n.t('Request price has higher priority than token price')}
-							</div>
-							<div class="mt-1 flex justify-between text-xs">
-								<span class="min-w-36">
-									{$i18n.t('Prompt Token Price')}
-								</span>
-								<input
-									class="w-full flex flex-1 text-xs bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
-									type="number"
-									step="0.0001"
-									min="0"
-									bind:value={info.price.prompt_price}
-									autocomplete="off"
-									required
-								/>
-							</div>
-							<div class="mt-1 flex justify-between text-xs">
-								<span class="min-w-36">
-									{$i18n.t('Prompt Token Cache Price')}
-								</span>
-								<input
-									class="w-full flex flex-1 text-xs bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
-									type="number"
-									step="0.0001"
-									min="0"
-									bind:value={info.price.prompt_cache_price}
-									autocomplete="off"
-									required
-								/>
-							</div>
-							<div class="mt-1 flex justify-between text-xs">
-								<span class="min-w-36">
-									{$i18n.t('Completion Token Price')}
-								</span>
-								<input
-									class="w-full flex flex-1 text-xs bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
-									type="number"
-									step="0.0001"
-									min="0"
-									bind:value={info.price.completion_price}
-									autocomplete="off"
-									required
-								/>
-							</div>
-							<div class="mt-1 flex justify-between text-xs">
-								<span class="min-w-36">
-									{$i18n.t('Request Price')}
-								</span>
-								<input
-									class="w-full flex flex-1 text-xs bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
-									type="number"
-									step="0.0001"
-									min="0"
-									bind:value={info.price.request_price}
-									autocomplete="off"
-									required
-								/>
-							</div>
-							<div class="mt-1 flex justify-between text-xs">
-								<span class="min-w-36">
-									{$i18n.t('Minimum Credit Required')}
-								</span>
-								<input
-									class="w-full flex flex-1 text-xs bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
-									type="number"
-									step="0.0001"
-									min="0"
-									bind:value={info.price.minimum_credit}
-									autocomplete="off"
-									required
-								/>
+							<div class="space-y-2">
+								<div class="flex items-center gap-3">
+									<span class="text-xs text-gray-700 dark:text-gray-300 min-w-[140px]">
+										{$i18n.t('Prompt Token Price')}
+									</span>
+									<input
+										class="flex-1 px-2.5 py-1 text-xs bg-gray-50 dark:bg-gray-900 rounded-lg outline-none transition"
+										type="number"
+										step="0.0001"
+										min="0"
+										bind:value={info.price.prompt_price}
+										autocomplete="off"
+										required
+									/>
+								</div>
+								<div class="flex items-center gap-3">
+									<span class="text-xs text-gray-700 dark:text-gray-300 min-w-[140px]">
+										{$i18n.t('Prompt Token Cache Price')}
+									</span>
+									<input
+										class="flex-1 px-2.5 py-1 text-xs bg-gray-50 dark:bg-gray-900 rounded-lg outline-none transition"
+										type="number"
+										step="0.0001"
+										min="0"
+										bind:value={info.price.prompt_cache_price}
+										autocomplete="off"
+										required
+									/>
+								</div>
+								<div class="flex items-center gap-3">
+									<span class="text-xs text-gray-700 dark:text-gray-300 min-w-[140px]">
+										{$i18n.t('Completion Token Price')}
+									</span>
+									<input
+										class="flex-1 px-2.5 py-1 text-xs bg-gray-50 dark:bg-gray-900 rounded-lg outline-none transition"
+										type="number"
+										step="0.0001"
+										min="0"
+										bind:value={info.price.completion_price}
+										autocomplete="off"
+										required
+									/>
+								</div>
+								<div class="flex items-center gap-3">
+									<span class="text-xs text-gray-700 dark:text-gray-300 min-w-[140px]">
+										{$i18n.t('Request Price')}
+									</span>
+									<input
+										class="flex-1 px-2.5 py-1 text-xs bg-gray-50 dark:bg-gray-900 rounded-lg outline-none transition"
+										type="number"
+										step="0.0001"
+										min="0"
+										bind:value={info.price.request_price}
+										autocomplete="off"
+										required
+									/>
+								</div>
+								<div class="flex items-center gap-3">
+									<span class="text-xs text-gray-700 dark:text-gray-300 min-w-[140px]">
+										{$i18n.t('Minimum Credit Required')}
+									</span>
+									<input
+										class="flex-1 px-2.5 py-1 text-xs bg-gray-50 dark:bg-gray-900 rounded-lg outline-none transition"
+										type="number"
+										step="0.0001"
+										min="0"
+										bind:value={info.price.minimum_credit}
+										autocomplete="off"
+										required
+									/>
+								</div>
 							</div>
 						</div>
 					{/if}
 
-					<div class="my-1">
-						<div class="mb-1 flex w-full justify-between items-center">
-							<div class=" self-center text-sm font-semibold">{$i18n.t('Description')}</div>
-
+					<!-- 描述 -->
+					<div class="mb-6">
+						<div class="mb-2 flex w-full justify-between items-center">
+							<div class="text-sm font-semibold">{$i18n.t('Description')}</div>
 							<button
-								class="p-1 text-xs flex rounded-sm transition"
+								class="px-3 py-1 text-xs flex items-center gap-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
 								type="button"
 								aria-pressed={enableDescription ? 'true' : 'false'}
 								aria-label={enableDescription
@@ -660,44 +639,44 @@
 								}}
 							>
 								{#if !enableDescription}
-									<span class="ml-2 self-center">{$i18n.t('Default')}</span>
+									<span class="text-gray-600 dark:text-gray-400">{$i18n.t('Default')}</span>
 								{:else}
-									<span class="ml-2 self-center">{$i18n.t('Custom')}</span>
+									<span class="text-gray-600 dark:text-gray-400">{$i18n.t('Custom')}</span>
 								{/if}
 							</button>
 						</div>
 
 						{#if enableDescription}
 							<Textarea
-								className=" text-sm w-full bg-transparent outline-hidden resize-none overflow-y-hidden "
+								className="text-sm w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg outline-none focus:border-gray-400 dark:focus:border-gray-600 transition resize-none overflow-y-hidden"
 								placeholder={$i18n.t('Add a short description about what this model does')}
 								bind:value={info.meta.description}
 							/>
 						{/if}
 					</div>
 
-					<div class=" mt-2 my-1">
-						<div class="">
-							<Tags
-								tags={info?.meta?.tags ?? []}
-								on:delete={(e) => {
-									const tagName = e.detail;
-									info.meta.tags = info.meta.tags.filter((tag) => tag.name !== tagName);
-								}}
-								on:add={(e) => {
-									const tagName = e.detail;
-									if (!(info?.meta?.tags ?? null)) {
-										info.meta.tags = [{ name: tagName }];
-									} else {
-										info.meta.tags = [...info.meta.tags, { name: tagName }];
-									}
-								}}
-							/>
-						</div>
+					<!-- 标签 -->
+					<div class="mb-6">
+						<Tags
+							tags={info?.meta?.tags ?? []}
+							on:delete={(e) => {
+								const tagName = e.detail;
+								info.meta.tags = info.meta.tags.filter((tag) => tag.name !== tagName);
+							}}
+							on:add={(e) => {
+								const tagName = e.detail;
+								if (!(info?.meta?.tags ?? null)) {
+									info.meta.tags = [{ name: tagName }];
+								} else {
+									info.meta.tags = [...info.meta.tags, { name: tagName }];
+								}
+							}}
+						/>
 					</div>
 
-					<div class="my-2">
-						<div class="px-4 py-3 bg-gray-50 dark:bg-gray-950 rounded-3xl">
+					<!-- 访问控制 -->
+					<div class="mb-6">
+						<div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800">
 							<AccessControl
 								bind:accessControl
 								accessRoles={['read', 'write']}
@@ -706,67 +685,64 @@
 						</div>
 					</div>
 
-					<hr class=" border-gray-100 dark:border-gray-850 my-1.5" />
+					<!-- 模型参数 -->
+					<div class="mb-6">
+						<div class="text-sm font-semibold mb-4">{$i18n.t('Model Params')}</div>
 
-					<div class="my-2">
-						<div class="flex w-full justify-between">
-							<div class=" self-center text-sm font-semibold">{$i18n.t('Model Params')}</div>
-						</div>
-
-						<div class="mt-2">
-							<div class="my-1">
-								<div class=" text-xs font-semibold mb-2">{$i18n.t('System Prompt')}</div>
-								<div>
-									<Textarea
-										className=" text-sm w-full bg-transparent outline-hidden resize-none overflow-y-hidden "
-										placeholder={$i18n.t(
-											'Write your model system prompt content here\ne.g.) You are Mario from Super Mario Bros, acting as an assistant.'
-										)}
-										rows={4}
-										bind:value={system}
-									/>
-								</div>
+						<div class="space-y-4">
+							<div>
+								<div class="text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">{$i18n.t('System Prompt')}</div>
+								<Textarea
+									className="text-sm w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg outline-none focus:border-gray-400 dark:focus:border-gray-600 transition resize-none overflow-y-hidden"
+									placeholder={$i18n.t(
+										'Write your model system prompt content here\ne.g.) You are Mario from Super Mario Bros, acting as an assistant.'
+									)}
+									rows={4}
+									bind:value={system}
+								/>
 							</div>
 
-							<div class="flex w-full justify-between">
-								<div class=" self-center text-xs font-semibold">
-									{$i18n.t('Advanced Params')}
+							<div>
+								<div class="flex w-full justify-between items-center mb-2">
+									<div class="text-xs font-medium text-gray-700 dark:text-gray-300">
+										{$i18n.t('Advanced Params')}
+									</div>
+									<button
+										class="px-3 py-1 text-xs flex items-center gap-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+										type="button"
+										on:click={() => {
+											showAdvanced = !showAdvanced;
+										}}
+									>
+										<span class="text-gray-600 dark:text-gray-400">
+											{#if showAdvanced}
+												{$i18n.t('Hide')}
+											{:else}
+												{$i18n.t('Show')}
+											{/if}
+										</span>
+									</button>
 								</div>
 
-								<button
-									class="p-1 px-3 text-xs flex rounded-sm transition"
-									type="button"
-									on:click={() => {
-										showAdvanced = !showAdvanced;
-									}}
-								>
-									{#if showAdvanced}
-										<span class="ml-2 self-center">{$i18n.t('Hide')}</span>
-									{:else}
-										<span class="ml-2 self-center">{$i18n.t('Show')}</span>
-									{/if}
-								</button>
+								{#if showAdvanced}
+									<div class="mt-3">
+										<AdvancedParams admin={true} custom={true} bind:params />
+									</div>
+								{/if}
 							</div>
-
-							{#if showAdvanced}
-								<div class="my-2">
-									<AdvancedParams admin={true} custom={true} bind:params />
-								</div>
-							{/if}
 						</div>
 					</div>
 
-					<hr class=" border-gray-100 dark:border-gray-850 my-1" />
+					<!-- 提示词建议 -->
+					<div class="mb-6">
+						<div class="flex w-full justify-between items-center mb-2">
+							<div class="text-sm font-semibold">
+								{$i18n.t('Prompt suggestions')}
+							</div>
 
-					<div class="my-2">
-						<div class="flex w-full justify-between items-center">
-							<div class="flex w-full justify-between items-center">
-								<div class=" self-center text-sm font-semibold">
-									{$i18n.t('Prompt suggestions')}
-								</div>
-
+							<div class="flex items-center gap-2">
 								<button
-									class="p-1 text-xs flex rounded-sm transition"
+									class="px-3 py-1 text-xs flex items-center gap-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
 									type="button"
 									on:click={() => {
 										if ((info?.meta?.suggestion_prompts ?? null) === null) {
@@ -776,85 +752,87 @@
 										}
 									}}
 								>
-									{#if (info?.meta?.suggestion_prompts ?? null) === null}
-										<span class="ml-2 self-center">{$i18n.t('Default')}</span>
-									{:else}
-										<span class="ml-2 self-center">{$i18n.t('Custom')}</span>
-									{/if}
+									<span class="text-gray-600 dark:text-gray-400">
+										{#if (info?.meta?.suggestion_prompts ?? null) === null}
+											{$i18n.t('Default')}
+										{:else}
+											{$i18n.t('Custom')}
+										{/if}
+									</span>
 								</button>
-							</div>
 
-							{#if (info?.meta?.suggestion_prompts ?? null) !== null}
-								<button
-									class="p-1 px-2 text-xs flex rounded-sm transition"
-									type="button"
-									on:click={() => {
-										if (
-											info.meta.suggestion_prompts.length === 0 ||
-											info.meta.suggestion_prompts.at(-1).content !== ''
-										) {
-											info.meta.suggestion_prompts = [
-												...info.meta.suggestion_prompts,
-												{ content: '' }
-											];
-										}
-									}}
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-										class="w-4 h-4"
+								{#if (info?.meta?.suggestion_prompts ?? null) !== null}
+									<button
+										class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+										type="button"
+										on:click={() => {
+											if (
+												info.meta.suggestion_prompts.length === 0 ||
+												info.meta.suggestion_prompts.at(-1).content !== ''
+											) {
+												info.meta.suggestion_prompts = [
+													...info.meta.suggestion_prompts,
+													{ content: '' }
+												];
+											}
+										}}
 									>
-										<path
-											d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"
-										/>
-									</svg>
-								</button>
-							{/if}
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											viewBox="0 0 20 20"
+											fill="currentColor"
+											class="w-4 h-4 text-gray-600 dark:text-gray-400"
+										>
+											<path
+												d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"
+											/>
+										</svg>
+									</button>
+								{/if}
+							</div>
 						</div>
 
 						{#if info?.meta?.suggestion_prompts}
-							<div class="flex flex-col space-y-1 mt-1 mb-3">
+							<div class="flex flex-col space-y-2 mt-3">
 								{#if info.meta.suggestion_prompts.length > 0}
 									{#each info.meta.suggestion_prompts as prompt, promptIdx}
-										<div class=" flex rounded-lg">
+										<div class="flex items-center gap-2">
 											<input
-												class=" text-sm w-full bg-transparent outline-hidden border-r border-gray-100 dark:border-gray-850"
+												class="flex-1 text-sm px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg outline-none focus:border-gray-400 dark:focus:border-gray-600 transition"
 												placeholder={$i18n.t('Write a prompt suggestion (e.g. Who are you?)')}
 												bind:value={prompt.content}
 											/>
-
 											<button
-												class="px-2"
+												class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
 												type="button"
 												on:click={() => {
 													info.meta.suggestion_prompts.splice(promptIdx, 1);
 													info.meta.suggestion_prompts = info.meta.suggestion_prompts;
 												}}
 											>
-												<XMark className={'size-4'} />
+												<XMark className={'size-4 text-gray-500'} />
 											</button>
 										</div>
 									{/each}
 								{:else}
-									<div class="text-xs text-center">{$i18n.t('No suggestion prompts')}</div>
+									<div class="text-xs text-center text-gray-500 py-4">{$i18n.t('No suggestion prompts')}</div>
 								{/if}
 							</div>
 						{/if}
 					</div>
 
-					<hr class=" border-gray-100 dark:border-gray-850 my-1.5" />
-
-					<div class="my-2">
+					<!-- 知识库 -->
+					<div class="mb-6">
 						<Knowledge bind:selectedItems={knowledge} />
 					</div>
 
-					<div class="my-2">
+					<!-- 工具 -->
+					<div class="mb-6">
 						<ToolsSelector bind:selectedToolIds={toolIds} tools={$tools} />
 					</div>
 
-					<div class="my-2">
+					<!-- 过滤器 -->
+					<div class="mb-6">
 						<FiltersSelector
 							bind:selectedFilterIds={filterIds}
 							filters={$functions.filter((func) => func.type === 'filter')}
@@ -870,7 +848,7 @@
 						)}
 
 						{#if toggleableFilters.length > 0}
-							<div class="my-2">
+							<div class="mb-6">
 								<DefaultFiltersSelector
 									bind:selectedFilterIds={defaultFilterIds}
 									filters={toggleableFilters}
@@ -879,14 +857,16 @@
 						{/if}
 					{/if}
 
-					<div class="my-2">
+					<!-- 动作 -->
+					<div class="mb-6">
 						<ActionsSelector
 							bind:selectedActionIds={actionIds}
 							actions={$functions.filter((func) => func.type === 'action')}
 						/>
 					</div>
 
-					<div class="my-2">
+					<!-- 功能 -->
+					<div class="mb-6">
 						<Capabilities bind:capabilities />
 					</div>
 
@@ -899,35 +879,37 @@
 							.map(([key, value]) => key)}
 
 						{#if availableFeatures.length > 0}
-							<div class="my-2">
+							<div class="mb-6">
 								<DefaultFeatures {availableFeatures} bind:featureIds={defaultFeatureIds} />
 							</div>
 						{/if}
 					{/if}
 
-					<div class="my-2 text-gray-300 dark:text-gray-700">
-						<div class="flex w-full justify-between mb-2">
-							<div class=" self-center text-sm font-semibold">{$i18n.t('JSON Preview')}</div>
-
+					<!-- JSON 预览 -->
+					<div class="mb-6">
+						<div class="flex w-full justify-between items-center mb-2">
+							<div class="text-sm font-semibold text-gray-700 dark:text-gray-300">{$i18n.t('JSON Preview')}</div>
 							<button
-								class="p-1 px-3 text-xs flex rounded-sm transition"
+								class="px-3 py-1 text-xs flex items-center gap-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
 								type="button"
 								on:click={() => {
 									showPreview = !showPreview;
 								}}
 							>
-								{#if showPreview}
-									<span class="ml-2 self-center">{$i18n.t('Hide')}</span>
-								{:else}
-									<span class="ml-2 self-center">{$i18n.t('Show')}</span>
-								{/if}
+								<span class="text-gray-600 dark:text-gray-400">
+									{#if showPreview}
+										{$i18n.t('Hide')}
+									{:else}
+										{$i18n.t('Show')}
+									{/if}
+								</span>
 							</button>
 						</div>
 
 						{#if showPreview}
-							<div>
+							<div class="mt-3">
 								<textarea
-									class="text-sm w-full bg-transparent outline-hidden resize-none"
+									class="text-xs w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg outline-none resize-none font-mono text-gray-600 dark:text-gray-400"
 									rows="10"
 									value={JSON.stringify(info, null, 2)}
 									disabled
@@ -937,26 +919,25 @@
 						{/if}
 					</div>
 
-					<div class="my-2 flex justify-end pb-20">
+					<!-- 提交按钮 -->
+					<div class="flex justify-end sticky bottom-0 py-3 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 -mx-4 px-4">
 						<button
-							class=" text-sm px-3 py-2 transition rounded-lg {loading
-								? ' cursor-not-allowed bg-black hover:bg-gray-900 text-white dark:bg-white dark:hover:bg-gray-100 dark:text-black'
-								: 'bg-black hover:bg-gray-900 text-white dark:bg-white dark:hover:bg-gray-100 dark:text-black'} flex w-full justify-center"
+							class="px-4 py-1.5 text-sm font-medium transition rounded-lg {loading
+								? 'cursor-not-allowed bg-gray-400 dark:bg-gray-600'
+								: 'bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100'} text-white dark:text-black flex items-center justify-center gap-2 shadow-sm"
 							type="submit"
 							disabled={loading}
 						>
-							<div class=" self-center font-medium">
+							<span>
 								{#if edit}
 									{$i18n.t('Save & Update')}
 								{:else}
 									{$i18n.t('Save & Create')}
 								{/if}
-							</div>
+							</span>
 
 							{#if loading}
-								<div class="ml-1.5 self-center">
-									<Spinner />
-								</div>
+								<Spinner />
 							{/if}
 						</button>
 					</div>

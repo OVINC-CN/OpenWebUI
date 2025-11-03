@@ -21,30 +21,27 @@
 </script>
 
 {#if token.type === 'html'}
-	{#if html && html.includes('<video')}
-		{@const video = html.match(/<video[^>]*>([\s\S]*?)<\/video>/)}
-		{@const videoSrc = video && video[1]}
+	{#if token.text && token.text.includes('<video')}
+		{@const videoSrcMatch = token.text.match(/src=["']([^"']+)["']/)}
+		{@const videoSrc = videoSrcMatch && videoSrcMatch[1]}
 		{#if videoSrc}
 			<!-- svelte-ignore a11y-media-has-caption -->
 			<video
-				class="w-full my-2"
+				class="max-w-full max-h-96 my-2 rounded-lg"
 				src={videoSrc.replaceAll('&amp;', '&')}
 				title="Video player"
-				frameborder="0"
-				referrerpolicy="strict-origin-when-cross-origin"
 				controls
-				allowfullscreen
 			></video>
 		{:else}
 			{token.text}
 		{/if}
-	{:else if html && html.includes('<audio')}
-		{@const audio = html.match(/<audio[^>]*>([\s\S]*?)<\/audio>/)}
-		{@const audioSrc = audio && audio[1]}
+	{:else if token.text && token.text.includes('<audio')}
+		{@const audioSrcMatch = token.text.match(/src=["']([^"']+)["']/)}
+		{@const audioSrc = audioSrcMatch && audioSrcMatch[1]}
 		{#if audioSrc}
 			<!-- svelte-ignore a11y-media-has-caption -->
 			<audio
-				class="w-full my-2"
+				class="w-full max-w-md my-2"
 				src={audioSrc.replaceAll('&amp;', '&')}
 				title="Audio player"
 				controls
@@ -121,7 +118,7 @@
 		{/if}
 	{:else if token.text.includes(`<source_id`)}
 		<Source {id} {token} onClick={onSourceClick} />
-	{:else}
+	{:else if token.text && (token.text.trim() === '</video>' || token.text.trim() === '</audio>')}{:else}
 		{@const br = token.text.match(/<br\s*\/?>/)}
 		{#if br}
 			<br />

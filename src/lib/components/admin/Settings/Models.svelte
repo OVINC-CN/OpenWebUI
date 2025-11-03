@@ -19,6 +19,7 @@
 	import { page } from '$app/stores';
 
 	import { getModels } from '$lib/apis';
+	import { fetchPricingFromOpenAI } from '$lib/apis/credit';
 	import Search from '$lib/components/icons/Search.svelte';
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
 	import Switch from '$lib/components/common/Switch.svelte';
@@ -44,6 +45,7 @@
 	let modelsImportInProgress = false;
 	let importFiles;
 	let modelsImportInputElement: HTMLInputElement;
+	let fetchPricingInProgress = false;
 
 	let models = null;
 
@@ -207,6 +209,80 @@
 		saveAs(blob, `${model.id}-${Date.now()}.json`);
 	};
 
+	const fetchPricingHandler = async () => {
+		fetchPricingInProgress = true;
+		try {
+			const res = await fetchPricingFromOpenAI(localStorage.token);
+			
+			console.log('Pricing fetch response:', res);
+			
+			if (res) {
+				// Show debug info
+				if (res.debug) {
+					console.log('Debug info:', {
+						totalApiCalls: res.debug.total_api_calls,
+						successfulFetches: res.debug.successful_fetches,
+						totalErrors: res.debug.total_errors
+					});
+				}
+				
+				if (res.success) {
+					// Show success message with details
+					const updatedCount = res.total_updated || 0;
+					const createdCount = res.updated_models?.filter(m => m.status === 'created').length || 0;
+					const modifiedCount = res.updated_models?.filter(m => m.status === 'updated').length || 0;
+					
+					let message = $i18n.t('Successfully updated {{count}} model(s)', { count: updatedCount });
+					if (createdCount > 0 && modifiedCount > 0) {
+						message += ` (${createdCount} ${$i18n.t('created')}, ${modifiedCount} ${$i18n.t('updated')})`;
+					}
+					
+					toast.success(message);
+					
+					// Log details to console
+					if (res.updated_models && res.updated_models.length > 0) {
+						console.log('Updated models:', res.updated_models);
+					}
+					
+					// Refresh model list
+					await init();
+					
+					// Refresh global models store
+					_models.set(
+						await getModels(
+							localStorage.token,
+							$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
+						)
+					);
+				} else {
+					// No models updated
+					const errorMsg = res?.message || $i18n.t('Failed to fetch pricing information');
+					
+					if (res.debug && res.debug.successful_fetches === 0) {
+						toast.error($i18n.t('No pricing data fetched from APIs. Check your OpenAI API connections.'));
+					} else {
+						toast.warning(errorMsg);
+					}
+				}
+				
+				// Always show errors if present
+				if (res.errors && res.errors.length > 0) {
+					toast.warning(
+						$i18n.t('Some errors occurred. Check console for details.')
+					);
+					console.error('Pricing fetch errors:', res.errors);
+				}
+			} else {
+				toast.error($i18n.t('Failed to fetch pricing information'));
+			}
+		} catch (error) {
+			console.error('Error fetching pricing:', error);
+			toast.error($i18n.t('Failed to fetch pricing information: ' + error));
+		} finally {
+			fetchPricingInProgress = false;
+		}
+	};
+
 	onMount(async () => {
 		await init();
 		const id = $page.url.searchParams.get('id');
@@ -259,6 +335,34 @@
 				</div>
 
 				<div class="flex items-center gap-1.5">
+					<Tooltip content={$i18n.t('Fetch Pricing from API')}>
+						<button
+							class=" p-1 rounded-full flex gap-1 items-center"
+							type="button"
+							disabled={fetchPricingInProgress}
+							on:click={fetchPricingHandler}
+						>
+							{#if fetchPricingInProgress}
+								<Spinner className="size-4" />
+							{:else}
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke-width="1.5"
+									stroke="currentColor"
+									class="size-4"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+									/>
+								</svg>
+							{/if}
+						</button>
+					</Tooltip>
+
 					<Tooltip content={$i18n.t('Manage Models')}>
 						<button
 							class=" p-1 rounded-full flex gap-1 items-center"

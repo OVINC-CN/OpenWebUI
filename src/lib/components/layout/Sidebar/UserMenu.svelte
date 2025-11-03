@@ -21,6 +21,7 @@
 	import Code from '$lib/components/icons/Code.svelte';
 	import UserGroup from '$lib/components/icons/UserGroup.svelte';
 	import SignOut from '$lib/components/icons/SignOut.svelte';
+	import CreditCard from '$lib/components/icons/CreditCard.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -87,6 +88,24 @@
 					<Settings className="w-5 h-5" strokeWidth="1.5" />
 				</div>
 				<div class=" self-center truncate">{$i18n.t('Settings')}</div>
+			</DropdownMenu.Item>
+
+			<DropdownMenu.Item
+				as="a"
+				href="/credit"
+				class="flex rounded-xl py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition select-none"
+				on:click={async () => {
+					show = false;
+					if ($mobile) {
+						await tick();
+						showSidebar.set(false);
+					}
+				}}
+			>
+				<div class=" self-center mr-3">
+					<CreditCard className="w-5 h-5" strokeWidth="1.5" />
+				</div>
+				<div class=" self-center truncate">{$i18n.t('Credit')}</div>
 			</DropdownMenu.Item>
 
 			<DropdownMenu.Item
@@ -160,7 +179,7 @@
 						on:click={() => {
 							show = false;
 						}}
-						href="https://docs.openwebui.com"
+						href="https://docs.cheny.com"
 					>
 						<QuestionMarkCircle className="size-5" />
 						<div class="flex items-center">{$i18n.t('Documentation')}</div>
@@ -175,7 +194,7 @@
 						on:click={() => {
 							show = false;
 						}}
-						href="https://github.com/ovinc-cn/openwebui/releases"
+						href="https://github.com/ovinc-cn/cheny/releases"
 					>
 						<Map className="size-5" />
 						<div class="flex items-center">{$i18n.t('Releases')}</div>

@@ -125,7 +125,7 @@
 												($i18n.language === 'dg-DG'
 													? `${WEBUI_BASE_URL}/doge.png`
 													: `${WEBUI_BASE_URL}/static/favicon.png`)}
-											class=" size-9 @sm:size-10 rounded-full border-[1px] border-gray-100 dark:border-none"
+											class=" size-9 @sm:size-10 p-1"
 											aria-hidden="true"
 											draggable="false"
 										/>
@@ -183,7 +183,7 @@
 									By
 									{#if models[selectedModelIdx]?.info?.meta?.user.community}
 										<a
-											href="https://openwebui.com/m/{models[selectedModelIdx]?.info?.meta?.user
+											href="https://cheny.com/m/{models[selectedModelIdx]?.info?.meta?.user
 												.username}"
 											>{models[selectedModelIdx]?.info?.meta?.user.name
 												? models[selectedModelIdx]?.info?.meta?.user.name

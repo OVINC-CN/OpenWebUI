@@ -87,9 +87,9 @@
 <!-- {JSON.stringify(tokens)} -->
 {#each tokens as token, tokenIdx (tokenIdx)}
 	{#if token.type === 'hr'}
-		<hr class=" border-gray-100 dark:border-gray-850" />
+		<hr class="my-6 border-gray-100 dark:border-gray-850" />
 	{:else if token.type === 'heading'}
-		<svelte:element this={headerComponent(token.depth)} dir="auto">
+		<svelte:element this={headerComponent(token.depth)} dir="auto" class="font-semibold leading-tight">
 			<MarkdownInlineTokens
 				id={`${id}-${tokenIdx}-h`}
 				tokens={token.tokens}
@@ -124,55 +124,41 @@
 			{token.text}
 		{/if}
 	{:else if token.type === 'table'}
-		<div class="relative w-full group mb-2">
+		<div class="relative w-full group mb-3">
 			<div class="scrollbar-hidden relative overflow-x-auto max-w-full">
-				<table
-					class=" w-full text-sm text-left text-gray-500 dark:text-gray-400 max-w-full rounded-xl"
-				>
-					<thead
-						class="text-xs text-gray-700 uppercase bg-white dark:bg-gray-900 dark:text-gray-400 border-none"
-					>
-						<tr class="">
+				<table class="w-full text-[13px] text-gray-700 dark:text-gray-300 border-collapse">
+					<thead>
+						<tr>
 							{#each token.header as header, headerIdx}
 								<th
 									scope="col"
-									class="px-2.5! py-2! cursor-pointer border-b border-gray-100! dark:border-gray-800!"
-									style={token.align[headerIdx] ? '' : `text-align: ${token.align[headerIdx]}`}
+									class="px-3 py-2 text-left font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 text-[14px]"
 								>
-									<div class="gap-1.5 text-left">
-										<div class="shrink-0 break-normal">
-											<MarkdownInlineTokens
-												id={`${id}-${tokenIdx}-header-${headerIdx}`}
-												tokens={header.tokens}
-												{done}
-												{onSourceClick}
-											/>
-										</div>
-									</div>
+									<MarkdownInlineTokens
+										id={`${id}-${tokenIdx}-header-${headerIdx}`}
+										tokens={header.tokens}
+										{done}
+										{onSourceClick}
+									/>
 								</th>
 							{/each}
 						</tr>
 					</thead>
 					<tbody>
 						{#each token.rows as row, rowIdx}
-							<tr class="bg-white dark:bg-gray-900 text-xs">
+							<tr>
 								{#each row ?? [] as cell, cellIdx}
 									<td
-										class="px-3! py-2! text-gray-900 dark:text-white w-max {token.rows.length -
-											1 ===
-										rowIdx
+										class="px-3 py-2 text-left text-gray-700 dark:text-gray-300 {token.rows.length - 1 === rowIdx
 											? ''
-											: 'border-b border-gray-50! dark:border-gray-850!'}"
-										style={token.align[cellIdx] ? `text-align: ${token.align[cellIdx]}` : ''}
+											: 'border-b border-gray-100 dark:border-gray-800'}"
 									>
-										<div class="break-normal">
-											<MarkdownInlineTokens
-												id={`${id}-${tokenIdx}-row-${rowIdx}-${cellIdx}`}
-												tokens={cell.tokens}
-												{done}
-												{onSourceClick}
-											/>
-										</div>
+										<MarkdownInlineTokens
+											id={`${id}-${tokenIdx}-row-${rowIdx}-${cellIdx}`}
+											tokens={cell.tokens}
+											{done}
+											{onSourceClick}
+										/>
 									</td>
 								{/each}
 							</tr>
@@ -200,7 +186,7 @@
 		{#if alert}
 			<AlertRenderer {token} {alert} />
 		{:else}
-			<blockquote dir="auto">
+			<blockquote dir="auto" class="border-l-[3px] border-gray-300 dark:border-gray-700 pl-4 py-1 text-gray-600 dark:text-gray-400 bg-gray-50/30 dark:bg-gray-800/20 rounded-r">
 				<svelte:self
 					id={`${id}-${tokenIdx}`}
 					tokens={token.tokens}
@@ -213,12 +199,12 @@
 		{/if}
 	{:else if token.type === 'list'}
 		{#if token.ordered}
-			<ol start={token.start || 1} dir="auto">
+			<ol start={token.start || 1} dir="auto" class="space-y-2">
 				{#each token.items as item, itemIdx}
-					<li class="text-start">
+					<li class="text-start leading-7">
 						{#if item?.task}
 							<input
-								class=" translate-y-[1px] -translate-x-1"
+								class="translate-y-[1px] -translate-x-1"
 								type="checkbox"
 								checked={item.checked}
 								on:change={(e) => {
@@ -247,9 +233,9 @@
 				{/each}
 			</ol>
 		{:else}
-			<ul dir="auto" class="">
+			<ul dir="auto" class="space-y-2">
 				{#each token.items as item, itemIdx}
-					<li class="text-start {item?.task ? 'flex -translate-x-6.5 gap-3 ' : ''}">
+					<li class="text-start leading-7 {item?.task ? 'flex -translate-x-6.5 gap-3 ' : ''}">
 						{#if item?.task}
 							<input
 								class=""
@@ -324,7 +310,7 @@
 			onload="this.style.height=(this.contentWindow.document.body.scrollHeight+20)+'px';"
 		></iframe>
 	{:else if token.type === 'paragraph'}
-		<p dir="auto">
+		<p dir="auto" class="leading-7">
 			<MarkdownInlineTokens
 				id={`${id}-${tokenIdx}-p`}
 				tokens={token.tokens ?? []}
@@ -365,7 +351,7 @@
 			<KatexRenderer content={token.text} displayMode={token?.displayMode ?? false} />
 		{/if}
 	{:else if token.type === 'space'}
-		<div class="my-2" />
+		<div class="my-3" />
 	{:else}
 		{console.log('Unknown token', token)}
 	{/if}

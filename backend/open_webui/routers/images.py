@@ -526,10 +526,10 @@ async def image_generations(
             headers["Content-Type"] = "application/json"
 
             if ENABLE_FORWARD_USER_INFO_HEADERS:
-                headers["X-OpenWebUI-User-Name"] = quote(user.name, safe=" ")
-                headers["X-OpenWebUI-User-Id"] = user.id
-                headers["X-OpenWebUI-User-Email"] = user.email
-                headers["X-OpenWebUI-User-Role"] = user.role
+                headers["X-Cheny-User-Name"] = quote(user.name, safe=" ")
+                headers["X-Cheny-User-Id"] = user.id
+                headers["X-Cheny-User-Email"] = user.email
+                headers["X-Cheny-User-Role"] = user.role
 
             data = {
                 "model": model,

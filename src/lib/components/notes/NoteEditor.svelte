@@ -967,8 +967,8 @@ Provide the enhanced notes in markdown format. Use markdown syntax for headings,
 		showDeleteConfirm = false;
 	}}
 >
-	<div class=" text-sm text-gray-500">
-		{$i18n.t('This will delete')} <span class="  font-semibold">{note.title}</span>.
+	<div class="text-xs text-gray-600 dark:text-gray-400">
+		{$i18n.t('This will delete')} <span class="font-semibold">{note.title}</span>.
 	</div>
 </DeleteConfirmDialog>
 

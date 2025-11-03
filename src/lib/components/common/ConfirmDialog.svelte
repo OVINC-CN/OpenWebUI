@@ -102,23 +102,36 @@
 		}}
 	>
 		<div
-			class=" m-auto max-w-full w-[32rem] mx-2 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm rounded-4xl max-h-[100dvh] shadow-3xl border border-white dark:border-gray-900"
+			class=" m-auto max-w-full w-[32rem] mx-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-xl max-h-[100dvh] shadow-3xl border border-white dark:border-gray-850"
 			in:flyAndScale
 			on:mousedown={(e) => {
 				e.stopPropagation();
 			}}
 		>
-			<div class="px-[1.75rem] py-6 flex flex-col">
-				<div class=" text-lg font-medium dark:text-gray-200 mb-2.5">
-					{#if title !== ''}
-						{title}
-					{:else}
-						{$i18n.t('Confirm your action')}
-					{/if}
-				</div>
-
+		<div class="px-4 pt-3.5 pb-1.5 flex items-center justify-between">
+			<div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+				{#if title !== ''}
+					{title}
+				{:else}
+					{$i18n.t('Confirm your action')}
+				{/if}
+			</div>
+			<button
+				class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+				on:click={() => {
+					show = false;
+					dispatch('cancel');
+				}}
+				type="button"
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+				</svg>
+			</button>
+		</div>
+		<div class="px-4 pb-3.5 flex flex-col">
 				<slot>
-					<div class=" text-sm text-gray-500 flex-1">
+					<div class="text-xs text-gray-600 dark:text-gray-400 flex-1 mt-3">
 						{#if message !== ''}
 							{@const html = DOMPurify.sanitize(marked.parse(message))}
 							{@html html}
@@ -130,7 +143,7 @@
 							<textarea
 								bind:value={inputValue}
 								placeholder={inputPlaceholder ? inputPlaceholder : $i18n.t('Enter your message')}
-								class="w-full mt-2 rounded-lg px-4 py-2 text-sm dark:text-gray-300 dark:bg-gray-900 outline-hidden resize-none"
+								class="w-full mt-2 rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-1 focus:ring-gray-900 dark:focus:ring-gray-100 resize-none transition"
 								rows="3"
 								required
 							/>
@@ -138,27 +151,27 @@
 					</div>
 				</slot>
 
-				<div class="mt-6 flex justify-between gap-1.5">
-					<button
-						class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-850 dark:hover:bg-gray-800 dark:text-white font-medium w-full py-2 rounded-3xl transition"
-						on:click={() => {
-							show = false;
-							dispatch('cancel');
-						}}
-						type="button"
-					>
-						{cancelLabel}
-					</button>
-					<button
-						class="text-sm bg-gray-900 hover:bg-gray-850 text-gray-100 dark:bg-gray-100 dark:hover:bg-white dark:text-gray-800 font-medium w-full py-2 rounded-3xl transition"
-						on:click={() => {
-							confirmHandler();
-						}}
-						type="button"
-					>
-						{confirmLabel}
-					</button>
-				</div>
+			<div class="mt-3 flex justify-end gap-1.5">
+				<button
+					class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-850 dark:hover:bg-gray-800 dark:text-white font-medium px-3 py-1.5 rounded-full transition"
+					on:click={() => {
+						show = false;
+						dispatch('cancel');
+					}}
+					type="button"
+				>
+					{cancelLabel}
+				</button>
+				<button
+					class="text-xs bg-gray-900 hover:bg-gray-850 text-gray-100 dark:bg-gray-100 dark:hover:bg-white dark:text-gray-800 font-medium px-3 py-1.5 rounded-full transition"
+					on:click={() => {
+						confirmHandler();
+					}}
+					type="button"
+				>
+					{confirmLabel}
+				</button>
+			</div>
 			</div>
 		</div>
 	</div>

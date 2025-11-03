@@ -148,7 +148,7 @@ def get_license_data(app, key):
         },
         "metadata": {
             "type": "enterprise",
-            "organization_name": os.getenv("ORGANIZATION_NAME", "OpenWebui"),
+            "organization_name": os.getenv("ORGANIZATION_NAME", "cheny"),
         },
     }
     try:

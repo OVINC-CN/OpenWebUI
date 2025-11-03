@@ -211,6 +211,220 @@ async def update_model_price(
     return f"success update price for {len(form_data)} models"
 
 
+# Constants for model name formatting
+MODEL_NAME_FORMATS = {
+    'gpt': 'GPT', 'chatgpt': 'ChatGPT',
+    'glm': 'GLM', 'deepseek': 'DeepSeek'
+}
+
+# Icons without color suffix
+ICONS_WITHOUT_COLOR_SUFFIX = {
+    'openai', 'grok', 'anthropic', 'mistral', 'cohere',
+    'huggingface', 'meta', 'stability'
+}
+
+# CDN base URL for lobe-icons
+LOBE_ICONS_CDN = "https://registry.npmmirror.com/@lobehub/icons-static-svg/latest/files/icons"
+
+
+def convert_model_name_to_display(model_name: str) -> str:
+    """Convert model_name to display name with special formatting rules."""
+    words = model_name.replace('-', ' ').split()
+    return ' '.join(MODEL_NAME_FORMATS.get(w.lower(), w.capitalize()) for w in words)
+
+
+def convert_lobe_icon_to_url(icon_name: str) -> str:
+    """Convert lobe-icons format to CDN URL."""
+    if not icon_name or icon_name.startswith(('http://', 'https://', '/')):
+        return icon_name
+    
+    import re
+    match = re.match(r'^([A-Za-z0-9]+)\.(Color|Mono|Text)$', icon_name)
+    if not match:
+        return icon_name
+    
+    name, variant = match.groups()
+    lower_name = name.lower()
+    
+    # Determine icon path based on variant
+    if variant == 'Color':
+        icon_path = lower_name if lower_name in ICONS_WITHOUT_COLOR_SUFFIX else f"{lower_name}-color"
+    else:
+        icon_path = f"{lower_name}-{variant.lower()}"
+    
+    return f"{LOBE_ICONS_CDN}/{icon_path}.svg"
+
+
+def transform_pricing_data(pricing_data: dict) -> dict:
+    """Transform external API pricing data to OpenWebUI format."""
+    data_list = pricing_data.get("data", [])
+    if not isinstance(data_list, list):
+        return {}
+    
+    transformed = {}
+    for model_data in data_list:
+        model_name = model_data.get("model_name")
+        if not model_name:
+            continue
+        
+        # Extract and convert pricing (all per 1M tokens/requests)
+        model_ratio = float(model_data.get("model_ratio", 0))
+        price = {
+            "prompt_price": model_ratio,
+            "prompt_cache_price": model_ratio / 2,
+            "completion_price": float(model_data.get("completion_ratio", 0)),
+            "request_price": float(model_data.get("model_price", 0)) * 1000000,
+            "minimum_credit": 0.01
+        }
+        
+        # Build meta with tags and icon
+        tags_str = model_data.get("tags", "")
+        tags_list = [{"name": tag.strip()} for tag in tags_str.split(",") if tag.strip()] if tags_str else []
+        
+        meta = {
+            "description": model_data.get("description", ""),
+            "tags": tags_list,
+            "profile_image_url": convert_lobe_icon_to_url(model_data.get("icon", ""))
+        }
+        
+        transformed[model_name] = {
+            "name": convert_model_name_to_display(model_name),
+            "price": price,
+            "meta": meta,
+            "access_control": None
+        }
+    
+    return transformed
+
+
+def _get_pricing_url(base_url: str) -> str:
+    """Convert base URL to pricing URL, removing /v1 suffix if present."""
+    url = base_url.rstrip('/')
+    return f"{url[:-3] if url.endswith('/v1') else url}/api/pricing"
+
+
+def _get_meta_dict(meta) -> dict:
+    """Convert meta to dict, handling both Pydantic models and dicts."""
+    if not meta:
+        return {}
+    return meta.model_dump() if hasattr(meta, 'model_dump') else meta.copy() if isinstance(meta, dict) else {}
+
+
+async def _fetch_pricing_from_url(session, url: str, api_key: str) -> tuple[dict | None, dict | None]:
+    """Fetch pricing data from a single URL."""
+    import aiohttp
+    
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    
+    try:
+        async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=10)) as response:
+            if response.status == 200:
+                data = await response.json()
+                log.info(f"Successfully fetched pricing from {url}")
+                return data, None
+            else:
+                error = {"url": url, "status": response.status, "error": await response.text()}
+                log.warning(f"Failed to fetch pricing from {url}: HTTP {response.status}")
+                return None, error
+    except Exception as e:
+        log.error(f"Error fetching pricing from {url}: {str(e)}")
+        return None, {"url": url, "error": str(e)}
+
+
+@router.post("/models/pricing/fetch")
+async def fetch_pricing_from_openai(
+    request: Request, user: UserModel = Depends(get_admin_user)
+):
+    """Fetch and update model pricing from configured OpenAI API endpoints."""
+    import aiohttp
+    from open_webui.models.models import ModelForm
+    
+    config = request.app.state.config
+    all_pricing_data, errors, updated_models = [], [], []
+    
+    # Fetch pricing from all enabled connections
+    async with aiohttp.ClientSession(trust_env=True) as session:
+        for idx, base_url in enumerate(config.OPENAI_API_BASE_URLS):
+            api_config = config.OPENAI_API_CONFIGS.get(str(idx), config.OPENAI_API_CONFIGS.get(base_url, {}))
+            
+            if not api_config.get("enable", True):
+                continue
+            
+            api_key = config.OPENAI_API_KEYS[idx] if idx < len(config.OPENAI_API_KEYS) else ""
+            pricing_url = _get_pricing_url(base_url)
+            
+            log.info(f"Fetching pricing from: {pricing_url}")
+            data, error = await _fetch_pricing_from_url(session, pricing_url, api_key)
+            
+            if data:
+                all_pricing_data.append(data)
+            if error:
+                errors.append(error)
+    
+    # Transform and update models
+    for pricing_data in all_pricing_data:
+        try:
+            transformed_data = transform_pricing_data(pricing_data)
+            log.info(f"Transformed {len(transformed_data)} models")
+            
+            for model_id, model_info in transformed_data.items():
+                try:
+                    existing_model = Models.get_model_by_id(id=model_id)
+                    price_form = ModelPriceForm.model_validate(model_info["price"]).model_dump()
+                    
+                    if existing_model:
+                        # Update existing model
+                        existing_model.name = model_info["name"]
+                        existing_model.price = price_form
+                        existing_model.access_control = model_info.get("access_control")
+                        
+                        existing_meta = _get_meta_dict(existing_model.meta)
+                        existing_meta.update(model_info["meta"])
+                        existing_model.meta = existing_meta
+                        
+                        Models.update_model_by_id(id=model_id, model=existing_model)
+                        updated_models.append({"id": model_id, "name": model_info["name"], "status": "updated"})
+                    else:
+                        # Create new model
+                        new_model = ModelForm(
+                            id=model_id,
+                            name=model_info["name"],
+                            base_model_id=None,
+                            meta=model_info["meta"],
+                            params={},
+                            access_control=model_info.get("access_control"),
+                            price=ModelPriceForm.model_validate(model_info["price"])
+                        )
+                        
+                        if Models.insert_new_model(form_data=new_model, user_id=user.id):
+                            updated_models.append({"id": model_id, "name": model_info["name"], "status": "created"})
+                            
+                except Exception as e:
+                    log.error(f"Error updating model {model_id}: {str(e)}")
+                    errors.append({"model_id": model_id, "error": str(e)})
+                    
+        except Exception as e:
+            log.error(f"Error transforming pricing data: {str(e)}")
+            errors.append({"error": f"Data transformation error: {str(e)}"})
+    
+    log.info(f"Pricing fetch completed: updated {len(updated_models)} model(s)")
+    
+    return {
+        "success": bool(updated_models),
+        "updated_models": updated_models,
+        "total_updated": len(updated_models),
+        "errors": errors or None,
+        "message": f"Successfully updated {len(updated_models)} model(s)",
+        "debug": {
+            "total_api_calls": len(config.OPENAI_API_BASE_URLS),
+            "successful_fetches": len(all_pricing_data),
+            "total_errors": len(errors)
+        }
+    }
+
+
 class StatisticRequest(BaseModel):
     start_time: int
     end_time: int
