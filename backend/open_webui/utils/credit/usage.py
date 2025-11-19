@@ -165,9 +165,14 @@ class CreditDeduct:
             prompt_tokens=0, completion_tokens=0, total_tokens=0
         )
         (
-            self.prompt_unit_price,
-            self.prompt_cache_unit_price,
-            self.completion_unit_price,
+            self._prompt_unit_price,
+            self._completion_unit_price,
+            self._prompt_long_ctx_tokens,
+            self._prompt_long_ctx_unit_price,
+            self._completion_long_ctx_tokens,
+            self._completion_long_ctx_unit_price,
+            self._prompt_cache_unit_price,
+            self._prompt_long_ctx_cache_unit_price,
             self.request_unit_price,
             _,
         ) = get_model_price(model=self.model, is_embedding=is_embedding)
@@ -228,6 +233,33 @@ class CreditDeduct:
             self.usage.completion_tokens,
             self.total_price,
         )
+
+    @property
+    def prompt_unit_price(self) -> Decimal:
+        if (
+            self.usage.prompt_tokens >= self._prompt_long_ctx_tokens > 0
+            and self._prompt_long_ctx_unit_price > 0
+        ):
+            return self._prompt_long_ctx_unit_price
+        return self._prompt_unit_price
+
+    @property
+    def prompt_cache_unit_price(self) -> Decimal:
+        if (
+            self.usage.prompt_tokens >= self._prompt_long_ctx_tokens > 0
+            and self._prompt_long_ctx_cache_unit_price > 0
+        ):
+            return self._prompt_long_ctx_cache_unit_price
+        return self._prompt_cache_unit_price
+
+    @property
+    def completion_unit_price(self) -> Decimal:
+        if (
+            self.usage.completion_tokens >= self._completion_long_ctx_tokens > 0
+            and self._completion_long_ctx_unit_price > 0
+        ):
+            return self._completion_long_ctx_unit_price
+        return self._completion_unit_price
 
     @property
     def prompt_price(self) -> Decimal:
