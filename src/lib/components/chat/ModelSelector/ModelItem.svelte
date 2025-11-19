@@ -42,6 +42,38 @@
 
 	let showMenu = false;
 	let showExternal = false;
+
+	const renderPrice = (price: Object): string => {
+		// request price not null
+		if (item.model?.info?.price?.request_price) {
+			return `${$i18n.t('Price For 1M Requests')}: ${item.model?.info?.price?.request_price}`;
+		}
+		const promptPrice = item.model?.info?.price?.prompt_price || 0;
+		const promptLongCtxPrice = item.model?.info?.price?.prompt_long_ctx_price || 0;
+		const promptCachePrice = item.model?.info?.price?.prompt_cache_price || 0;
+		const promptLongCtxCachePrice = item.model?.info?.price?.prompt_long_ctx_cache_price || 0;
+		const completionPrice = item.model?.info?.price?.completion_price || 0;
+		const completionLongCtxPrice = item.model?.info?.price?.completion_long_ctx_price || 0;
+		let renderContent = `${$i18n.t('Prompt Price For 1M Tokens')}: `;
+		if (promptPrice && promptLongCtxPrice) {
+			renderContent += `${promptPrice} ~ ${promptLongCtxPrice}<br/>`;
+		} else {
+			renderContent += `${promptPrice}<br/>`;
+		}
+		renderContent += `${$i18n.t('Prompt Cache Price For 1M Tokens')}: `;
+		if (promptCachePrice && promptLongCtxCachePrice) {
+			renderContent += `${promptCachePrice} ~ ${promptLongCtxCachePrice}<br/>`;
+		} else {
+			renderContent += `${promptCachePrice}<br/>`;
+		}
+		renderContent += `${$i18n.t('Completion Price For 1M Tokens')}: `;
+		if (completionPrice && completionLongCtxPrice) {
+			renderContent += `${completionPrice} ~ ${completionLongCtxPrice}<br/>`;
+		} else {
+			renderContent += `${completionPrice}<br/>`;
+		}
+		return renderContent;
+	};
 </script>
 
 <button
@@ -201,13 +233,7 @@
 				{/if}
 
 				{#if item.model?.info?.price?.request_price || item.model?.info?.price?.prompt_price || item.model?.info?.price?.prompt_cache_price || item.model?.info?.price?.completion_price}
-					<Tooltip
-						content={item.model?.info?.price?.request_price
-							? `${$i18n.t('Price For 1M Requests')}: ${item.model?.info?.price?.request_price ?? 0}`
-							: `${$i18n.t('Prompt Price For 1M Tokens')}: ${item.model?.info?.price?.prompt_price ?? 0} ~ ${item.model?.info?.price?.prompt_long_ctx_price ?? 0}<br/>` +
-								`${$i18n.t('Prompt Cache Price For 1M Tokens')}: ${item.model?.info?.price?.prompt_cache_price ?? 0} ~ ${item.model?.info?.price?.prompt_long_ctx_cache_price ?? 0}<br/>` +
-								`${$i18n.t('Completion Price For 1M Tokens')}: ${item.model?.info?.price?.completion_price ?? 0} ~ ${item.model?.info?.price?.completion_long_ctx_price ?? 0}<br/>`}
-					>
+					<Tooltip content={renderPrice(item.model?.info?.price)}>
 						<div class=" translate-y-[1px]">
 							<svg
 								class="icon"
