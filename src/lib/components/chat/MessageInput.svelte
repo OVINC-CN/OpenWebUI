@@ -1485,6 +1485,7 @@
 											<Tooltip content={$i18n.t('Valves')} placement="top">
 												<button
 													id="model-valves-button"
+													type="button"
 													class="bg-transparent hover:bg-gray-100 text-gray-700 dark:text-white dark:hover:bg-gray-800 rounded-full size-8 flex justify-center items-center outline-hidden focus:outline-hidden"
 													on:click={() => {
 														selectedValvesType = 'function';

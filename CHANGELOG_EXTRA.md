@@ -5,11 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.36.4] - 2025.11.19
+## [0.6.36.5] - 2025.11.21
 
 ### Added
 
 - 支持为超长上下文配置单独的价格 (管理员面板-设置-模型-模型价格配置)
+
+### Fixed
+
+- 修复用户调整配置项 (UserValves) 直接触发消息发送的问题
 
 ## [0.6.36.1] - 2025.11.07
 
