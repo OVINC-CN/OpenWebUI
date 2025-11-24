@@ -7,7 +7,7 @@
 
 <img
 	aria-hidden="true"
-		src={src === ''
+	src={src === ''
 		? `${WEBUI_BASE_URL}/static/favicon.png`
 		: src.startsWith(WEBUI_BASE_URL) ||
 			  src.startsWith('https://www.gravatar.com/avatar/') ||

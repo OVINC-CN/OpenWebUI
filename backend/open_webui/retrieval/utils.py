@@ -19,7 +19,6 @@ from langchain_core.documents import Document
 from open_webui.config import VECTOR_DB
 from open_webui.retrieval.vector.factory import VECTOR_DB_CLIENT
 
-
 from open_webui.models.users import UserModel
 from open_webui.models.files import Files
 from open_webui.models.knowledge import Knowledges
@@ -34,7 +33,6 @@ from open_webui.utils.misc import get_message_list
 
 from open_webui.retrieval.web.utils import get_web_loader
 from open_webui.retrieval.loaders.youtube import YoutubeLoader
-
 
 from open_webui.env import (
     SRC_LOG_LEVELS,
@@ -51,7 +49,6 @@ from open_webui.utils.credit.utils import check_credit_by_user_id
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["RAG"])
-
 
 from typing import Any
 
@@ -520,45 +517,6 @@ async def query_collection_with_hybrid_search(
     return merge_and_sort_query_results(results, k=k)
 
 
-def generate_openai_batch_embeddings(
-    model: str,
-    texts: list[str],
-    url: str = "https://api.openai.com/v1",
-    key: str = "",
-    prefix: str = None,
-    user: UserModel = None,
-) -> Optional[list[list[float]]]:
-    try:
-        log.debug(
-            f"generate_openai_batch_embeddings:model {model} batch size: {len(texts)}"
-        )
-        json_data = {"input": texts, "model": model}
-        if isinstance(RAG_EMBEDDING_PREFIX_FIELD_NAME, str) and isinstance(prefix, str):
-            json_data[RAG_EMBEDDING_PREFIX_FIELD_NAME] = prefix
-
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {key}",
-        }
-        if ENABLE_FORWARD_USER_INFO_HEADERS and user:
-            headers = include_user_info_headers(headers, user)
-
-        r = requests.post(
-            f"{url}/embeddings",
-            headers=headers,
-            json=json_data,
-        )
-        r.raise_for_status()
-        data = r.json()
-        if "data" in data:
-            return [elem["embedding"] for elem in data["data"]]
-        else:
-            raise "Something went wrong :/"
-    except Exception as e:
-        log.exception(f"Error generating openai batch embeddings: {e}")
-        return None
-
-
 async def agenerate_openai_batch_embeddings(
     model: str,
     texts: list[str],
@@ -567,6 +525,10 @@ async def agenerate_openai_batch_embeddings(
     prefix: str = None,
     user: UserModel = None,
 ) -> Optional[list[list[float]]]:
+    # check credit
+    if user:
+        check_credit_by_user_id(user_id=user.id, form_data={}, is_embedding=True)
+
     try:
         log.debug(
             f"agenerate_openai_batch_embeddings:model {model} batch size: {len(texts)}"
@@ -588,60 +550,33 @@ async def agenerate_openai_batch_embeddings(
             ) as r:
                 r.raise_for_status()
                 data = await r.json()
+
+                if user:
+                    with CreditDeduct(
+                        user=user,
+                        model_id=model,
+                        body={
+                            "messages": [
+                                {"role": "user", "content": form_data["input"]}
+                            ]
+                        },
+                        is_stream=False,
+                        is_embedding=True,
+                    ) as credit_deduct:
+                        if "usage" in data:
+                            credit_deduct.is_official_usage = True
+                            prompt_tokens = data["usage"]["prompt_tokens"]
+                            credit_deduct.usage.prompt_tokens = prompt_tokens
+                            credit_deduct.usage.total_tokens = prompt_tokens
+                        else:
+                            credit_deduct.run(form_data["input"])
+
                 if "data" in data:
                     return [item["embedding"] for item in data["data"]]
                 else:
                     raise Exception("Something went wrong :/")
     except Exception as e:
         log.exception(f"Error generating openai batch embeddings: {e}")
-        return None
-
-
-def generate_azure_openai_batch_embeddings(
-    model: str,
-    texts: list[str],
-    url: str,
-    key: str = "",
-    version: str = "",
-    prefix: str = None,
-    user: UserModel = None,
-) -> Optional[list[list[float]]]:
-    try:
-        log.debug(
-            f"generate_azure_openai_batch_embeddings:deployment {model} batch size: {len(texts)}"
-        )
-        json_data = {"input": texts}
-        if isinstance(RAG_EMBEDDING_PREFIX_FIELD_NAME, str) and isinstance(prefix, str):
-            json_data[RAG_EMBEDDING_PREFIX_FIELD_NAME] = prefix
-
-        url = f"{url}/openai/deployments/{model}/embeddings?api-version={version}"
-
-        for _ in range(5):
-            headers = {
-                "Content-Type": "application/json",
-                "api-key": key,
-            }
-            if ENABLE_FORWARD_USER_INFO_HEADERS and user:
-                headers = include_user_info_headers(headers, user)
-
-            r = requests.post(
-                url,
-                headers=headers,
-                json=json_data,
-            )
-            if r.status_code == 429:
-                retry = float(r.headers.get("Retry-After", "1"))
-                time.sleep(retry)
-                continue
-            r.raise_for_status()
-            data = r.json()
-            if "data" in data:
-                return [elem["embedding"] for elem in data["data"]]
-            else:
-                raise Exception("Something went wrong :/")
-        return None
-    except Exception as e:
-        log.exception(f"Error generating azure openai batch embeddings: {e}")
         return None
 
 
@@ -654,6 +589,10 @@ async def agenerate_azure_openai_batch_embeddings(
     prefix: str = None,
     user: UserModel = None,
 ) -> Optional[list[list[float]]]:
+    # check credit
+    if user:
+        check_credit_by_user_id(user_id=user.id, form_data={}, is_embedding=True)
+
     try:
         log.debug(
             f"agenerate_azure_openai_batch_embeddings:deployment {model} batch size: {len(texts)}"
@@ -675,52 +614,29 @@ async def agenerate_azure_openai_batch_embeddings(
             async with session.post(full_url, headers=headers, json=form_data) as r:
                 r.raise_for_status()
                 data = await r.json()
+
+                input_text = str(form_data["input"])
+                with CreditDeduct(
+                    user=user,
+                    model_id=model,
+                    body={"messages": [{"role": "user", "content": input_text}]},
+                    is_stream=False,
+                    is_embedding=True,
+                ) as credit_deduct:
+                    if "usage" in data:
+                        credit_deduct.is_official_usage = True
+                        prompt_tokens = data["usage"]["prompt_tokens"]
+                        credit_deduct.usage.prompt_tokens = prompt_tokens
+                        credit_deduct.usage.total_tokens = prompt_tokens
+                    else:
+                        credit_deduct.run(input_text)
+
                 if "data" in data:
                     return [item["embedding"] for item in data["data"]]
                 else:
                     raise Exception("Something went wrong :/")
     except Exception as e:
         log.exception(f"Error generating azure openai batch embeddings: {e}")
-        return None
-
-
-def generate_ollama_batch_embeddings(
-    model: str,
-    texts: list[str],
-    url: str,
-    key: str = "",
-    prefix: str = None,
-    user: UserModel = None,
-) -> Optional[list[list[float]]]:
-    try:
-        log.debug(
-            f"generate_ollama_batch_embeddings:model {model} batch size: {len(texts)}"
-        )
-        json_data = {"input": texts, "model": model}
-        if isinstance(RAG_EMBEDDING_PREFIX_FIELD_NAME, str) and isinstance(prefix, str):
-            json_data[RAG_EMBEDDING_PREFIX_FIELD_NAME] = prefix
-
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {key}",
-        }
-        if ENABLE_FORWARD_USER_INFO_HEADERS and user:
-            headers = include_user_info_headers(headers, user)
-
-        r = requests.post(
-            f"{url}/api/embed",
-            headers=headers,
-            json=json_data,
-        )
-        r.raise_for_status()
-        data = r.json()
-
-        if "embeddings" in data:
-            return data["embeddings"]
-        else:
-            raise "Something went wrong :/"
-    except Exception as e:
-        log.exception(f"Error generating ollama batch embeddings: {e}")
         return None
 
 
@@ -732,6 +648,10 @@ async def agenerate_ollama_batch_embeddings(
     prefix: str = None,
     user: UserModel = None,
 ) -> Optional[list[list[float]]]:
+    # check credit
+    if user:
+        check_credit_by_user_id(user_id=user.id, form_data={}, is_embedding=True)
+
     try:
         log.debug(
             f"agenerate_ollama_batch_embeddings:model {model} batch size: {len(texts)}"
@@ -753,6 +673,17 @@ async def agenerate_ollama_batch_embeddings(
             ) as r:
                 r.raise_for_status()
                 data = await r.json()
+
+                input_text = str(form_data["input"])
+                with CreditDeduct(
+                    user=user,
+                    model_id=model,
+                    body={"messages": [{"role": "user", "content": input_text}]},
+                    is_stream=False,
+                    is_embedding=True,
+                ) as credit_deduct:
+                    credit_deduct.run(input_text)
+
                 if "embeddings" in data:
                     return data["embeddings"]
                 else:

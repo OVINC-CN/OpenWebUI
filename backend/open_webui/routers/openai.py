@@ -949,22 +949,9 @@ async def generate_chat_completion(
         # Check if response is SSE
         if "text/event-stream" in r.headers.get("Content-Type", ""):
 
-            async def consumer_content(content):
-                with CreditDeduct(
-                    user=user,
-                    model_id=model_id,
-                    body=form_data,
-                    is_stream=True,
-                ) as credit_deduct:
-                    async for chunk in content:
-                        credit_deduct.run(response=chunk)
-                        yield chunk
-
-                    yield credit_deduct.usage_message
-
             streaming = True
             return StreamingResponse(
-                stream_chunks_handler(r.content),
+                stream_chunks_handler(user, model_id, form_data, r.content),
                 status_code=r.status,
                 headers=dict(r.headers),
                 background=BackgroundTask(
