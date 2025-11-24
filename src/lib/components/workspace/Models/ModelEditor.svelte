@@ -22,6 +22,7 @@
 	import XMark from '$lib/components/icons/XMark.svelte';
 	import DefaultFiltersSelector from './DefaultFiltersSelector.svelte';
 	import DefaultFeatures from './DefaultFeatures.svelte';
+	import PromptSuggestions from './PromptSuggestions.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -78,8 +79,13 @@
 		},
 		price: {
 			prompt_price: 0,
+			prompt_long_ctx_tokens: 0,
+			prompt_long_ctx_price: 0,
 			prompt_cache_price: 0,
+			prompt_long_ctx_cache_price: 0,
 			completion_price: 0,
+			completion_long_ctx_tokens: 0,
+			completion_long_ctx_price: 0,
 			request_price: 0,
 			minimum_credit: 0
 		}
@@ -317,8 +323,13 @@
 			if (!info.price) {
 				info.price = {
 					prompt_price: 0,
+					prompt_long_ctx_tokens: 0,
+					prompt_long_ctx_price: 0,
 					prompt_cache_price: 0,
+					prompt_long_ctx_cache_price: 0,
 					completion_price: 0,
+					completion_long_ctx_tokens: 0,
+					completion_long_ctx_price: 0,
 					request_price: 0,
 					minimum_credit: 0
 				};
@@ -504,7 +515,7 @@
 						<div class="flex-1">
 							<div>
 								<input
-									class="text-3xl font-semibold w-full bg-transparent outline-hidden"
+									class="text-3xl font-medium w-full bg-transparent outline-hidden"
 									placeholder={$i18n.t('Model Name')}
 									bind:value={name}
 									required
@@ -537,7 +548,7 @@
 
 					{#if preset}
 						<div class="my-1">
-							<div class=" text-sm font-semibold mb-1">{$i18n.t('Base Model (From)')}</div>
+							<div class=" text-sm font-medium mb-1">{$i18n.t('Base Model (From)')}</div>
 
 							<div>
 								<select
@@ -571,6 +582,10 @@
 							<div class="text-xs text-gray-500">
 								{$i18n.t('Request price has higher priority than token price')}
 							</div>
+							<hr class=" border-gray-100 dark:border-gray-850 my-1.5" />
+							<div class="text-xs font-bold">
+								{$i18n.t('Base Configuration')}
+							</div>
 							<div class="mt-1 flex justify-between text-xs">
 								<span class="min-w-36">
 									{$i18n.t('Prompt Token Price')}
@@ -582,21 +597,6 @@
 									min="0"
 									bind:value={info.price.prompt_price}
 									autocomplete="off"
-									required
-								/>
-							</div>
-							<div class="mt-1 flex justify-between text-xs">
-								<span class="min-w-36">
-									{$i18n.t('Prompt Token Cache Price')}
-								</span>
-								<input
-									class="w-full flex flex-1 text-xs bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
-									type="number"
-									step="0.0001"
-									min="0"
-									bind:value={info.price.prompt_cache_price}
-									autocomplete="off"
-									required
 								/>
 							</div>
 							<div class="mt-1 flex justify-between text-xs">
@@ -610,8 +610,97 @@
 									min="0"
 									bind:value={info.price.completion_price}
 									autocomplete="off"
-									required
 								/>
+							</div>
+							<hr class=" border-gray-100 dark:border-gray-850 my-1.5" />
+							<div class="text-xs font-bold">
+								{$i18n.t('Long Context Configuration')}
+							</div>
+							<div class="mt-1 flex justify-between text-xs">
+								<span class="min-w-36">
+									{$i18n.t('Prompt Long Ctx Threshold')}
+								</span>
+								<input
+									class="w-full flex flex-1 text-xs bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+									type="number"
+									step="1"
+									min="0"
+									bind:value={info.price.prompt_long_ctx_tokens}
+									autocomplete="off"
+								/>
+							</div>
+							<div class="mt-1 flex justify-between text-xs">
+								<span class="min-w-36">
+									{$i18n.t('Prompt Long Ctx Token Price')}
+								</span>
+								<input
+									class="w-full flex flex-1 text-xs bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+									type="number"
+									step="0.0001"
+									min="0"
+									bind:value={info.price.prompt_long_ctx_price}
+									autocomplete="off"
+								/>
+							</div>
+							<div class="mt-1 flex justify-between text-xs">
+								<span class="min-w-36">
+									{$i18n.t('Completion Long Ctx Threshold')}
+								</span>
+								<input
+									class="w-full flex flex-1 text-xs bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+									type="number"
+									step="1"
+									min="0"
+									bind:value={info.price.completion_long_ctx_tokens}
+									autocomplete="off"
+								/>
+							</div>
+							<div class="mt-1 flex justify-between text-xs">
+								<span class="min-w-36">
+									{$i18n.t('Completion Long Ctx Token Price')}
+								</span>
+								<input
+									class="w-full flex flex-1 text-xs bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+									type="number"
+									step="1"
+									min="0"
+									bind:value={info.price.completion_long_ctx_price}
+									autocomplete="off"
+								/>
+							</div>
+							<hr class=" border-gray-100 dark:border-gray-850 my-1.5" />
+							<div class="text-xs font-bold">
+								{$i18n.t('Prompt Cache Configuration')}
+							</div>
+							<div class="mt-1 flex justify-between text-xs">
+								<span class="min-w-36">
+									{$i18n.t('Prompt Token Price')}
+								</span>
+								<input
+									class="w-full flex flex-1 text-xs bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+									type="number"
+									step="0.0001"
+									min="0"
+									bind:value={info.price.prompt_cache_price}
+									autocomplete="off"
+								/>
+							</div>
+							<div class="mt-1 flex justify-between text-xs">
+								<span class="min-w-36">
+									{$i18n.t('Prompt Long Ctx Token Price')}
+								</span>
+								<input
+									class="w-full flex flex-1 text-xs bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+									type="number"
+									step="0.0001"
+									min="0"
+									bind:value={info.price.prompt_long_ctx_cache_price}
+									autocomplete="off"
+								/>
+							</div>
+							<hr class=" border-gray-100 dark:border-gray-850 my-1.5" />
+							<div class="text-xs font-bold">
+								{$i18n.t('Other Configuration')}
 							</div>
 							<div class="mt-1 flex justify-between text-xs">
 								<span class="min-w-36">
@@ -624,7 +713,6 @@
 									min="0"
 									bind:value={info.price.request_price}
 									autocomplete="off"
-									required
 								/>
 							</div>
 							<div class="mt-1 flex justify-between text-xs">
@@ -638,7 +726,6 @@
 									min="0"
 									bind:value={info.price.minimum_credit}
 									autocomplete="off"
-									required
 								/>
 							</div>
 						</div>
@@ -646,7 +733,7 @@
 
 					<div class="my-1">
 						<div class="mb-1 flex w-full justify-between items-center">
-							<div class=" self-center text-sm font-semibold">{$i18n.t('Description')}</div>
+							<div class=" self-center text-sm font-medium">{$i18n.t('Description')}</div>
 
 							<button
 								class="p-1 text-xs flex rounded-sm transition"
@@ -701,7 +788,8 @@
 							<AccessControl
 								bind:accessControl
 								accessRoles={['read', 'write']}
-								allowPublic={$user?.permissions?.sharing?.public_models || $user?.role === 'admin'}
+								share={$user?.permissions?.sharing?.models || $user?.role === 'admin'}
+								sharePublic={$user?.permissions?.sharing?.public_models || $user?.role === 'admin'}
 							/>
 						</div>
 					</div>
@@ -710,12 +798,12 @@
 
 					<div class="my-2">
 						<div class="flex w-full justify-between">
-							<div class=" self-center text-sm font-semibold">{$i18n.t('Model Params')}</div>
+							<div class=" self-center text-sm font-medium">{$i18n.t('Model Params')}</div>
 						</div>
 
 						<div class="mt-2">
 							<div class="my-1">
-								<div class=" text-xs font-semibold mb-2">{$i18n.t('System Prompt')}</div>
+								<div class=" text-xs font-medium mb-2">{$i18n.t('System Prompt')}</div>
 								<div>
 									<Textarea
 										className=" text-sm w-full bg-transparent outline-hidden resize-none overflow-y-hidden "
@@ -729,7 +817,7 @@
 							</div>
 
 							<div class="flex w-full justify-between">
-								<div class=" self-center text-xs font-semibold">
+								<div class=" self-center text-xs font-medium">
 									{$i18n.t('Advanced Params')}
 								</div>
 
@@ -756,13 +844,13 @@
 						</div>
 					</div>
 
-					<hr class=" border-gray-100 dark:border-gray-850 my-1" />
+					<hr class=" border-gray-100 dark:border-gray-850 my-2" />
 
 					<div class="my-2">
 						<div class="flex w-full justify-between items-center">
 							<div class="flex w-full justify-between items-center">
-								<div class=" self-center text-sm font-semibold">
-									{$i18n.t('Prompt suggestions')}
+								<div class=" self-center text-sm font-medium">
+									{$i18n.t('Prompts')}
 								</div>
 
 								<button
@@ -770,7 +858,7 @@
 									type="button"
 									on:click={() => {
 										if ((info?.meta?.suggestion_prompts ?? null) === null) {
-											info.meta.suggestion_prompts = [{ content: '' }];
+											info.meta.suggestion_prompts = [{ content: '', title: ['', ''] }];
 										} else {
 											info.meta.suggestion_prompts = null;
 										}
@@ -783,64 +871,10 @@
 									{/if}
 								</button>
 							</div>
-
-							{#if (info?.meta?.suggestion_prompts ?? null) !== null}
-								<button
-									class="p-1 px-2 text-xs flex rounded-sm transition"
-									type="button"
-									on:click={() => {
-										if (
-											info.meta.suggestion_prompts.length === 0 ||
-											info.meta.suggestion_prompts.at(-1).content !== ''
-										) {
-											info.meta.suggestion_prompts = [
-												...info.meta.suggestion_prompts,
-												{ content: '' }
-											];
-										}
-									}}
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-										class="w-4 h-4"
-									>
-										<path
-											d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"
-										/>
-									</svg>
-								</button>
-							{/if}
 						</div>
 
 						{#if info?.meta?.suggestion_prompts}
-							<div class="flex flex-col space-y-1 mt-1 mb-3">
-								{#if info.meta.suggestion_prompts.length > 0}
-									{#each info.meta.suggestion_prompts as prompt, promptIdx}
-										<div class=" flex rounded-lg">
-											<input
-												class=" text-sm w-full bg-transparent outline-hidden border-r border-gray-100 dark:border-gray-850"
-												placeholder={$i18n.t('Write a prompt suggestion (e.g. Who are you?)')}
-												bind:value={prompt.content}
-											/>
-
-											<button
-												class="px-2"
-												type="button"
-												on:click={() => {
-													info.meta.suggestion_prompts.splice(promptIdx, 1);
-													info.meta.suggestion_prompts = info.meta.suggestion_prompts;
-												}}
-											>
-												<XMark className={'size-4'} />
-											</button>
-										</div>
-									{/each}
-								{:else}
-									<div class="text-xs text-center">{$i18n.t('No suggestion prompts')}</div>
-								{/if}
-							</div>
+							<PromptSuggestions bind:promptSuggestions={info.meta.suggestion_prompts} />
 						{/if}
 					</div>
 
@@ -907,7 +941,7 @@
 
 					<div class="my-2 text-gray-300 dark:text-gray-700">
 						<div class="flex w-full justify-between mb-2">
-							<div class=" self-center text-sm font-semibold">{$i18n.t('JSON Preview')}</div>
+							<div class=" self-center text-sm font-medium">{$i18n.t('JSON Preview')}</div>
 
 							<button
 								class="p-1 px-3 text-xs flex rounded-sm transition"

@@ -7,7 +7,6 @@ from typing import Optional
 import aiohttp
 from aiocache import cached
 import requests
-from urllib.parse import quote
 
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
@@ -46,11 +45,14 @@ from open_webui.utils.payload import (
 )
 from open_webui.utils.misc import (
     convert_logit_bias_input_to_json,
+    stream_chunks_handler,
 )
 
 from open_webui.utils.auth import get_admin_user, get_verified_user
 from open_webui.utils.access_control import has_access
 from open_webui.utils.credit.usage import CreditDeduct
+from open_webui.utils.headers import include_user_info_headers
+
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OPENAI"])
@@ -67,21 +69,16 @@ async def send_get_request(url, key=None, user: UserModel = None):
     timeout = aiohttp.ClientTimeout(total=AIOHTTP_CLIENT_TIMEOUT_MODEL_LIST)
     try:
         async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
+            headers = {
+                **({"Authorization": f"Bearer {key}"} if key else {}),
+            }
+
+            if ENABLE_FORWARD_USER_INFO_HEADERS and user:
+                headers = include_user_info_headers(headers, user)
+
             async with session.get(
                 url,
-                headers={
-                    **({"Authorization": f"Bearer {key}"} if key else {}),
-                    **(
-                        {
-                            "X-OpenWebUI-User-Name": quote(user.name, safe=" "),
-                            "X-OpenWebUI-User-Id": user.id,
-                            "X-OpenWebUI-User-Email": user.email,
-                            "X-OpenWebUI-User-Role": user.role,
-                        }
-                        if ENABLE_FORWARD_USER_INFO_HEADERS and user
-                        else {}
-                    ),
-                },
+                headers=headers,
                 ssl=AIOHTTP_CLIENT_SESSION_SSL,
             ) as response:
                 return await response.json()
@@ -141,22 +138,12 @@ async def get_headers_and_cookies(
             if "openrouter.ai" in url
             else {}
         ),
-        **(
-            {
-                "X-OpenWebUI-User-Name": quote(user.name, safe=" "),
-                "X-OpenWebUI-User-Id": user.id,
-                "X-OpenWebUI-User-Email": user.email,
-                "X-OpenWebUI-User-Role": user.role,
-                **(
-                    {"X-OpenWebUI-Chat-Id": metadata.get("chat_id")}
-                    if metadata and metadata.get("chat_id")
-                    else {}
-                ),
-            }
-            if ENABLE_FORWARD_USER_INFO_HEADERS
-            else {}
-        ),
     }
+
+    if ENABLE_FORWARD_USER_INFO_HEADERS and user:
+        headers = include_user_info_headers(headers, user)
+        if metadata and metadata.get("chat_id"):
+            headers["X-OpenWebUI-Chat-Id"] = metadata.get("chat_id")
 
     token = None
     auth_type = config.get("auth_type")
@@ -763,6 +750,7 @@ def get_azure_allowed_params(api_version: str) -> set[str]:
         "response_format",
         "seed",
         "max_completion_tokens",
+        "reasoning_effort",
     }
 
     try:
@@ -961,22 +949,9 @@ async def generate_chat_completion(
         # Check if response is SSE
         if "text/event-stream" in r.headers.get("Content-Type", ""):
 
-            async def consumer_content(content):
-                with CreditDeduct(
-                    user=user,
-                    model_id=model_id,
-                    body=form_data,
-                    is_stream=True,
-                ) as credit_deduct:
-                    async for chunk in content:
-                        credit_deduct.run(response=chunk)
-                        yield chunk
-
-                    yield credit_deduct.usage_message
-
             streaming = True
             return StreamingResponse(
-                consumer_content(r.content),
+                stream_chunks_handler(user, model_id, form_data, r.content),
                 status_code=r.status,
                 headers=dict(r.headers),
                 background=BackgroundTask(

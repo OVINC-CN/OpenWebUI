@@ -19,7 +19,7 @@ log.setLevel(SRC_LOG_LEVELS["MODELS"])
 class Auth(Base):
     __tablename__ = "auth"
 
-    id = Column(String, primary_key=True)
+    id = Column(String, primary_key=True, unique=True)
     email = Column(String)
     password = Column(Text)
     active = Column(Boolean)
@@ -121,10 +121,9 @@ class AuthsTable:
             else:
                 return None
 
-    def authenticate_user(self, email: str, password: str) -> Optional[UserModel]:
-        # to avoid cycle-import error
-        from open_webui.utils.auth import verify_password
-
+    def authenticate_user(
+        self, email: str, verify_password: callable
+    ) -> Optional[UserModel]:
         log.info(f"authenticate_user: {email}")
 
         user = Users.get_user_by_email(email)
@@ -135,7 +134,7 @@ class AuthsTable:
             with get_db() as db:
                 auth = db.query(Auth).filter_by(id=user.id, active=True).first()
                 if auth:
-                    if verify_password(password, auth.password):
+                    if verify_password(auth.password):
                         return user
                     else:
                         return None

@@ -2,7 +2,7 @@ import base64
 import math
 from decimal import Decimal
 from io import BytesIO
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 
 import httpx
 from PIL import Image
@@ -27,12 +27,28 @@ from open_webui.models.models import Models, ModelModel
 def get_model_price(
     model: Optional[ModelModel] = None,
     is_embedding: Optional[bool] = False,
-) -> (Decimal, Decimal, Decimal, Decimal, Decimal):
+) -> Tuple[
+    Decimal,
+    Decimal,
+    Decimal,
+    Decimal,
+    Decimal,
+    Decimal,
+    Decimal,
+    Decimal,
+    Decimal,
+    Decimal,
+]:
     """
     Returns
     - prompt price
-    - prompt cache price
     - completion price
+    - prompt long ctx threshold
+    - prompt price long ctx
+    - completion long ctx threshold
+    - completion price long ctx
+    - prompt cache price
+    - prompt cache price long ctx
     - request price
     - minimum credit
     """
@@ -44,13 +60,23 @@ def get_model_price(
             Decimal(0),
             Decimal(0),
             Decimal(0),
+            Decimal(0),
+            Decimal(0),
+            Decimal(0),
+            Decimal(0),
+            Decimal(0),
         )
     # no model provide
     if not model or not isinstance(model, ModelModel):
         return (
             Decimal(USAGE_CALCULATE_DEFAULT_TOKEN_PRICE.value),
             Decimal(USAGE_CALCULATE_DEFAULT_TOKEN_PRICE.value),
-            Decimal(USAGE_CALCULATE_DEFAULT_TOKEN_PRICE.value),
+            Decimal(0),
+            Decimal(0),
+            Decimal(0),
+            Decimal(0),
+            Decimal(0),
+            Decimal(0),
             Decimal(USAGE_CALCULATE_DEFAULT_REQUEST_PRICE.value),
             Decimal(0),
         )
@@ -67,12 +93,37 @@ def get_model_price(
         ),
         Decimal(
             model_price.get(
+                "completion_price", USAGE_CALCULATE_DEFAULT_TOKEN_PRICE.value
+            )
+        ),
+        Decimal(
+            model_price.get(
+                "prompt_long_ctx_tokens", USAGE_CALCULATE_DEFAULT_TOKEN_PRICE.value
+            )
+        ),
+        Decimal(
+            model_price.get(
+                "prompt_long_ctx_price", USAGE_CALCULATE_DEFAULT_TOKEN_PRICE.value
+            )
+        ),
+        Decimal(
+            model_price.get(
+                "completion_long_ctx_tokens", USAGE_CALCULATE_DEFAULT_TOKEN_PRICE.value
+            )
+        ),
+        Decimal(
+            model_price.get(
+                "completion_long_ctx_price", USAGE_CALCULATE_DEFAULT_TOKEN_PRICE.value
+            )
+        ),
+        Decimal(
+            model_price.get(
                 "prompt_cache_price", USAGE_CALCULATE_DEFAULT_TOKEN_PRICE.value
             )
         ),
         Decimal(
             model_price.get(
-                "completion_price", USAGE_CALCULATE_DEFAULT_TOKEN_PRICE.value
+                "prompt_long_ctx_cache_price", USAGE_CALCULATE_DEFAULT_TOKEN_PRICE.value
             )
         ),
         Decimal(
@@ -134,10 +185,31 @@ def check_credit_by_user_id(
     # load model
     model_id = form_data.get("model") or form_data.get("model_id") or ""
     model = Models.get_model_by_id(model_id)
-    model_price = get_model_price(model, is_embedding=is_embedding)
-    minimum_credit = model_price[-1]
+    (
+        prompt_price,
+        completion_price,
+        prompt_long_ctx_tokens,
+        prompt_long_ctx_price,
+        completion_long_ctx_tokens,
+        completion_long_ctx_price,
+        prompt_cache_price,
+        prompt_long_ctx_cache_price,
+        request_price,
+        minimum_credit,
+    ) = get_model_price(model, is_embedding=is_embedding)
     # check for free
-    if is_free_request(model_price=model_price, form_data=form_data):
+    if is_free_request(
+        model_price=[
+            prompt_price,
+            completion_price,
+            prompt_long_ctx_price,
+            completion_long_ctx_price,
+            prompt_cache_price,
+            prompt_long_ctx_cache_price,
+            request_price,
+        ],
+        form_data=form_data,
+    ):
         return
     # load credit
     metadata = form_data.get("metadata") or form_data
