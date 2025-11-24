@@ -89,6 +89,20 @@ class VectorSearchRetriever(BaseRetriever):
     embedding_function: Any
     top_k: int
 
+    def _get_relevant_documents(
+        self, query: str, *, run_manager: CallbackManagerForRetrieverRun
+    ) -> list[Document]:
+        """Get documents relevant to a query.
+
+        Args:
+            query: String to find relevant documents for.
+            run_manager: The callback handler to use.
+
+        Returns:
+            List of relevant documents.
+        """
+        return []
+
     async def _aget_relevant_documents(
         self,
         query: str,
@@ -1164,6 +1178,25 @@ class RerankCompressor(BaseDocumentCompressor):
         extra = "forbid"
         arbitrary_types_allowed = True
 
+    def compress_documents(
+        self,
+        documents: Sequence[Document],
+        query: str,
+        callbacks: Optional[Callbacks] = None,
+    ) -> Sequence[Document]:
+        """Compress retrieved documents given the query context.
+
+        Args:
+            documents: The retrieved documents.
+            query: The query context.
+            callbacks: Optional callbacks to run during compression.
+
+        Returns:
+            The compressed documents.
+
+        """
+        return []
+
     async def acompress_documents(
         self,
         documents: Sequence[Document],
@@ -1174,9 +1207,7 @@ class RerankCompressor(BaseDocumentCompressor):
 
         scores = None
         if reranking:
-            scores = self.reranking_function(
-                [(query, doc.page_content) for doc in documents]
-            )
+            scores = self.reranking_function(query, documents)
         else:
             from sentence_transformers import util
 
