@@ -1071,11 +1071,7 @@
 											<img
 												alt="model profile"
 												class="size-3.5 max-w-[28px] object-cover rounded-full"
-												src={$models.find((model) => model.id === atSelectedModel.id)?.info?.meta
-													?.profile_image_url ??
-													($i18n.language === 'dg-DG'
-														? `${WEBUI_BASE_URL}/doge.png`
-														: `${WEBUI_BASE_URL}/static/favicon.png`)}
+												src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${$models.find((model) => model.id === atSelectedModel.id).id}&lang=${$i18n.language}`}
 											/>
 											<div class="translate-y-[0.5px]">
 												<span class="">{atSelectedModel.name}</span>
