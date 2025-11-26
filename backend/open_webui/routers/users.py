@@ -24,7 +24,7 @@ from open_webui.models.credits import (
 from open_webui.models.users import (
     UserModel,
     UserGroupIdsModel,
-    UserListResponse,
+    UserGroupIdsListResponse,
     UserInfoListResponse,
     UserIdNameListResponse,
     UserRoleUpdateForm,
@@ -83,7 +83,7 @@ async def get_active_users(
 PAGE_ITEM_COUNT = 30
 
 
-@router.get("/", response_model=UserListResponse)
+@router.get("/", response_model=UserGroupIdsListResponse)
 async def get_users(
     query: Optional[str] = None,
     order_by: Optional[str] = None,
