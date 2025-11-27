@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.40.2] - 2025.11.27
 
+### Changed
+
+- 补充部分官方 Logo 和静态文件
+
 ### Fixed
 
 - 增强对非标准流式响应的兼容性 (如 Deepseek API)
