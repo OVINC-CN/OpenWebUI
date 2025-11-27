@@ -610,7 +610,8 @@ def stream_chunks_handler(
                 body=form_data,
                 is_stream=True,
             ) as credit_deduct:
-                async for chunk, _ in stream.iter_chunks():
+                # change to avoid multi \n\n cause message lose
+                async for chunk in stream:
                     credit_deduct.run(response=chunk)
                     yield chunk
 
@@ -628,8 +629,8 @@ def stream_chunks_handler(
             body=form_data,
             is_stream=True,
         ) as credit_deduct:
-
-            async for data, _ in stream.iter_chunks():
+            # change to avoid multi \n\n cause message lose
+            async for data in stream:
 
                 if not data:
                     continue
