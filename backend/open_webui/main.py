@@ -54,11 +54,11 @@ from open_webui.utils.audit import AuditLevel, AuditLoggingMiddleware
 from open_webui.utils.credit.utils import is_free_request, check_credit_by_user_id
 from open_webui.utils.logger import start_logger
 from open_webui.socket.main import (
+    MODELS,
     app as socket_app,
     periodic_usage_pool_cleanup,
     get_event_emitter,
     get_models_in_use,
-    get_active_user_ids,
 )
 from open_webui.routers import (
     audio,
@@ -263,6 +263,7 @@ from open_webui.config import (
     DOCLING_PARAMS,
     DOCUMENT_INTELLIGENCE_ENDPOINT,
     DOCUMENT_INTELLIGENCE_KEY,
+    DOCUMENT_INTELLIGENCE_MODEL,
     MISTRAL_OCR_API_BASE_URL,
     MISTRAL_OCR_API_KEY,
     RAG_TEXT_SPLITTER,
@@ -342,6 +343,7 @@ from open_webui.config import (
     ENABLE_API_KEYS,
     ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS,
     API_KEYS_ALLOWED_ENDPOINTS,
+    ENABLE_FOLDERS,
     ENABLE_CHANNELS,
     ENABLE_NOTES,
     ENABLE_COMMUNITY_SHARING,
@@ -791,6 +793,8 @@ app.state.config.USER_PERMISSIONS = USER_PERMISSIONS
 app.state.config.WEBHOOK_URL = WEBHOOK_URL
 app.state.config.BANNERS = WEBUI_BANNERS
 
+
+app.state.config.ENABLE_FOLDERS = ENABLE_FOLDERS
 app.state.config.ENABLE_CHANNELS = ENABLE_CHANNELS
 app.state.config.ENABLE_NOTES = ENABLE_NOTES
 app.state.config.ENABLE_COMMUNITY_SHARING = ENABLE_COMMUNITY_SHARING
@@ -892,6 +896,7 @@ app.state.config.DOCLING_API_KEY = DOCLING_API_KEY
 app.state.config.DOCLING_PARAMS = DOCLING_PARAMS
 app.state.config.DOCUMENT_INTELLIGENCE_ENDPOINT = DOCUMENT_INTELLIGENCE_ENDPOINT
 app.state.config.DOCUMENT_INTELLIGENCE_KEY = DOCUMENT_INTELLIGENCE_KEY
+app.state.config.DOCUMENT_INTELLIGENCE_MODEL = DOCUMENT_INTELLIGENCE_MODEL
 app.state.config.MISTRAL_OCR_API_BASE_URL = MISTRAL_OCR_API_BASE_URL
 app.state.config.MISTRAL_OCR_API_KEY = MISTRAL_OCR_API_KEY
 app.state.config.MINERU_API_MODE = MINERU_API_MODE
@@ -1000,9 +1005,7 @@ app.state.YOUTUBE_LOADER_TRANSLATION = None
 
 try:
     app.state.ef = get_ef(
-        app.state.config.RAG_EMBEDDING_ENGINE,
-        app.state.config.RAG_EMBEDDING_MODEL,
-        RAG_EMBEDDING_MODEL_AUTO_UPDATE,
+        app.state.config.RAG_EMBEDDING_ENGINE, app.state.config.RAG_EMBEDDING_MODEL
     )
     if (
         app.state.config.ENABLE_RAG_HYBRID_SEARCH
@@ -1013,7 +1016,6 @@ try:
             app.state.config.RAG_RERANKING_MODEL,
             app.state.config.RAG_EXTERNAL_RERANKER_URL,
             app.state.config.RAG_EXTERNAL_RERANKER_API_KEY,
-            RAG_RERANKING_MODEL_AUTO_UPDATE,
         )
     else:
         app.state.rf = None
@@ -1269,7 +1271,7 @@ app.state.config.ALIPAY_PRODUCT_CODE = ALIPAY_PRODUCT_CODE
 #
 ########################################
 
-app.state.MODELS = {}
+app.state.MODELS = MODELS
 
 # Add the middleware to the app
 if ENABLE_COMPRESSION_MIDDLEWARE:
@@ -1642,6 +1644,7 @@ async def chat_completion(
             "user_id": user.id,
             "chat_id": form_data.pop("chat_id", None),
             "message_id": form_data.pop("id", None),
+            "parent_message_id": form_data.pop("parent_id", None),
             "session_id": form_data.pop("session_id", None),
             "filter_ids": form_data.pop("filter_ids", []),
             "tool_ids": form_data.get("tool_ids", None),
@@ -1702,6 +1705,7 @@ async def chat_completion(
                             metadata["chat_id"],
                             metadata["message_id"],
                             {
+                                "parentId": metadata.get("parent_message_id", None),
                                 "model": model_id,
                             },
                         )
@@ -1734,6 +1738,7 @@ async def chat_completion(
                             metadata["chat_id"],
                             metadata["message_id"],
                             {
+                                "parentId": metadata.get("parent_message_id", None),
                                 "error": {"content": str(e)},
                             },
                         )
@@ -1914,6 +1919,7 @@ async def get_app_config(request: Request):
             **(
                 {
                     "enable_direct_connections": app.state.config.ENABLE_DIRECT_CONNECTIONS,
+                    "enable_folders": app.state.config.ENABLE_FOLDERS,
                     "enable_channels": app.state.config.ENABLE_CHANNELS,
                     "enable_notes": app.state.config.ENABLE_NOTES,
                     "enable_web_search": app.state.config.ENABLE_WEB_SEARCH,
@@ -2086,7 +2092,10 @@ async def get_current_usage(user=Depends(get_verified_user)):
     This is an experimental endpoint and subject to change.
     """
     try:
-        return {"model_ids": get_models_in_use(), "user_ids": get_active_user_ids()}
+        return {
+            "model_ids": get_models_in_use(),
+            "user_count": Users.get_active_user_count(),
+        }
     except Exception as e:
         log.error(f"Error getting usage statistics: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -2149,7 +2158,7 @@ except Exception as e:
     )
 
 
-async def register_client(self, request, client_id: str) -> bool:
+async def register_client(request, client_id: str) -> bool:
     server_type, server_id = client_id.split(":", 1)
 
     connection = None
