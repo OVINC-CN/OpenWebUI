@@ -42,6 +42,10 @@ from open_webui.env import (
     WEBUI_AUTH_SIGNOUT_REDIRECT_URL,
     ENABLE_INITIAL_ADMIN_SIGNUP,
     SRC_LOG_LEVELS,
+    REDIS_URL,
+    REDIS_SENTINEL_HOSTS,
+    REDIS_SENTINEL_PORT,
+    REDIS_CLUSTER,
 )
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse, Response, JSONResponse
@@ -50,6 +54,10 @@ from open_webui.config import (
     ENABLE_OAUTH_SIGNUP,
     ENABLE_LDAP,
     ENABLE_PASSWORD_AUTH,
+    SMTP_USERNAME,
+    SMTP_PASSWORD,
+    SMTP_HOST,
+    SMTP_PORT,
 )
 from pydantic import BaseModel, Field
 
@@ -73,7 +81,11 @@ from open_webui.utils.webhook import post_webhook
 from open_webui.utils.access_control import get_permissions, has_permission
 from open_webui.utils.groups import apply_default_group_assignment
 
-from open_webui.utils.redis import get_redis_client
+from open_webui.utils.redis import (
+    get_redis_client,
+    get_redis_connection,
+    get_sentinels_from_env,
+)
 from open_webui.utils.rate_limit import RateLimiter
 
 
@@ -1028,6 +1040,30 @@ class AdminConfig(BaseModel):
 async def update_admin_config(
     request: Request, form_data: AdminConfig, user=Depends(get_admin_user)
 ):
+    # verify redis status
+    if form_data.ENABLE_SIGNUP_VERIFY:
+        # check redis
+        _redis = get_redis_connection(
+            redis_url=REDIS_URL,
+            redis_sentinels=get_sentinels_from_env(
+                REDIS_SENTINEL_HOSTS, REDIS_SENTINEL_PORT
+            ),
+            redis_cluster=REDIS_CLUSTER,
+        )
+        if not _redis:
+            raise HTTPException(status_code=400, detail="Redis is not configured.")
+        # check smtp
+        if (
+            not SMTP_USERNAME.value
+            or not SMTP_PASSWORD.value
+            or not SMTP_HOST.value
+            or not SMTP_PORT.value
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="SMTP is not configured. Cannot enable signup verification.",
+            )
+
     request.app.state.config.SHOW_ADMIN_DETAILS = form_data.SHOW_ADMIN_DETAILS
     request.app.state.config.WEBUI_URL = form_data.WEBUI_URL
     request.app.state.config.ENABLE_SIGNUP = form_data.ENABLE_SIGNUP

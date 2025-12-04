@@ -13,7 +13,13 @@ from fastapi.responses import PlainTextResponse, RedirectResponse, Response
 from pydantic import BaseModel, Field
 
 from open_webui.config import EZFP_CALLBACK_HOST, ALIPAY_APP_ID
-from open_webui.env import SRC_LOG_LEVELS
+from open_webui.env import (
+    SRC_LOG_LEVELS,
+    REDIS_URL,
+    REDIS_SENTINEL_HOSTS,
+    REDIS_SENTINEL_PORT,
+    REDIS_CLUSTER,
+)
 from open_webui.models.credits import (
     TradeTicketModel,
     TradeTickets,
@@ -28,6 +34,7 @@ from open_webui.utils.auth import get_verified_user, get_admin_user
 from open_webui.utils.credit.alipay import AlipayClient
 from open_webui.utils.credit.ezfp import ezfp_client
 from open_webui.utils.models import get_all_models
+from open_webui.utils.redis import get_redis_connection, get_sentinels_from_env
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["MAIN"])
@@ -345,6 +352,17 @@ async def create_redemption_code(
     """
     Create redemption codes
     """
+    # check redis
+    _redis = get_redis_connection(
+        redis_url=REDIS_URL,
+        redis_sentinels=get_sentinels_from_env(
+            REDIS_SENTINEL_HOSTS, REDIS_SENTINEL_PORT
+        ),
+        redis_cluster=REDIS_CLUSTER,
+    )
+    if not _redis:
+        raise HTTPException(status_code=500, detail="Redis connection failed.")
+    # create
     now = int(time.time())
     if form_data.expired_at is not None:
         expired_at = datetime.datetime.fromtimestamp(form_data.expired_at)
