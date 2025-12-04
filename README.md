@@ -54,14 +54,6 @@ ghcr.io/ovinc-cn/openwebui:<版本号>
 
 ![alipay_private_key](docs/alipay_private_key.png)
 
-### 兑换码功能
-
-需要使用 Redis 避免被多次兑换
-
-```
-REDIS_URL=redis://:<password>@<host>:6379/0
-```
-
 ### 自定义价格配置
 
 可以对请求 Body 中的任何匹配的内容额外计费，例如 OpenAI 和 Gemini 原生网页搜索  
@@ -95,10 +87,6 @@ AIOHTTP_CLIENT_READ_BUFFER_SIZE=65536
 请在管理端打开注册邮箱验证，配置 WebUI URL，同时配置如下环境变量
 
 ```
-# 缓存
-REDIS_URL=redis://:<password>@<host>:6379/0
-
-# 邮件相关
 SMTP_HOST=smtp.email.qq.com
 SMTP_PORT=465
 SMTP_USERNAME=example@qq.com
