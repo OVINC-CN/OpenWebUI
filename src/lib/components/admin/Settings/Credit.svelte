@@ -3,6 +3,7 @@
 	import { getUsageConfig, setUsageConfig } from '$lib/apis/configs';
 
 	import SensitiveInput from '$lib/components/common/SensitiveInput.svelte';
+	import Switch from '$lib/components/common/Switch.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -36,6 +37,12 @@
 				<div class="mb-3">
 					<div class=" mb-2.5 text-base font-medium">{$i18n.t('Credit')}</div>
 					<hr class=" border-gray-100 dark:border-gray-850 my-2" />
+					<div class="mb-2.5 flex w-full justify-between">
+						<div class=" self-center text-xs font-medium">
+							{$i18n.t('No Charge When Empty Response')}
+						</div>
+						<Switch bind:state={config.CREDIT_NO_CHARGE_EMPTY_RESPONSE} />
+					</div>
 					<div class="flex w-full justify-between">
 						<div class=" self-center text-xs font-medium">{$i18n.t('No Credit Message')}</div>
 					</div>
