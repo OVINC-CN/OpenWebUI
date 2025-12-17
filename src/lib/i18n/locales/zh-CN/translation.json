@@ -1178,6 +1178,7 @@
 	"new-channel": "新频道",
 	"Next message": "下一条消息",
 	"No authentication": "无身份验证",
+	"No Charge When Empty Response": "空响应时不计费",
 	"No chats found": "未找到对话记录",
 	"No chats found for this user.": "未找到此用户的对话记录",
 	"No chats found.": "未找到对话记录",

@@ -1324,7 +1324,6 @@ USER_PERMISSIONS_WORKSPACE_TOOLS_EXPORT = (
     os.environ.get("USER_PERMISSIONS_WORKSPACE_TOOLS_EXPORT", "False").lower() == "true"
 )
 
-
 USER_PERMISSIONS_WORKSPACE_MODELS_ALLOW_SHARING = (
     os.environ.get("USER_PERMISSIONS_WORKSPACE_MODELS_ALLOW_SHARING", "False").lower()
     == "true"
@@ -1363,7 +1362,6 @@ USER_PERMISSIONS_WORKSPACE_PROMPTS_ALLOW_PUBLIC_SHARING = (
     == "true"
 )
 
-
 USER_PERMISSIONS_WORKSPACE_TOOLS_ALLOW_SHARING = (
     os.environ.get("USER_PERMISSIONS_WORKSPACE_TOOLS_ALLOW_SHARING", "False").lower()
     == "true"
@@ -1375,7 +1373,6 @@ USER_PERMISSIONS_WORKSPACE_TOOLS_ALLOW_PUBLIC_SHARING = (
     ).lower()
     == "true"
 )
-
 
 USER_PERMISSIONS_NOTES_ALLOW_SHARING = (
     os.environ.get("USER_PERMISSIONS_NOTES_ALLOW_PUBLIC_SHARING", "False").lower()
@@ -1964,7 +1961,6 @@ Output:
 <text>{{PROMPT}}</text>  
 #### Output:
 """
-
 
 VOICE_MODE_PROMPT_TEMPLATE = PersistentConfig(
     "VOICE_MODE_PROMPT_TEMPLATE",
@@ -2906,7 +2902,6 @@ ENABLE_RAG_LOCAL_WEB_FETCH = (
     os.getenv("ENABLE_RAG_LOCAL_WEB_FETCH", "False").lower() == "true"
 )
 
-
 DEFAULT_WEB_FETCH_FILTER_LIST = [
     "!169.254.169.254",
     "!fd00:ec2::254",
@@ -2924,7 +2919,6 @@ else:
     ]
 
 WEB_FETCH_FILTER_LIST = list(set(DEFAULT_WEB_FETCH_FILTER_LIST + web_fetch_filter_list))
-
 
 YOUTUBE_LOADER_LANGUAGE = PersistentConfig(
     "YOUTUBE_LOADER_LANGUAGE",
@@ -3485,11 +3479,9 @@ try:
 except json.JSONDecodeError:
     images_openai_params = {}
 
-
 IMAGES_OPENAI_API_PARAMS = PersistentConfig(
     "IMAGES_OPENAI_API_PARAMS", "image_generation.openai.params", images_openai_params
 )
-
 
 IMAGES_GEMINI_API_BASE_URL = PersistentConfig(
     "IMAGES_GEMINI_API_BASE_URL",
@@ -3557,7 +3549,6 @@ IMAGES_EDIT_GEMINI_API_KEY = PersistentConfig(
     "images.edit.gemini.api_key",
     os.getenv("IMAGES_EDIT_GEMINI_API_KEY", GEMINI_API_KEY),
 )
-
 
 IMAGES_EDIT_COMFYUI_BASE_URL = PersistentConfig(
     "IMAGES_EDIT_COMFYUI_BASE_URL",
@@ -3726,7 +3717,6 @@ AUDIO_TTS_OPENAI_PARAMS = PersistentConfig(
     audio_tts_openai_params,
 )
 
-
 AUDIO_TTS_API_KEY = PersistentConfig(
     "AUDIO_TTS_API_KEY",
     "audio.tts.api_key",
@@ -3881,6 +3871,13 @@ LDAP_ATTRIBUTE_FOR_GROUPS = PersistentConfig(
 ####################################
 # Credit and Usage
 ####################################
+
+
+CREDIT_NO_CHARGE_EMPTY_RESPONSE = PersistentConfig(
+    "CREDIT_NO_CHARGE_EMPTY_RESPONSE",
+    "credit.no_charge_empty_response",
+    os.environ.get("CREDIT_NO_CHARGE_EMPTY_RESPONSE", "True").lower() == "true",
+)
 
 CREDIT_NO_CREDIT_MSG = PersistentConfig(
     "CREDIT_NO_CREDIT_MSG",

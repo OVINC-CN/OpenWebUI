@@ -2,7 +2,7 @@ import json
 import logging
 import time
 from decimal import Decimal
-from typing import List, Union
+from typing import List, Union, Tuple
 
 import tiktoken
 from fastapi import HTTPException
@@ -10,6 +10,7 @@ from tiktoken import Encoding
 from jsonpath_ng import parse as jsonpath_parse
 
 from open_webui.config import (
+    CREDIT_NO_CHARGE_EMPTY_RESPONSE,
     USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE,
     USAGE_DEFAULT_ENCODING_MODEL,
     USAGE_CALCULATE_MINIMUM_COST,
@@ -72,7 +73,7 @@ class Calculator:
         response: Union[ChatCompletion, ChatCompletionChunk],
         model_prefix_to_remove: str = "",
         default_model_for_encoding: str = "gpt-4o",
-    ) -> (bool, CompletionUsage):
+    ) -> Tuple[bool, CompletionUsage]:
         try:
             # use provider usage
             if response.usage is not None:
@@ -118,11 +119,13 @@ class Calculator:
                 choice = choices[0]
                 if isinstance(response, ChatCompletion):
                     usage.completion_tokens = len(
-                        encoder.encode(choice.message.content or "")
+                        # strip <think> to avoid empty token calculation
+                        encoder.encode(choice.message.content.lstrip("<think>") or "")
                     )
                 elif isinstance(response, ChatCompletionChunk):
+                    # strip <think> to avoid empty token calculation
                     usage.completion_tokens = len(
-                        encoder.encode(choice.delta.content or "")
+                        encoder.encode(choice.delta.content.lstrip("<think>") or "")
                     )
 
             # total tokens
@@ -155,6 +158,7 @@ class CreditDeduct:
         is_embedding: bool = False,
     ) -> None:
         self.is_error = False
+        self.empty_no_cost = CREDIT_NO_CHARGE_EMPTY_RESPONSE.value
         self.remote_id = ""
         self.user = user
         self.model_id = model_id
@@ -211,6 +215,8 @@ class CreditDeduct:
                             for k, v in self.custom_fees.items()
                         },
                         "is_calculate": not self.is_official_usage,
+                        "is_empty_response": self.is_empty_response,
+                        "empty_no_cost": self.empty_no_cost,
                         **self.usage.model_dump(exclude_unset=True, exclude_none=True),
                     },
                     api_params={
@@ -233,6 +239,10 @@ class CreditDeduct:
             self.usage.completion_tokens,
             self.total_price,
         )
+
+    @property
+    def is_empty_response(self) -> bool:
+        return self.usage.completion_tokens <= 0
 
     @property
     def prompt_unit_price(self) -> Decimal:
@@ -263,6 +273,8 @@ class CreditDeduct:
 
     @property
     def prompt_price(self) -> Decimal:
+        if self.is_error or (self.is_empty_response and self.empty_no_cost):
+            return Decimal(0)
         cache_tokens = 0
         # load from prompt_tokens_details or input_tokens_details
         if (
@@ -289,22 +301,32 @@ class CreditDeduct:
 
     @property
     def completion_price(self) -> Decimal:
+        if self.is_error or (self.is_empty_response and self.empty_no_cost):
+            return Decimal(0)
         return self.completion_unit_price * self.usage.completion_tokens / 1000 / 1000
 
     @property
     def request_price(self) -> Decimal:
+        if self.is_error or (self.is_empty_response and self.empty_no_cost):
+            return Decimal(0)
         return self.request_unit_price / 1000 / 1000
 
     @property
     def feature_price(self) -> Decimal:
+        if self.is_error or (self.is_empty_response and self.empty_no_cost):
+            return Decimal(0)
         return get_feature_price(self.features)
 
     @property
     def custom_price(self) -> Decimal:
+        if self.is_error or (self.is_empty_response and self.empty_no_cost):
+            return Decimal(0)
         return Decimal(sum(v for _, v in self.custom_fees.items())) / 1000 / 1000
 
     @property
     def total_price(self) -> Decimal:
+        if self.is_error or (self.is_empty_response and self.empty_no_cost):
+            return Decimal(0)
         if self.request_unit_price > 0:
             total_price = self.request_price + self.feature_price + self.custom_price
         else:
@@ -338,6 +360,8 @@ class CreditDeduct:
                 },
                 "is_calculate": not self.is_official_usage,
                 "is_error": self.is_error,
+                "is_empty_response": self.is_empty_response,
+                "empty_no_cost": self.empty_no_cost,
             },
             **self.usage.model_dump(exclude_unset=True, exclude_none=True),
         }
@@ -472,12 +496,16 @@ class CreditDeduct:
             model_prefix_to_remove=USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE.value,
             default_model_for_encoding=USAGE_DEFAULT_ENCODING_MODEL.value,
         )
+
+        # use official usage
         if is_official_usage:
             self.is_official_usage = True
             self.usage = usage
             return
         if self.is_official_usage:
             return
+
+        # use calculated usage
         if self.is_stream:
             self.usage.prompt_tokens = usage.prompt_tokens
             self.usage.completion_tokens += usage.completion_tokens
