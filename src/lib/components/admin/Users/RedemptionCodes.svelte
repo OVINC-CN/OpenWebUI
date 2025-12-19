@@ -25,15 +25,6 @@
 	let showEditModal = false;
 	let selectedCode: any = null;
 
-	$: if (page) {
-		loadCodes();
-	}
-
-	$: if (keyword !== undefined) {
-		page = 1;
-		loadCodes();
-	}
-
 	const loadCodes = async () => {
 		try {
 			const data = await getRedemptionCodes(localStorage.token, page, limit, keyword);
@@ -116,9 +107,9 @@
 		return code.replace(/(.{4})(.*)(.{4})/, '$1****$3');
 	};
 
-	onMount(async () => {
-		await loadCodes();
-	});
+	$: if (page !== undefined || keyword !== undefined) {
+		loadCodes();
+	}
 </script>
 
 <CreateRedemptionCodeModal
