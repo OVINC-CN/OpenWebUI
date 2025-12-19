@@ -13,16 +13,7 @@
 	let limit = 30;
 	let total = null;
 
-	$: if (page) {
-		doQuery();
-	}
-
 	let query = '';
-
-	$: if (query !== undefined) {
-		page = 1;
-		doQuery();
-	}
 
 	let logs = [];
 	const doQuery = async () => {
@@ -41,7 +32,7 @@
 		return new Date(t * 1000).toLocaleString();
 	};
 
-	const formatDesc = (log: Log): string => {
+	const formatDesc = (log): string => {
 		const usage = log?.detail?.usage ?? {};
 		if (usage && Object.keys(usage).length > 0) {
 			if (usage.total_price !== undefined && usage.total_price !== null) {
@@ -59,9 +50,9 @@
 
 	let showDeleteLogModal = false;
 
-	onMount(async () => {
-		await doQuery();
-	});
+	$: if (page !== undefined || query !== undefined) {
+		doQuery();
+	}
 </script>
 
 <DeleteCreditLogModal
@@ -99,7 +90,7 @@
 				<input
 					class=" w-full text-sm pr-4 py-1 rounded-r-xl outline-hidden bg-transparent"
 					bind:value={query}
-					placeholder={$i18n.t('Search')}
+					placeholder={$i18n.t('Fuzzy Search Username')}
 				/>
 			</div>
 			<div>

@@ -56,6 +56,7 @@
 
 	let endTime = new Date();
 	let startTime = new Date();
+	startTime.setDate(endTime.getDate() - 7);
 
 	const mergeData = (data: Array<ChartItem>) => {
 		let sorted = data.sort((a, b) => b.value - a.value);
@@ -314,14 +315,10 @@
 			locale = Mandarin;
 		}
 
-		const end = new Date();
-		const start = new Date();
-		start.setDate(end.getDate() - 7);
-
 		const minDays = new Date();
-		minDays.setDate(end.getDate() - 180);
+		minDays.setDate(endTime.getDate() - 180);
 		const tomorrow = new Date();
-		tomorrow.setDate(end.getDate() + 1);
+		tomorrow.setDate(endTime.getDate() + 1);
 
 		fp = flatpickr(dateRangeInput, {
 			locale: locale,
@@ -330,7 +327,7 @@
 			enableTime: true,
 			animate: true,
 			allowInput: true,
-			defaultDate: [start, end],
+			defaultDate: [startTime, endTime],
 			defaultHour: 0,
 			maxDate: tomorrow,
 			minDate: minDays,
@@ -345,10 +342,6 @@
 				}
 			}
 		});
-
-		startTime = start;
-		endTime = end;
-		await doQuery();
 
 		return () => {
 			fp.destroy();
@@ -383,7 +376,7 @@
 				<input
 					class=" w-full text-sm pr-4 py-1 rounded-r-xl outline-hidden bg-transparent"
 					bind:value={query}
-					placeholder={$i18n.t('Search')}
+					placeholder={$i18n.t('Fuzzy Search Username')}
 				/>
 			</div>
 		</div>

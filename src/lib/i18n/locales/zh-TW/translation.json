@@ -868,6 +868,7 @@
 	"Functions": "函式",
 	"Functions allow arbitrary code execution.": "函式允許執行任意程式碼。",
 	"Functions imported successfully": "成功匯入函式",
+	"Fuzzy Search Username": "",
 	"Gemini": "Gemini",
 	"Gemini API Key": "Gemini API 金鑰",
 	"Gemini API Key is required.": "需要提供 Gemini API 金鑰。",
