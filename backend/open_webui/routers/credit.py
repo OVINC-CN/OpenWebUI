@@ -75,7 +75,7 @@ class DeleteLogsResponse(BaseModel):
 
 
 @router.delete("/logs")
-async def update_model_price(
+async def delete_credit_logs(
     form_data: DeleteLogsForm, _: UserModel = Depends(get_admin_user)
 ) -> DeleteLogsResponse:
     return DeleteLogsResponse(
@@ -221,21 +221,42 @@ async def update_model_price(
 class StatisticRequest(BaseModel):
     start_time: int
     end_time: int
+    query: Optional[str] = None
 
 
 @router.post("/statistics")
 async def get_statistics(
     form_data: StatisticRequest, _: UserModel = Depends(get_admin_user)
 ):
-    # load credit data
-    logs = CreditLogs.get_log_by_time(form_data.start_time, form_data.end_time)
-    trade_logs = TradeTickets.get_ticket_by_time(
-        form_data.start_time, form_data.end_time
-    )
+    # query user id
+    user_ids = []
+    if form_data.query:
+        users = Users.get_users(filter={"query": form_data.query})["users"]
+        user_map = {user.id: user.name for user in users}
+        user_ids = list(user_map.keys())
+        if not user_ids:
+            return {
+                "total_tokens": 0,
+                "total_credit": 0,
+                "model_cost_pie": [],
+                "model_token_pie": [],
+                "user_cost_pie": [],
+                "user_token_pie": [],
+                "total_payment": 0,
+                "user_payment_stats_x": [],
+                "user_payment_stats_y": [],
+            }
+    else:
+        users = Users.get_users()["users"]
+        user_map = {user.id: user.name for user in users}
 
-    # load user data
-    users = Users.get_users()["users"]
-    user_map = {user.id: user.name for user in users}
+    # load credit data
+    logs = CreditLogs.get_log_by_time(
+        form_data.start_time, form_data.end_time, user_ids
+    )
+    trade_logs = TradeTickets.get_ticket_by_time(
+        form_data.start_time, form_data.end_time, user_ids
+    )
 
     # build graph data
     total_tokens = 0

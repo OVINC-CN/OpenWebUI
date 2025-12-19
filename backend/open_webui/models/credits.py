@@ -280,7 +280,7 @@ class TradeTicketTable:
             return None
 
     def get_ticket_by_time(
-        self, start_time: int, end_time: int
+        self, start_time: int, end_time: int, user_ids: Optional[List[str]] = None
     ) -> list[TradeTicketModel]:
         try:
             with get_db() as db:
@@ -288,8 +288,10 @@ class TradeTicketTable:
                     db.query(TradeTicket)
                     .filter(TradeTicket.created_at >= start_time)
                     .filter(TradeTicket.created_at < end_time)
-                    .order_by(TradeTicket.created_at.asc())
                 )
+                if user_ids:
+                    logs = logs.filter(TradeTicket.user_id.in_(user_ids))
+                logs = logs.order_by(TradeTicket.created_at.asc())
                 return [TradeTicketModel.model_validate(log) for log in logs]
         except Exception:
             return []
@@ -345,7 +347,7 @@ class CreditLogTable:
             return [CreditLogSimpleModel.model_validate(log) for log in all_logs]
 
     def get_log_by_time(
-        self, start_time: int, end_time: int
+        self, start_time: int, end_time: int, user_ids: Optional[List[str]] = None
     ) -> list[CreditLogSimpleModel]:
         try:
             with get_db() as db:
@@ -353,8 +355,10 @@ class CreditLogTable:
                     db.query(CreditLog)
                     .filter(CreditLog.created_at >= start_time)
                     .filter(CreditLog.created_at < end_time)
-                    .order_by(CreditLog.created_at.asc())
                 )
+                if user_ids:
+                    logs = logs.filter(CreditLog.user_id.in_(user_ids))
+                logs = logs.order_by(CreditLog.created_at.asc())
                 return [CreditLogSimpleModel.model_validate(log) for log in logs]
         except Exception:
             return []
