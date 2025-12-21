@@ -710,6 +710,10 @@ async def get_channel_messages(
             thread_replies[0].created_at if thread_replies else None
         )
 
+        user = None
+        user_model = users.get(message.user_id) or None
+        if user_model:
+            user = UserNameResponse(**user_model.model_dump())
         messages.append(
             MessageUserResponse(
                 **{
@@ -717,7 +721,7 @@ async def get_channel_messages(
                     "reply_count": len(thread_replies),
                     "latest_reply_at": latest_thread_reply_at,
                     "reactions": Messages.get_reactions_by_message_id(message.id),
-                    "user": UserNameResponse(**users[message.user_id].model_dump()),
+                    "user": user,
                 }
             )
         )
@@ -768,12 +772,16 @@ async def get_pinned_channel_messages(
             user = Users.get_user_by_id(message.user_id)
             users[message.user_id] = user
 
+        user = None
+        user_model = users.get(message.user_id) or None
+        if user_model:
+            user = UserNameResponse(**user_model.model_dump())
         messages.append(
             MessageWithReactionsResponse(
                 **{
                     **message.model_dump(),
                     "reactions": Messages.get_reactions_by_message_id(message.id),
-                    "user": UserNameResponse(**users[message.user_id].model_dump()),
+                    "user": user,
                 }
             )
         )
@@ -1258,6 +1266,10 @@ async def get_channel_thread_messages(
             user = Users.get_user_by_id(message.user_id)
             users[message.user_id] = user
 
+        user = None
+        user_model = users.get(message.user_id) or None
+        if user_model:
+            user = UserNameResponse(**user_model.model_dump())
         messages.append(
             MessageUserResponse(
                 **{
@@ -1265,7 +1277,7 @@ async def get_channel_thread_messages(
                     "reply_count": 0,
                     "latest_reply_at": None,
                     "reactions": Messages.get_reactions_by_message_id(message.id),
-                    "user": UserNameResponse(**users[message.user_id].model_dump()),
+                    "user": user,
                 }
             )
         )

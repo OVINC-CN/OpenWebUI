@@ -118,14 +118,16 @@ class Calculator:
             if choices:
                 choice = choices[0]
                 if isinstance(response, ChatCompletion):
+                    content = choice.message.content or ""
                     usage.completion_tokens = len(
                         # strip <think> to avoid empty token calculation
-                        encoder.encode(choice.message.content.lstrip("<think>") or "")
+                        encoder.encode(content.lstrip("<think>"))
                     )
                 elif isinstance(response, ChatCompletionChunk):
+                    content = choice.delta.content or ""
                     # strip <think> to avoid empty token calculation
                     usage.completion_tokens = len(
-                        encoder.encode(choice.delta.content.lstrip("<think>") or "")
+                        encoder.encode(content.lstrip("<think>"))
                     )
 
             # total tokens
