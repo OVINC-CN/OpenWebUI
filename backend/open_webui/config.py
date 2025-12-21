@@ -1181,6 +1181,12 @@ SMTP_PASSWORD = PersistentConfig(
     os.environ.get("SMTP_PASSWORD", ""),
 )
 
+SMTP_SENT_FROM = PersistentConfig(
+    "SMTP_SENT_FROM",
+    "ui.smtp.sent_from",
+    os.environ.get("SMTP_SENT_FROM", ""),
+)
+
 DEFAULT_LOCALE = PersistentConfig(
     "DEFAULT_LOCALE",
     "ui.default_locale",

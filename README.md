@@ -103,6 +103,7 @@ docker run -d -p 3000:8080 \
 
 ### 2. 自定义价格配置
 
+(管理员面板 - 设置- 积分 - 自定义价格配置)
 支持对请求 Body 内容进行正则匹配计费（如对 Web Search 额外收费）。
 
 ```json
@@ -117,18 +118,7 @@ docker run -d -p 3000:8080 \
 ]
 ```
 
-### 3. 注册邮箱验证
-
-开启邮箱验证需配置 SMTP 环境变量：
-
-```env
-SMTP_HOST=smtp.email.qq.com
-SMTP_PORT=465
-SMTP_USERNAME=example@qq.com
-SMTP_PASSWORD=your_password
-```
-
-### 4. 性能调优
+### 3. 性能调优
 
 如果遇到 `Chunk too big` 错误，可调整 HTTP Client Read Buffer：
 

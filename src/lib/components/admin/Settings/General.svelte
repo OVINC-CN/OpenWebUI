@@ -337,6 +337,85 @@
 						{$i18n.t('After verify, will auto change to role User')}
 					</div>
 
+					{#if adminConfig.ENABLE_SIGNUP_VERIFY}
+						<div class="mb-2.5 flex w-full flex-col pr-2">
+							<div class=" text-xs font-medium">
+								{$i18n.t('SMTP Host')}
+							</div>
+
+							<div class="flex mt-2 space-x-2">
+								<input
+									class="w-full rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+									type="text"
+									required={adminConfig.ENABLE_SIGNUP_VERIFY}
+									bind:value={adminConfig.SMTP_HOST}
+								/>
+							</div>
+						</div>
+
+						<div class="mb-2.5 flex w-full flex-col pr-2">
+							<div class=" text-xs font-medium">
+								{$i18n.t('SMTP Port')}
+							</div>
+
+							<div class="flex mt-2 space-x-2">
+								<input
+									class="w-full rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+									type="text"
+									required={adminConfig.ENABLE_SIGNUP_VERIFY}
+									bind:value={adminConfig.SMTP_PORT}
+								/>
+							</div>
+						</div>
+
+						<div class="mb-2.5 flex w-full flex-col pr-2">
+							<div class=" text-xs font-medium">
+								{$i18n.t('SMTP Sent From')}
+							</div>
+							<div class="text-xs text-gray-300 font-medium">
+								{$i18n.t('If empty, will use username as the from address')}
+							</div>
+
+							<div class="flex mt-2 space-x-2">
+								<input
+									class="w-full rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+									type="text"
+									bind:value={adminConfig.SMTP_SENT_FROM}
+								/>
+							</div>
+						</div>
+
+						<div class="mb-2.5 flex w-full flex-col pr-2">
+							<div class=" text-xs font-medium">
+								{$i18n.t('SMTP Username')}
+							</div>
+
+							<div class="flex mt-2 space-x-2">
+								<input
+									class="w-full rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+									type="text"
+									required={adminConfig.ENABLE_SIGNUP_VERIFY}
+									bind:value={adminConfig.SMTP_USERNAME}
+								/>
+							</div>
+						</div>
+
+						<div class="mb-2.5 flex w-full flex-col pr-2">
+							<div class=" text-xs font-medium">
+								{$i18n.t('SMTP Password')}
+							</div>
+
+							<div
+								class="flex mt-2 space-x-2 w-full rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
+							>
+								<SensitiveInput
+									required={adminConfig.ENABLE_SIGNUP_VERIFY}
+									bind:value={adminConfig.SMTP_PASSWORD}
+								/>
+							</div>
+						</div>
+					{/if}
+
 					<div class="mb-2.5 flex w-full flex-col pr-2">
 						<div class=" text-xs font-medium">
 							{$i18n.t('Sign Up Email Domain Whitelist')}
