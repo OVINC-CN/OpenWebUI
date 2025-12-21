@@ -262,7 +262,9 @@
 					{:else}
 						<ProfilePreview user={message.user}>
 							<ProfileImage
-								src={`${WEBUI_API_BASE_URL}/users/${message.user.id}/profile/image`}
+								src={message.user?.id
+									? `${WEBUI_API_BASE_URL}/users/${message.user.id}/profile/image`
+									: '/favicon.png'}
 								className={'size-8 ml-0.5'}
 							/>
 						</ProfilePreview>
