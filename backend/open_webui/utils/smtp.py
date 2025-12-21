@@ -2,23 +2,30 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from open_webui.config import SMTP_USERNAME, SMTP_HOST, SMTP_PORT, SMTP_PASSWORD
+from open_webui.config import (
+    SMTP_USERNAME,
+    SMTP_HOST,
+    SMTP_PORT,
+    SMTP_PASSWORD,
+    SMTP_SENT_FROM,
+)
 
 
 def send_email(receiver: str, subject: str, body: str):
     message = MIMEMultipart()
-    message["From"] = SMTP_USERNAME.value
+    message["From"] = SMTP_SENT_FROM.value or SMTP_USERNAME.value
     message["To"] = receiver
     message["Subject"] = subject
     message.attach(MIMEText(body, "html"))
 
-    if SMTP_PORT.value == "587":
-        server = smtplib.SMTP(SMTP_HOST.value, int(SMTP_PORT.value))
+    port = str(SMTP_PORT.value)
+    if port == "587":
+        server = smtplib.SMTP(SMTP_HOST.value, int(port))
         server.starttls()
-    elif SMTP_PORT.value == "465":
-        server = smtplib.SMTP_SSL(SMTP_HOST.value, int(SMTP_PORT.value))
+    elif port == "465":
+        server = smtplib.SMTP_SSL(SMTP_HOST.value, int(port))
     else:
-        raise ValueError(f"Invalid SMTP port {SMTP_PORT.value}")
+        raise ValueError(f"Invalid SMTP port {port}")
 
     try:
         server.login(SMTP_USERNAME.value, SMTP_PASSWORD.value)

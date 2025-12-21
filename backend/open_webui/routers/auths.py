@@ -54,10 +54,6 @@ from open_webui.config import (
     ENABLE_OAUTH_SIGNUP,
     ENABLE_LDAP,
     ENABLE_PASSWORD_AUTH,
-    SMTP_USERNAME,
-    SMTP_PASSWORD,
-    SMTP_HOST,
-    SMTP_PORT,
 )
 from pydantic import BaseModel, Field
 
@@ -995,6 +991,11 @@ async def get_admin_config(request: Request, user=Depends(get_admin_user)):
         "ENABLE_SIGNUP": request.app.state.config.ENABLE_SIGNUP,
         "ENABLE_SIGNUP_VERIFY": request.app.state.config.ENABLE_SIGNUP_VERIFY,
         "SIGNUP_EMAIL_DOMAIN_WHITELIST": request.app.state.config.SIGNUP_EMAIL_DOMAIN_WHITELIST,
+        "SMTP_HOST": request.app.state.config.SMTP_HOST,
+        "SMTP_PORT": request.app.state.config.SMTP_PORT,
+        "SMTP_USERNAME": request.app.state.config.SMTP_USERNAME,
+        "SMTP_PASSWORD": request.app.state.config.SMTP_PASSWORD,
+        "SMTP_SENT_FROM": request.app.state.config.SMTP_SENT_FROM,
         "ENABLE_API_KEYS": request.app.state.config.ENABLE_API_KEYS,
         "ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS": request.app.state.config.ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS,
         "API_KEYS_ALLOWED_ENDPOINTS": request.app.state.config.API_KEYS_ALLOWED_ENDPOINTS,
@@ -1019,6 +1020,11 @@ class AdminConfig(BaseModel):
     ENABLE_SIGNUP: bool
     ENABLE_SIGNUP_VERIFY: bool = Field(default=False)
     SIGNUP_EMAIL_DOMAIN_WHITELIST: str = Field(default="")
+    SMTP_HOST: str
+    SMTP_PORT: str
+    SMTP_USERNAME: str
+    SMTP_PASSWORD: str
+    SMTP_SENT_FROM: str
     ENABLE_API_KEYS: bool
     ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS: bool
     API_KEYS_ALLOWED_ENDPOINTS: str
@@ -1052,17 +1058,6 @@ async def update_admin_config(
         )
         if not _redis:
             raise HTTPException(status_code=400, detail="Redis is not configured.")
-        # check smtp
-        if (
-            not SMTP_USERNAME.value
-            or not SMTP_PASSWORD.value
-            or not SMTP_HOST.value
-            or not SMTP_PORT.value
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail="SMTP is not configured. Cannot enable signup verification.",
-            )
 
     request.app.state.config.SHOW_ADMIN_DETAILS = form_data.SHOW_ADMIN_DETAILS
     request.app.state.config.WEBUI_URL = form_data.WEBUI_URL
@@ -1071,6 +1066,11 @@ async def update_admin_config(
     request.app.state.config.SIGNUP_EMAIL_DOMAIN_WHITELIST = (
         form_data.SIGNUP_EMAIL_DOMAIN_WHITELIST
     )
+    request.app.state.config.SMTP_HOST = form_data.SMTP_HOST
+    request.app.state.config.SMTP_PORT = form_data.SMTP_PORT
+    request.app.state.config.SMTP_USERNAME = form_data.SMTP_USERNAME
+    request.app.state.config.SMTP_PASSWORD = form_data.SMTP_PASSWORD
+    request.app.state.config.SMTP_SENT_FROM = form_data.SMTP_SENT_FROM
 
     request.app.state.config.ENABLE_API_KEYS = form_data.ENABLE_API_KEYS
     request.app.state.config.ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS = (
@@ -1117,6 +1117,11 @@ async def update_admin_config(
         "ENABLE_SIGNUP": request.app.state.config.ENABLE_SIGNUP,
         "ENABLE_SIGNUP_VERIFY": request.app.state.config.ENABLE_SIGNUP_VERIFY,
         "SIGNUP_EMAIL_DOMAIN_WHITELIST": request.app.state.config.SIGNUP_EMAIL_DOMAIN_WHITELIST,
+        "SMTP_HOST": request.app.state.config.SMTP_HOST,
+        "SMTP_PORT": request.app.state.config.SMTP_PORT,
+        "SMTP_USERNAME": request.app.state.config.SMTP_USERNAME,
+        "SMTP_PASSWORD": request.app.state.config.SMTP_PASSWORD,
+        "SMTP_SENT_FROM": request.app.state.config.SMTP_SENT_FROM,
         "ENABLE_API_KEYS": request.app.state.config.ENABLE_API_KEYS,
         "ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS": request.app.state.config.ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS,
         "API_KEYS_ALLOWED_ENDPOINTS": request.app.state.config.API_KEYS_ALLOWED_ENDPOINTS,
