@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.41.6] - 2025.12.21
+## [0.6.41.8] - 2025.12.21
 
 ### Added
 
@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 对部分配置增加额外的校验和提示
 - 优化积分统计面板、积分日志、兑换码管理的加载性能
+
+### Fixed
+
+- 修复部分场景频道消息加载失败的问题
 
 ## [0.6.41.1] - 2025.12.03
 
