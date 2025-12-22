@@ -263,7 +263,9 @@ def calculate_image_token(model_id: str, image: ImageURL) -> int:
         if "," in image.url:
             image_data = image.url.split(",", 1)[1]
         else:
-            image_data = image.url
+            from open_webui.utils.files import get_image_base64_from_url
+
+            image_data = get_image_base64_from_url(image.url) or image.url
 
     image_data = base64.b64decode(image_data.encode("utf-8"))
     image = Image.open(BytesIO(image_data))

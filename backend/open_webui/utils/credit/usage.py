@@ -16,7 +16,7 @@ from open_webui.config import (
     USAGE_CALCULATE_MINIMUM_COST,
     USAGE_CUSTOM_PRICE_CONFIG,
 )
-from open_webui.env import SRC_LOG_LEVELS
+from open_webui.env import GLOBAL_LOG_LEVEL
 from open_webui.models.credits import AddCreditForm, Credits, SetCreditFormDetail
 from open_webui.models.models import Models
 from open_webui.models.users import UserModel
@@ -34,7 +34,7 @@ from open_webui.utils.credit.utils import (
 )
 
 logger = logging.getLogger(__name__)
-logger.setLevel(SRC_LOG_LEVELS["MAIN"])
+logger.setLevel(GLOBAL_LOG_LEVEL)
 
 
 class Calculator:

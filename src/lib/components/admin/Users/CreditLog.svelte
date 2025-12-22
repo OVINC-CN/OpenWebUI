@@ -149,7 +149,7 @@
 						{$i18n.t('Model')}
 					</th>
 					<th scope="col" class="px-3 py-1.5 select-none w-3">
-						{$i18n.t('Desc')}
+						{$i18n.t('Description')}
 					</th>
 				</tr>
 			</thead>

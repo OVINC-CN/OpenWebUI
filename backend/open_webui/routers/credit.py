@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 
 from open_webui.config import EZFP_CALLBACK_HOST, ALIPAY_APP_ID
 from open_webui.env import (
-    SRC_LOG_LEVELS,
+    GLOBAL_LOG_LEVEL,
     REDIS_URL,
     REDIS_SENTINEL_HOSTS,
     REDIS_SENTINEL_PORT,
@@ -37,7 +37,7 @@ from open_webui.utils.models import get_all_models
 from open_webui.utils.redis import get_redis_connection, get_sentinels_from_env
 
 log = logging.getLogger(__name__)
-log.setLevel(SRC_LOG_LEVELS["MAIN"])
+log.setLevel(GLOBAL_LOG_LEVEL)
 
 router = APIRouter()
 
