@@ -27,7 +27,7 @@ from open_webui.utils.plugin import (
 )
 from open_webui.utils.tools import get_tools
 
-from open_webui.env import SRC_LOG_LEVELS, GLOBAL_LOG_LEVEL
+from open_webui.env import GLOBAL_LOG_LEVEL
 
 from open_webui.utils.misc import (
     openai_chat_chunk_message_template,
@@ -41,7 +41,6 @@ from open_webui.utils.credit.usage import CreditDeduct
 
 logging.basicConfig(stream=sys.stdout, level=GLOBAL_LOG_LEVEL)
 log = logging.getLogger(__name__)
-log.setLevel(SRC_LOG_LEVELS["MAIN"])
 
 
 def get_function_module_by_id(request: Request, pipe_id: str):

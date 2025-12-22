@@ -40,7 +40,6 @@ from open_webui.env import (
     WEBUI_SECRET_KEY,
     TRUSTED_SIGNATURE_KEY,
     STATIC_DIR,
-    SRC_LOG_LEVELS,
     WEBUI_AUTH_TRUSTED_EMAIL_HEADER,
     FRONTEND_BUILD_DIR,
     REDIS_URL,
@@ -56,7 +55,6 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from open_webui.utils.redis import get_redis_connection, get_sentinels_from_env
 
 log = logging.getLogger(__name__)
-log.setLevel(SRC_LOG_LEVELS["OAUTH"])
 
 SESSION_SECRET = WEBUI_SECRET_KEY
 ALGORITHM = "HS256"
