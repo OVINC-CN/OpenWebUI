@@ -160,7 +160,7 @@ class CreditDeduct:
         is_embedding: bool = False,
     ) -> None:
         self.is_error = False
-        self.empty_no_cost = CREDIT_NO_CHARGE_EMPTY_RESPONSE.value
+        self.empty_no_cost = not is_embedding and CREDIT_NO_CHARGE_EMPTY_RESPONSE.value
         self.remote_id = ""
         self.user = user
         self.model_id = model_id
