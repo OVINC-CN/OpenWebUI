@@ -41,7 +41,10 @@ from open_webui.env import (
     WEBUI_AUTH_COOKIE_SECURE,
     WEBUI_AUTH_SIGNOUT_REDIRECT_URL,
     ENABLE_INITIAL_ADMIN_SIGNUP,
-    SRC_LOG_LEVELS,
+    REDIS_URL,
+    REDIS_SENTINEL_HOSTS,
+    REDIS_SENTINEL_PORT,
+    REDIS_CLUSTER,
 )
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse, Response, JSONResponse
@@ -73,7 +76,11 @@ from open_webui.utils.webhook import post_webhook
 from open_webui.utils.access_control import get_permissions, has_permission
 from open_webui.utils.groups import apply_default_group_assignment
 
-from open_webui.utils.redis import get_redis_client
+from open_webui.utils.redis import (
+    get_redis_client,
+    get_redis_connection,
+    get_sentinels_from_env,
+)
 from open_webui.utils.rate_limit import RateLimiter
 
 
@@ -87,7 +94,6 @@ from ldap3.utils.conv import escape_filter_chars
 router = APIRouter()
 
 log = logging.getLogger(__name__)
-log.setLevel(SRC_LOG_LEVELS["MAIN"])
 
 signin_rate_limiter = RateLimiter(
     redis_client=get_redis_client(), limit=5 * 3, window=60 * 3
@@ -297,13 +303,11 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
             f"{LDAP_ATTRIBUTE_FOR_MAIL}",
             "cn",
         ]
-
         if ENABLE_LDAP_GROUP_MANAGEMENT:
             search_attributes.append(f"{LDAP_ATTRIBUTE_FOR_GROUPS}")
             log.info(
                 f"LDAP Group Management enabled. Adding {LDAP_ATTRIBUTE_FOR_GROUPS} to search attributes"
             )
-
         log.info(f"LDAP search attributes: {search_attributes}")
 
         search_success = connection_app.search(
@@ -311,15 +315,22 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
             search_filter=f"(&({LDAP_ATTRIBUTE_FOR_USERNAME}={escape_filter_chars(form_data.user.lower())}){LDAP_SEARCH_FILTERS})",
             attributes=search_attributes,
         )
-
         if not search_success or not connection_app.entries:
             raise HTTPException(400, detail="User not found in the LDAP server")
 
         entry = connection_app.entries[0]
-        username = str(entry[f"{LDAP_ATTRIBUTE_FOR_USERNAME}"]).lower()
+        entry_username = entry[f"{LDAP_ATTRIBUTE_FOR_USERNAME}"].value
         email = entry[
             f"{LDAP_ATTRIBUTE_FOR_MAIL}"
         ].value  # retrieve the Attribute value
+
+        username_list = []  # list of usernames from LDAP attribute
+        if isinstance(entry_username, list):
+            username_list = [str(name).lower() for name in entry_username]
+        else:
+            username_list = [str(entry_username).lower()]
+
+        # TODO: support multiple emails if LDAP returns a list
         if not email:
             raise HTTPException(400, "User does not have a valid email address.")
         elif isinstance(email, str):
@@ -329,13 +340,13 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
         else:
             email = str(email).lower()
 
-        cn = str(entry["cn"])
-        user_dn = entry.entry_dn
+        cn = str(entry["cn"])  # common name
+        user_dn = entry.entry_dn  # user distinguished name
 
         user_groups = []
         if ENABLE_LDAP_GROUP_MANAGEMENT and LDAP_ATTRIBUTE_FOR_GROUPS in entry:
             group_dns = entry[LDAP_ATTRIBUTE_FOR_GROUPS]
-            log.info(f"LDAP raw group DNs for user {username}: {group_dns}")
+            log.info(f"LDAP raw group DNs for user {username_list}: {group_dns}")
 
             if group_dns:
                 log.info(f"LDAP group_dns original: {group_dns}")
@@ -386,16 +397,16 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
                         )
 
                 log.info(
-                    f"LDAP groups for user {username}: {user_groups} (total: {len(user_groups)})"
+                    f"LDAP groups for user {username_list}: {user_groups} (total: {len(user_groups)})"
                 )
             else:
-                log.info(f"No groups found for user {username}")
+                log.info(f"No groups found for user {username_list}")
         elif ENABLE_LDAP_GROUP_MANAGEMENT:
             log.warning(
                 f"LDAP Group Management enabled but {LDAP_ATTRIBUTE_FOR_GROUPS} attribute not found in user entry"
             )
 
-        if username == form_data.user.lower():
+        if username_list and form_data.user.lower() in username_list:
             connection_user = Connection(
                 server,
                 user_dn,
@@ -983,6 +994,11 @@ async def get_admin_config(request: Request, user=Depends(get_admin_user)):
         "ENABLE_SIGNUP": request.app.state.config.ENABLE_SIGNUP,
         "ENABLE_SIGNUP_VERIFY": request.app.state.config.ENABLE_SIGNUP_VERIFY,
         "SIGNUP_EMAIL_DOMAIN_WHITELIST": request.app.state.config.SIGNUP_EMAIL_DOMAIN_WHITELIST,
+        "SMTP_HOST": request.app.state.config.SMTP_HOST,
+        "SMTP_PORT": request.app.state.config.SMTP_PORT,
+        "SMTP_USERNAME": request.app.state.config.SMTP_USERNAME,
+        "SMTP_PASSWORD": request.app.state.config.SMTP_PASSWORD,
+        "SMTP_SENT_FROM": request.app.state.config.SMTP_SENT_FROM,
         "ENABLE_API_KEYS": request.app.state.config.ENABLE_API_KEYS,
         "ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS": request.app.state.config.ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS,
         "API_KEYS_ALLOWED_ENDPOINTS": request.app.state.config.API_KEYS_ALLOWED_ENDPOINTS,
@@ -1007,6 +1023,11 @@ class AdminConfig(BaseModel):
     ENABLE_SIGNUP: bool
     ENABLE_SIGNUP_VERIFY: bool = Field(default=False)
     SIGNUP_EMAIL_DOMAIN_WHITELIST: str = Field(default="")
+    SMTP_HOST: str
+    SMTP_PORT: str
+    SMTP_USERNAME: str
+    SMTP_PASSWORD: str
+    SMTP_SENT_FROM: str
     ENABLE_API_KEYS: bool
     ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS: bool
     API_KEYS_ALLOWED_ENDPOINTS: str
@@ -1028,6 +1049,19 @@ class AdminConfig(BaseModel):
 async def update_admin_config(
     request: Request, form_data: AdminConfig, user=Depends(get_admin_user)
 ):
+    # verify redis status
+    if form_data.ENABLE_SIGNUP_VERIFY:
+        # check redis
+        _redis = get_redis_connection(
+            redis_url=REDIS_URL,
+            redis_sentinels=get_sentinels_from_env(
+                REDIS_SENTINEL_HOSTS, REDIS_SENTINEL_PORT
+            ),
+            redis_cluster=REDIS_CLUSTER,
+        )
+        if not _redis:
+            raise HTTPException(status_code=400, detail="Redis is not configured.")
+
     request.app.state.config.SHOW_ADMIN_DETAILS = form_data.SHOW_ADMIN_DETAILS
     request.app.state.config.WEBUI_URL = form_data.WEBUI_URL
     request.app.state.config.ENABLE_SIGNUP = form_data.ENABLE_SIGNUP
@@ -1035,6 +1069,11 @@ async def update_admin_config(
     request.app.state.config.SIGNUP_EMAIL_DOMAIN_WHITELIST = (
         form_data.SIGNUP_EMAIL_DOMAIN_WHITELIST
     )
+    request.app.state.config.SMTP_HOST = form_data.SMTP_HOST
+    request.app.state.config.SMTP_PORT = form_data.SMTP_PORT
+    request.app.state.config.SMTP_USERNAME = form_data.SMTP_USERNAME
+    request.app.state.config.SMTP_PASSWORD = form_data.SMTP_PASSWORD
+    request.app.state.config.SMTP_SENT_FROM = form_data.SMTP_SENT_FROM
 
     request.app.state.config.ENABLE_API_KEYS = form_data.ENABLE_API_KEYS
     request.app.state.config.ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS = (
@@ -1081,6 +1120,11 @@ async def update_admin_config(
         "ENABLE_SIGNUP": request.app.state.config.ENABLE_SIGNUP,
         "ENABLE_SIGNUP_VERIFY": request.app.state.config.ENABLE_SIGNUP_VERIFY,
         "SIGNUP_EMAIL_DOMAIN_WHITELIST": request.app.state.config.SIGNUP_EMAIL_DOMAIN_WHITELIST,
+        "SMTP_HOST": request.app.state.config.SMTP_HOST,
+        "SMTP_PORT": request.app.state.config.SMTP_PORT,
+        "SMTP_USERNAME": request.app.state.config.SMTP_USERNAME,
+        "SMTP_PASSWORD": request.app.state.config.SMTP_PASSWORD,
+        "SMTP_SENT_FROM": request.app.state.config.SMTP_SENT_FROM,
         "ENABLE_API_KEYS": request.app.state.config.ENABLE_API_KEYS,
         "ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS": request.app.state.config.ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS,
         "API_KEYS_ALLOWED_ENDPOINTS": request.app.state.config.API_KEYS_ALLOWED_ENDPOINTS,

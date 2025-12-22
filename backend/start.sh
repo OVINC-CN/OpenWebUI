@@ -79,7 +79,12 @@ else
     ARGS=(--workers "$UVICORN_WORKERS")
 fi
 
+# Do migrate before starting
+echo "Running database migrations..."
+"$PYTHON_CMD" -m open_webui.migrate
+
 # Run uvicorn
+echo "Starting Open WebUI on http://$HOST:$PORT with $UVICORN_WORKERS workers..."
 WEBUI_SECRET_KEY="$WEBUI_SECRET_KEY" exec "$PYTHON_CMD" -m uvicorn open_webui.main:app \
     --host "$HOST" \
     --port "$PORT" \

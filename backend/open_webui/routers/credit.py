@@ -13,7 +13,13 @@ from fastapi.responses import PlainTextResponse, RedirectResponse, Response
 from pydantic import BaseModel, Field
 
 from open_webui.config import EZFP_CALLBACK_HOST, ALIPAY_APP_ID
-from open_webui.env import SRC_LOG_LEVELS
+from open_webui.env import (
+    GLOBAL_LOG_LEVEL,
+    REDIS_URL,
+    REDIS_SENTINEL_HOSTS,
+    REDIS_SENTINEL_PORT,
+    REDIS_CLUSTER,
+)
 from open_webui.models.credits import (
     TradeTicketModel,
     TradeTickets,
@@ -28,9 +34,10 @@ from open_webui.utils.auth import get_verified_user, get_admin_user
 from open_webui.utils.credit.alipay import AlipayClient
 from open_webui.utils.credit.ezfp import ezfp_client
 from open_webui.utils.models import get_all_models
+from open_webui.utils.redis import get_redis_connection, get_sentinels_from_env
 
 log = logging.getLogger(__name__)
-log.setLevel(SRC_LOG_LEVELS["MAIN"])
+log.setLevel(GLOBAL_LOG_LEVEL)
 
 router = APIRouter()
 
@@ -68,7 +75,7 @@ class DeleteLogsResponse(BaseModel):
 
 
 @router.delete("/logs")
-async def update_model_price(
+async def delete_credit_logs(
     form_data: DeleteLogsForm, _: UserModel = Depends(get_admin_user)
 ) -> DeleteLogsResponse:
     return DeleteLogsResponse(
@@ -214,21 +221,42 @@ async def update_model_price(
 class StatisticRequest(BaseModel):
     start_time: int
     end_time: int
+    query: Optional[str] = None
 
 
 @router.post("/statistics")
 async def get_statistics(
     form_data: StatisticRequest, _: UserModel = Depends(get_admin_user)
 ):
-    # load credit data
-    logs = CreditLogs.get_log_by_time(form_data.start_time, form_data.end_time)
-    trade_logs = TradeTickets.get_ticket_by_time(
-        form_data.start_time, form_data.end_time
-    )
+    # query user id
+    user_ids = []
+    if form_data.query:
+        users = Users.get_users(filter={"query": form_data.query})["users"]
+        user_map = {user.id: user.name for user in users}
+        user_ids = list(user_map.keys())
+        if not user_ids:
+            return {
+                "total_tokens": 0,
+                "total_credit": 0,
+                "model_cost_pie": [],
+                "model_token_pie": [],
+                "user_cost_pie": [],
+                "user_token_pie": [],
+                "total_payment": 0,
+                "user_payment_stats_x": [],
+                "user_payment_stats_y": [],
+            }
+    else:
+        users = Users.get_users()["users"]
+        user_map = {user.id: user.name for user in users}
 
-    # load user data
-    users = Users.get_users()["users"]
-    user_map = {user.id: user.name for user in users}
+    # load credit data
+    logs = CreditLogs.get_log_by_time(
+        form_data.start_time, form_data.end_time, user_ids
+    )
+    trade_logs = TradeTickets.get_ticket_by_time(
+        form_data.start_time, form_data.end_time, user_ids
+    )
 
     # build graph data
     total_tokens = 0
@@ -345,6 +373,17 @@ async def create_redemption_code(
     """
     Create redemption codes
     """
+    # check redis
+    _redis = get_redis_connection(
+        redis_url=REDIS_URL,
+        redis_sentinels=get_sentinels_from_env(
+            REDIS_SENTINEL_HOSTS, REDIS_SENTINEL_PORT
+        ),
+        redis_cluster=REDIS_CLUSTER,
+    )
+    if not _redis:
+        raise HTTPException(status_code=500, detail="Redis connection failed.")
+    # create
     now = int(time.time())
     if form_data.expired_at is not None:
         expired_at = datetime.datetime.fromtimestamp(form_data.expired_at)

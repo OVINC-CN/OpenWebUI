@@ -56,6 +56,7 @@
 
 	let endTime = new Date();
 	let startTime = new Date();
+	startTime.setDate(endTime.getDate() - 7);
 
 	const mergeData = (data: Array<ChartItem>) => {
 		let sorted = data.sort((a, b) => b.value - a.value);
@@ -68,10 +69,16 @@
 	let dateRangeInput;
 	let fp;
 
-	const doQuery = async (startTime: Date, endTime: Date) => {
+	let query = '';
+	$: if (query !== undefined) {
+		doQuery();
+	}
+
+	const doQuery = async () => {
 		const data = await getCreditStats(localStorage.token, {
 			start_time: Math.round(startTime.getTime() / 1000),
-			end_time: Math.round(endTime.getTime() / 1000)
+			end_time: Math.round(endTime.getTime() / 1000),
+			query: query
 		}).catch((error) => {
 			toast.error(`${error}`);
 			return null;
@@ -308,14 +315,10 @@
 			locale = Mandarin;
 		}
 
-		const end = new Date();
-		const start = new Date();
-		start.setDate(end.getDate() - 7);
-
 		const minDays = new Date();
-		minDays.setDate(end.getDate() - 180);
+		minDays.setDate(endTime.getDate() - 180);
 		const tomorrow = new Date();
-		tomorrow.setDate(end.getDate() + 1);
+		tomorrow.setDate(endTime.getDate() + 1);
 
 		fp = flatpickr(dateRangeInput, {
 			locale: locale,
@@ -324,7 +327,7 @@
 			enableTime: true,
 			animate: true,
 			allowInput: true,
-			defaultDate: [start, end],
+			defaultDate: [startTime, endTime],
 			defaultHour: 0,
 			maxDate: tomorrow,
 			minDate: minDays,
@@ -333,12 +336,12 @@
 			time_24hr: true,
 			onChange: async (selectedDates, _) => {
 				if (selectedDates.length === 2) {
-					await doQuery(selectedDates[0], selectedDates[1]);
+					startTime = selectedDates[0];
+					endTime = selectedDates[1];
+					await doQuery();
 				}
 			}
 		});
-
-		await doQuery(start, end);
 
 		return () => {
 			fp.destroy();
@@ -346,60 +349,88 @@
 	});
 </script>
 
-<div class="mt-0.5 mb-2">
+<div class="mt-0.5 mb-2 gap-1 flex flex-col md:flex-row justify-between">
 	<div class="flex md:self-center text-lg font-medium px-0.5">
-		{$i18n.t('Credit Statistics')}
-	</div>
-
-	<div class="mt-2 flex justify-around h-[48px] white">
-		<input
-			bind:this={dateRangeInput}
-			type="text"
-			class="w-full rounded-md bg-gray-50 dark:text-gray-300 dark:bg-gray-850 text-center font-medium"
-			readonly
-		/>
-	</div>
-
-	<div
-		class="mt-2 flex justify-between items-center bg-gray-50 rounded-md dark:text-gray-300 dark:bg-gray-850"
-	>
-		<div class="flex flex-col items-center w-full">
-			<span class="text-gray-500 text-xs mb-1">{$i18n.t('Total Payment')}</span>
-			<div class="text-blue-600 font-medium">{statsData.total_payment ?? 0}</div>
-		</div>
-		<div class="flex flex-col items-center border-x border-gray-200 w-full">
-			<span class="text-gray-500 text-xs mb-1">{$i18n.t('Total Credit Cost')}</span>
-			<div class="text-green-600 font-medium">{statsData.total_credit ?? 0}</div>
-		</div>
-		<div class="flex flex-col items-center w-full">
-			<span class="text-gray-500 text-xs mb-1">{$i18n.t('Total Token Cost')}</span>
-			<div class="text-purple-600 font-medium">{statsData.total_tokens ?? 0}</div>
+		<div class="flex-shrink-0">
+			{$i18n.t('Credit Statistics')}
 		</div>
 	</div>
 
-	<div
-		class="mt-2 bg-gray-50 rounded-md dark:text-gray-300 dark:bg-gray-850"
-		bind:this={userPaymentLine}
-		style="width: 100%; height: 300px;"
-	></div>
-	<div
-		class="mt-2 bg-gray-50 rounded-md dark:text-gray-300 dark:bg-gray-850"
-		bind:this={modelTokenPie}
-		style="width: 100%; height: 300px;"
-	></div>
-	<div
-		class="mt-2 bg-gray-50 rounded-md dark:text-gray-300 dark:bg-gray-850"
-		bind:this={modelCostPie}
-		style="width: 100%; height: 300px;"
-	></div>
-	<div
-		class="mt-2 bg-gray-50 rounded-md dark:text-gray-300 dark:bg-gray-850"
-		bind:this={userTokenPie}
-		style="width: 100%; height: 300px;"
-	></div>
-	<div
-		class="mt-2 bg-gray-50 rounded-md dark:text-gray-300 dark:bg-gray-850"
-		bind:this={userCostPie}
-		style="width: 100%; height: 300px;"
-	></div>
+	<div class="flex gap-1">
+		<div class=" flex w-full space-x-2">
+			<div class="flex flex-1 w-full">
+				<div class=" self-center ml-1 mr-3">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 20 20"
+						fill="currentColor"
+						class="w-4 h-4"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+				</div>
+				<input
+					class=" w-full text-sm pr-4 py-1 rounded-r-xl outline-hidden bg-transparent"
+					bind:value={query}
+					placeholder={$i18n.t('Fuzzy Search Username')}
+				/>
+			</div>
+		</div>
+	</div>
 </div>
+
+<div class="mt-2 flex justify-around h-[48px] white">
+	<input
+		bind:this={dateRangeInput}
+		type="text"
+		class="w-full rounded-md bg-gray-50 dark:text-gray-300 dark:bg-gray-850 text-center font-medium"
+		readonly
+	/>
+</div>
+
+<div
+	class="mt-2 flex justify-between items-center bg-gray-50 rounded-md dark:text-gray-300 dark:bg-gray-850"
+>
+	<div class="flex flex-col items-center w-full">
+		<span class="text-gray-500 text-xs mb-1">{$i18n.t('Total Payment')}</span>
+		<div class="text-blue-600 font-medium">{statsData.total_payment ?? 0}</div>
+	</div>
+	<div class="flex flex-col items-center border-x border-gray-200 w-full">
+		<span class="text-gray-500 text-xs mb-1">{$i18n.t('Total Credit Cost')}</span>
+		<div class="text-green-600 font-medium">{statsData.total_credit ?? 0}</div>
+	</div>
+	<div class="flex flex-col items-center w-full">
+		<span class="text-gray-500 text-xs mb-1">{$i18n.t('Total Token Cost')}</span>
+		<div class="text-purple-600 font-medium">{statsData.total_tokens ?? 0}</div>
+	</div>
+</div>
+
+<div
+	class="mt-2 bg-gray-50 rounded-md dark:text-gray-300 dark:bg-gray-850"
+	bind:this={userPaymentLine}
+	style="width: 100%; height: 300px;"
+></div>
+<div
+	class="mt-2 bg-gray-50 rounded-md dark:text-gray-300 dark:bg-gray-850"
+	bind:this={modelTokenPie}
+	style="width: 100%; height: 300px;"
+></div>
+<div
+	class="mt-2 bg-gray-50 rounded-md dark:text-gray-300 dark:bg-gray-850"
+	bind:this={modelCostPie}
+	style="width: 100%; height: 300px;"
+></div>
+<div
+	class="mt-2 bg-gray-50 rounded-md dark:text-gray-300 dark:bg-gray-850"
+	bind:this={userTokenPie}
+	style="width: 100%; height: 300px;"
+></div>
+<div
+	class="mt-2 bg-gray-50 rounded-md dark:text-gray-300 dark:bg-gray-850"
+	bind:this={userCostPie}
+	style="width: 100%; height: 300px;"
+></div>

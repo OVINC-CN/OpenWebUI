@@ -51,81 +51,6 @@ logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
 ####################################
 
 
-# Function to run the alembic migrations
-def run_migrations():
-    log.info("Running migrations")
-    try:
-        from alembic import command
-        from alembic.config import Config
-
-        alembic_cfg = Config(OPEN_WEBUI_DIR / "alembic.ini")
-
-        # Set the script location dynamically
-        migrations_path = OPEN_WEBUI_DIR / "migrations"
-        alembic_cfg.set_main_option("script_location", str(migrations_path))
-
-        command.upgrade(alembic_cfg, "head")
-    except Exception as e:
-        log.exception(f"Error running migrations: {e}")
-
-
-run_migrations()
-
-
-def run_extra_migrations():
-    """
-    Only create table or index is allowed here.
-    """
-    custom_migrations = [
-        {"base": "3781e22d8b01", "upgrade_to": "1403e6d80d1d"},
-        {"base": "d31026856c01", "upgrade_to": "97c08d196e3d"},
-    ]
-    log.info("Running extra migrations")
-    # do migrations
-    try:
-        # load version from db
-        current_version = Session.execute(
-            text("SELECT version_num FROM alembic_version")
-        ).scalar_one()
-
-        # init alembic
-        from alembic import command
-        from alembic.config import Config
-
-        alembic_cfg = Config(OPEN_WEBUI_DIR / "alembic.ini")
-        migrations_path = OPEN_WEBUI_DIR / "migrations"
-        alembic_cfg.set_main_option("script_location", str(migrations_path))
-
-        # do migrations
-        for migration in custom_migrations:
-            try:
-                command.stamp(alembic_cfg, migration["base"])
-                command.upgrade(alembic_cfg, migration["upgrade_to"])
-            except Exception as err:
-                err = str(err)
-                if err.index("already exists") != -1 or err.index("duplicate") != -1:
-                    log.info(
-                        "skip migrate %s to %s: already exists",
-                        migration["base"],
-                        migration["upgrade_to"],
-                    )
-                    continue
-                log.warning(
-                    "failed to migrate %s to %s: %s",
-                    migration["base"],
-                    migration["upgrade_to"],
-                    err,
-                )
-
-        # stamp to current version
-        command.stamp(alembic_cfg, current_version)
-    except Exception as e:
-        log.exception("Error running extra migrations: %s", e)
-
-
-run_extra_migrations()
-
-
 class Config(Base):
     __tablename__ = "config"
 
@@ -680,6 +605,12 @@ OAUTH_ACCESS_TOKEN_REQUEST_INCLUDE_CLIENT_ID = (
     == "true"
 )
 
+OAUTH_AUDIENCE = PersistentConfig(
+    "OAUTH_AUDIENCE",
+    "oauth.audience",
+    os.environ.get("OAUTH_AUDIENCE", ""),
+)
+
 
 def load_oauth_providers():
     OAUTH_PROVIDERS.clear()
@@ -1181,6 +1112,12 @@ SMTP_PASSWORD = PersistentConfig(
     os.environ.get("SMTP_PASSWORD", ""),
 )
 
+SMTP_SENT_FROM = PersistentConfig(
+    "SMTP_SENT_FROM",
+    "ui.smtp.sent_from",
+    os.environ.get("SMTP_SENT_FROM", ""),
+)
+
 DEFAULT_LOCALE = PersistentConfig(
     "DEFAULT_LOCALE",
     "ui.default_locale",
@@ -1324,7 +1261,6 @@ USER_PERMISSIONS_WORKSPACE_TOOLS_EXPORT = (
     os.environ.get("USER_PERMISSIONS_WORKSPACE_TOOLS_EXPORT", "False").lower() == "true"
 )
 
-
 USER_PERMISSIONS_WORKSPACE_MODELS_ALLOW_SHARING = (
     os.environ.get("USER_PERMISSIONS_WORKSPACE_MODELS_ALLOW_SHARING", "False").lower()
     == "true"
@@ -1339,7 +1275,7 @@ USER_PERMISSIONS_WORKSPACE_MODELS_ALLOW_PUBLIC_SHARING = (
 
 USER_PERMISSIONS_WORKSPACE_KNOWLEDGE_ALLOW_SHARING = (
     os.environ.get(
-        "USER_PERMISSIONS_WORKSPACE_KNOWLEDGE_ALLOW_PUBLIC_SHARING", "False"
+        "USER_PERMISSIONS_WORKSPACE_KNOWLEDGE_ALLOW_SHARING", "False"
     ).lower()
     == "true"
 )
@@ -1363,7 +1299,6 @@ USER_PERMISSIONS_WORKSPACE_PROMPTS_ALLOW_PUBLIC_SHARING = (
     == "true"
 )
 
-
 USER_PERMISSIONS_WORKSPACE_TOOLS_ALLOW_SHARING = (
     os.environ.get("USER_PERMISSIONS_WORKSPACE_TOOLS_ALLOW_SHARING", "False").lower()
     == "true"
@@ -1376,10 +1311,8 @@ USER_PERMISSIONS_WORKSPACE_TOOLS_ALLOW_PUBLIC_SHARING = (
     == "true"
 )
 
-
 USER_PERMISSIONS_NOTES_ALLOW_SHARING = (
-    os.environ.get("USER_PERMISSIONS_NOTES_ALLOW_PUBLIC_SHARING", "False").lower()
-    == "true"
+    os.environ.get("USER_PERMISSIONS_NOTES_ALLOW_SHARING", "False").lower() == "true"
 )
 
 USER_PERMISSIONS_NOTES_ALLOW_PUBLIC_SHARING = (
@@ -1965,7 +1898,6 @@ Output:
 #### Output:
 """
 
-
 VOICE_MODE_PROMPT_TEMPLATE = PersistentConfig(
     "VOICE_MODE_PROMPT_TEMPLATE",
     "task.voice.prompt_template",
@@ -2539,6 +2471,12 @@ MINERU_API_URL = PersistentConfig(
     os.environ.get("MINERU_API_URL", "http://localhost:8000"),
 )
 
+MINERU_API_TIMEOUT = PersistentConfig(
+    "MINERU_API_TIMEOUT",
+    "rag.mineru_api_timeout",
+    os.environ.get("MINERU_API_TIMEOUT", "300"),
+)
+
 MINERU_API_KEY = PersistentConfig(
     "MINERU_API_KEY",
     "rag.mineru_api_key",
@@ -2809,6 +2747,13 @@ RAG_EXTERNAL_RERANKER_API_KEY = PersistentConfig(
     os.environ.get("RAG_EXTERNAL_RERANKER_API_KEY", ""),
 )
 
+RAG_EXTERNAL_RERANKER_TIMEOUT = PersistentConfig(
+    "RAG_EXTERNAL_RERANKER_TIMEOUT",
+    "rag.external_reranker_timeout",
+    os.environ.get("RAG_EXTERNAL_RERANKER_TIMEOUT", ""),
+)
+
+
 RAG_TEXT_SPLITTER = PersistentConfig(
     "RAG_TEXT_SPLITTER",
     "rag.text_splitter",
@@ -2906,7 +2851,6 @@ ENABLE_RAG_LOCAL_WEB_FETCH = (
     os.getenv("ENABLE_RAG_LOCAL_WEB_FETCH", "False").lower() == "true"
 )
 
-
 DEFAULT_WEB_FETCH_FILTER_LIST = [
     "!169.254.169.254",
     "!fd00:ec2::254",
@@ -2924,7 +2868,6 @@ else:
     ]
 
 WEB_FETCH_FILTER_LIST = list(set(DEFAULT_WEB_FETCH_FILTER_LIST + web_fetch_filter_list))
-
 
 YOUTUBE_LOADER_LANGUAGE = PersistentConfig(
     "YOUTUBE_LOADER_LANGUAGE",
@@ -2988,7 +2931,7 @@ WEB_SEARCH_DOMAIN_FILTER_LIST = PersistentConfig(
 WEB_SEARCH_CONCURRENT_REQUESTS = PersistentConfig(
     "WEB_SEARCH_CONCURRENT_REQUESTS",
     "rag.web.search.concurrent_requests",
-    int(os.getenv("WEB_SEARCH_CONCURRENT_REQUESTS", "10")),
+    int(os.getenv("WEB_SEARCH_CONCURRENT_REQUESTS", "0")),
 )
 
 WEB_LOADER_ENGINE = PersistentConfig(
@@ -3002,6 +2945,13 @@ WEB_LOADER_CONCURRENT_REQUESTS = PersistentConfig(
     "rag.web.loader.concurrent_requests",
     int(os.getenv("WEB_LOADER_CONCURRENT_REQUESTS", "10")),
 )
+
+WEB_LOADER_TIMEOUT = PersistentConfig(
+    "WEB_LOADER_TIMEOUT",
+    "rag.web.loader.timeout",
+    os.getenv("WEB_LOADER_TIMEOUT", ""),
+)
+
 
 ENABLE_WEB_LOADER_SSL_VERIFICATION = PersistentConfig(
     "ENABLE_WEB_LOADER_SSL_VERIFICATION",
@@ -3025,6 +2975,12 @@ SEARXNG_QUERY_URL = PersistentConfig(
     "SEARXNG_QUERY_URL",
     "rag.web.search.searxng_query_url",
     os.getenv("SEARXNG_QUERY_URL", ""),
+)
+
+SEARXNG_LANGUAGE = PersistentConfig(
+    "SEARXNG_LANGUAGE",
+    "rag.web.search.searxng_language",
+    os.getenv("SEARXNG_LANGUAGE", "all"),
 )
 
 YACY_QUERY_URL = PersistentConfig(
@@ -3456,10 +3412,16 @@ COMFYUI_WORKFLOW = PersistentConfig(
     os.getenv("COMFYUI_WORKFLOW", COMFYUI_DEFAULT_WORKFLOW),
 )
 
+comfyui_workflow_nodes = os.getenv("COMFYUI_WORKFLOW_NODES", "")
+try:
+    comfyui_workflow_nodes = json.loads(comfyui_workflow_nodes)
+except json.JSONDecodeError:
+    comfyui_workflow_nodes = []
+
 COMFYUI_WORKFLOW_NODES = PersistentConfig(
-    "COMFYUI_WORKFLOW",
+    "COMFYUI_WORKFLOW_NODES",
     "image_generation.comfyui.nodes",
-    [],
+    comfyui_workflow_nodes,
 )
 
 IMAGES_OPENAI_API_BASE_URL = PersistentConfig(
@@ -3485,11 +3447,9 @@ try:
 except json.JSONDecodeError:
     images_openai_params = {}
 
-
 IMAGES_OPENAI_API_PARAMS = PersistentConfig(
     "IMAGES_OPENAI_API_PARAMS", "image_generation.openai.params", images_openai_params
 )
-
 
 IMAGES_GEMINI_API_BASE_URL = PersistentConfig(
     "IMAGES_GEMINI_API_BASE_URL",
@@ -3558,7 +3518,6 @@ IMAGES_EDIT_GEMINI_API_KEY = PersistentConfig(
     os.getenv("IMAGES_EDIT_GEMINI_API_KEY", GEMINI_API_KEY),
 )
 
-
 IMAGES_EDIT_COMFYUI_BASE_URL = PersistentConfig(
     "IMAGES_EDIT_COMFYUI_BASE_URL",
     "images.edit.comfyui.base_url",
@@ -3576,10 +3535,16 @@ IMAGES_EDIT_COMFYUI_WORKFLOW = PersistentConfig(
     os.getenv("IMAGES_EDIT_COMFYUI_WORKFLOW", ""),
 )
 
+images_edit_comfyui_workflow_nodes = os.getenv("IMAGES_EDIT_COMFYUI_WORKFLOW_NODES", "")
+try:
+    images_edit_comfyui_workflow_nodes = json.loads(images_edit_comfyui_workflow_nodes)
+except json.JSONDecodeError:
+    images_edit_comfyui_workflow_nodes = []
+
 IMAGES_EDIT_COMFYUI_WORKFLOW_NODES = PersistentConfig(
     "IMAGES_EDIT_COMFYUI_WORKFLOW_NODES",
     "images.edit.comfyui.nodes",
-    [],
+    images_edit_comfyui_workflow_nodes,
 )
 
 ####################################
@@ -3725,7 +3690,6 @@ AUDIO_TTS_OPENAI_PARAMS = PersistentConfig(
     "audio.tts.openai.params",
     audio_tts_openai_params,
 )
-
 
 AUDIO_TTS_API_KEY = PersistentConfig(
     "AUDIO_TTS_API_KEY",
@@ -3881,6 +3845,13 @@ LDAP_ATTRIBUTE_FOR_GROUPS = PersistentConfig(
 ####################################
 # Credit and Usage
 ####################################
+
+
+CREDIT_NO_CHARGE_EMPTY_RESPONSE = PersistentConfig(
+    "CREDIT_NO_CHARGE_EMPTY_RESPONSE",
+    "credit.no_charge_empty_response",
+    os.environ.get("CREDIT_NO_CHARGE_EMPTY_RESPONSE", "True").lower() == "true",
+)
 
 CREDIT_NO_CREDIT_MSG = PersistentConfig(
     "CREDIT_NO_CREDIT_MSG",

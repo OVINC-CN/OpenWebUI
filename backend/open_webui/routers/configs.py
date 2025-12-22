@@ -18,7 +18,6 @@ from open_webui.utils.tools import (
 from open_webui.utils.mcp.client import MCPClient
 from open_webui.models.oauth_sessions import OAuthSessions
 
-from open_webui.env import SRC_LOG_LEVELS
 
 from open_webui.utils.oauth import (
     get_discovery_urls,
@@ -32,7 +31,6 @@ from mcp.shared.auth import OAuthMetadata
 router = APIRouter()
 
 log = logging.getLogger(__name__)
-log.setLevel(SRC_LOG_LEVELS["MAIN"])
 
 
 ############################
@@ -543,6 +541,7 @@ async def get_banners(
 
 
 class UsageConfigForm(BaseModel):
+    CREDIT_NO_CHARGE_EMPTY_RESPONSE: bool = Field(default=False)
     CREDIT_NO_CREDIT_MSG: str = Field(default="余额不足，请前往 设置-积分 充值")
     CREDIT_EXCHANGE_RATIO: float = Field(default=1, gt=0)
     CREDIT_DEFAULT_CREDIT: float = Field(default=0, ge=0)
@@ -573,6 +572,7 @@ class UsageConfigForm(BaseModel):
 @router.get("/usage", response_model=UsageConfigForm)
 async def get_usage_config(request: Request, _=Depends(get_admin_user)):
     return {
+        "CREDIT_NO_CHARGE_EMPTY_RESPONSE": request.app.state.config.CREDIT_NO_CHARGE_EMPTY_RESPONSE,
         "CREDIT_NO_CREDIT_MSG": request.app.state.config.CREDIT_NO_CREDIT_MSG,
         "CREDIT_EXCHANGE_RATIO": request.app.state.config.CREDIT_EXCHANGE_RATIO,
         "CREDIT_DEFAULT_CREDIT": request.app.state.config.CREDIT_DEFAULT_CREDIT,
@@ -605,6 +605,9 @@ async def get_usage_config(request: Request, _=Depends(get_admin_user)):
 async def set_usage_config(
     request: Request, form_data: UsageConfigForm, _=Depends(get_admin_user)
 ):
+    request.app.state.config.CREDIT_NO_CHARGE_EMPTY_RESPONSE = (
+        form_data.CREDIT_NO_CHARGE_EMPTY_RESPONSE
+    )
     request.app.state.config.CREDIT_NO_CREDIT_MSG = form_data.CREDIT_NO_CREDIT_MSG
     request.app.state.config.CREDIT_EXCHANGE_RATIO = form_data.CREDIT_EXCHANGE_RATIO
     request.app.state.config.CREDIT_DEFAULT_CREDIT = form_data.CREDIT_DEFAULT_CREDIT
@@ -652,6 +655,7 @@ async def set_usage_config(
     request.app.state.config.ALIPAY_PRODUCT_CODE = form_data.ALIPAY_PRODUCT_CODE
 
     return {
+        "CREDIT_NO_CHARGE_EMPTY_RESPONSE": request.app.state.config.CREDIT_NO_CHARGE_EMPTY_RESPONSE,
         "CREDIT_NO_CREDIT_MSG": request.app.state.config.CREDIT_NO_CREDIT_MSG,
         "CREDIT_EXCHANGE_RATIO": request.app.state.config.CREDIT_EXCHANGE_RATIO,
         "CREDIT_DEFAULT_CREDIT": request.app.state.config.CREDIT_DEFAULT_CREDIT,

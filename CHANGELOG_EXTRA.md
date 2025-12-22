@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.42.1] - 2025.12.22
+
+### Added
+
+- 支持空响应时不计费 (管理员面板-设置-积分)
+- 积分统计面板支持通过用户名模糊筛选 (管理员面板-用户-积分统计)
+- 支持配置邮件发送邮箱 (管理员面板-设置-通用)
+
+### Changed
+
+- 对部分配置增加额外的校验和提示
+- 优化积分统计面板、积分日志、兑换码管理的加载性能
+- 合并官方 0.6.42 改动
+
+### Fixed
+
+- 修复部分场景频道消息加载失败的问题
+- 修复并发执行 DB 初始化的问题
+
 ## [0.6.41.1] - 2025.12.03
 
 ### Changed

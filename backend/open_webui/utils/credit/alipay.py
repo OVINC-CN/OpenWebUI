@@ -22,11 +22,11 @@ from open_webui.config import (
     ALIPAY_CALLBACK_HOST,
     ALIPAY_PRODUCT_CODE,
 )
-from open_webui.env import SRC_LOG_LEVELS
+from open_webui.env import GLOBAL_LOG_LEVEL
 from open_webui.utils.credit.utils import check_amount
 
 logger = logging.getLogger(__name__)
-logger.setLevel(SRC_LOG_LEVELS["MAIN"])
+logger.setLevel(GLOBAL_LOG_LEVEL)
 
 
 class AlipayClient:
