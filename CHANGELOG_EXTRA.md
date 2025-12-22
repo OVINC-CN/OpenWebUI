@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.43.2] - 2025.12.22
+
+### Fixed
+
+- 修复嵌入计费计算错误的问题
+
 ## [0.6.43.1] - 2025.12.22
 
 ### Changed
