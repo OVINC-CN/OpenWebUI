@@ -1424,11 +1424,7 @@ USER_PERMISSIONS = PersistentConfig(
     DEFAULT_USER_PERMISSIONS,
 )
 
-ENABLE_FOLDERS = PersistentConfig(
-    "ENABLE_FOLDERS",
-    "folders.enable",
-    os.environ.get("ENABLE_FOLDERS", "True").lower() == "true",
-)
+ENABLE_FOLDERS = PersistentConfig("ENABLE_FOLDERS", "folders.enable", True)
 
 ENABLE_EVALUATION_ARENA_MODELS = PersistentConfig(
     "ENABLE_EVALUATION_ARENA_MODELS",
@@ -1471,24 +1467,6 @@ BYPASS_ADMIN_ACCESS_CONTROL = (
 
 ENABLE_ADMIN_CHAT_ACCESS = (
     os.environ.get("ENABLE_ADMIN_CHAT_ACCESS", "True").lower() == "true"
-)
-
-ENABLE_COMMUNITY_SHARING = PersistentConfig(
-    "ENABLE_COMMUNITY_SHARING",
-    "ui.enable_community_sharing",
-    os.environ.get("ENABLE_COMMUNITY_SHARING", "True").lower() == "true",
-)
-
-ENABLE_MESSAGE_RATING = PersistentConfig(
-    "ENABLE_MESSAGE_RATING",
-    "ui.enable_message_rating",
-    os.environ.get("ENABLE_MESSAGE_RATING", "True").lower() == "true",
-)
-
-ENABLE_USER_WEBHOOKS = PersistentConfig(
-    "ENABLE_USER_WEBHOOKS",
-    "ui.enable_user_webhooks",
-    os.environ.get("ENABLE_USER_WEBHOOKS", "True").lower() == "true",
 )
 
 # FastAPI / AnyIO settings

@@ -20,7 +20,6 @@
 	import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
 	import XMark from '$lib/components/icons/XMark.svelte';
 	import ModelSelector from './ModelSelector.svelte';
-	import Model from '../Evaluations/Model.svelte';
 
 	export let show = false;
 	export let initHandler = () => {};
