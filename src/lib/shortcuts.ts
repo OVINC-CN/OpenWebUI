@@ -35,7 +35,6 @@ export enum Shortcut {
 
 	//Message
 	GENERATE_MESSAGE_PAIR = 'generateMessagePair',
-	REGENERATE_RESPONSE = 'regenerateResponse',
 	COPY_LAST_CODE_BLOCK = 'copyLastCodeBlock',
 	COPY_LAST_RESPONSE = 'copyLastResponse',
 	STOP_GENERATING = 'stopGenerating'
@@ -125,11 +124,6 @@ export const shortcuts: ShortcutRegistry = {
 		keys: ['mod', 'shift', 'Enter'],
 		category: 'Message',
 		tooltip: 'Only active when the chat input is in focus.'
-	},
-	[Shortcut.REGENERATE_RESPONSE]: {
-		name: 'Regenerate Response',
-		keys: ['mod', 'R'],
-		category: 'Message'
 	},
 	[Shortcut.STOP_GENERATING]: {
 		name: 'Stop Generating',
