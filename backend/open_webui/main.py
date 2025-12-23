@@ -107,22 +107,6 @@ from open_webui.config import (
     THREAD_POOL_SIZE,
     # Tool Server Configs
     TOOL_SERVER_CONNECTIONS,
-    # Code Execution
-    ENABLE_CODE_EXECUTION,
-    CODE_EXECUTION_ENGINE,
-    CODE_EXECUTION_JUPYTER_URL,
-    CODE_EXECUTION_JUPYTER_AUTH,
-    CODE_EXECUTION_JUPYTER_AUTH_TOKEN,
-    CODE_EXECUTION_JUPYTER_AUTH_PASSWORD,
-    CODE_EXECUTION_JUPYTER_TIMEOUT,
-    ENABLE_CODE_INTERPRETER,
-    CODE_INTERPRETER_ENGINE,
-    CODE_INTERPRETER_PROMPT_TEMPLATE,
-    CODE_INTERPRETER_JUPYTER_URL,
-    CODE_INTERPRETER_JUPYTER_AUTH,
-    CODE_INTERPRETER_JUPYTER_AUTH_TOKEN,
-    CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD,
-    CODE_INTERPRETER_JUPYTER_TIMEOUT,
     # Retrieval
     RAG_TEMPLATE,
     RAG_FULL_CONTEXT,
@@ -295,9 +279,6 @@ from open_webui.config import (
     CREDIT_NO_CREDIT_MSG,
     USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE,
     USAGE_DEFAULT_ENCODING_MODEL,
-    USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE,
-    USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE,
-    USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE,
     USAGE_CALCULATE_FEATURE_TOOL_SERVER_PRICE,
     EZFP_ENDPOINT,
     EZFP_PID,
@@ -849,36 +830,6 @@ app.state.RERANKING_FUNCTION = get_reranking_function(
 
 ########################################
 #
-# CODE EXECUTION
-#
-########################################
-
-app.state.config.ENABLE_CODE_EXECUTION = ENABLE_CODE_EXECUTION
-app.state.config.CODE_EXECUTION_ENGINE = CODE_EXECUTION_ENGINE
-app.state.config.CODE_EXECUTION_JUPYTER_URL = CODE_EXECUTION_JUPYTER_URL
-app.state.config.CODE_EXECUTION_JUPYTER_AUTH = CODE_EXECUTION_JUPYTER_AUTH
-app.state.config.CODE_EXECUTION_JUPYTER_AUTH_TOKEN = CODE_EXECUTION_JUPYTER_AUTH_TOKEN
-app.state.config.CODE_EXECUTION_JUPYTER_AUTH_PASSWORD = (
-    CODE_EXECUTION_JUPYTER_AUTH_PASSWORD
-)
-app.state.config.CODE_EXECUTION_JUPYTER_TIMEOUT = CODE_EXECUTION_JUPYTER_TIMEOUT
-
-app.state.config.ENABLE_CODE_INTERPRETER = ENABLE_CODE_INTERPRETER
-app.state.config.CODE_INTERPRETER_ENGINE = CODE_INTERPRETER_ENGINE
-app.state.config.CODE_INTERPRETER_PROMPT_TEMPLATE = CODE_INTERPRETER_PROMPT_TEMPLATE
-
-app.state.config.CODE_INTERPRETER_JUPYTER_URL = CODE_INTERPRETER_JUPYTER_URL
-app.state.config.CODE_INTERPRETER_JUPYTER_AUTH = CODE_INTERPRETER_JUPYTER_AUTH
-app.state.config.CODE_INTERPRETER_JUPYTER_AUTH_TOKEN = (
-    CODE_INTERPRETER_JUPYTER_AUTH_TOKEN
-)
-app.state.config.CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD = (
-    CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD
-)
-app.state.config.CODE_INTERPRETER_JUPYTER_TIMEOUT = CODE_INTERPRETER_JUPYTER_TIMEOUT
-
-########################################
-#
 # TASKS
 #
 ########################################
@@ -929,15 +880,6 @@ app.state.config.USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE = (
 app.state.config.USAGE_DEFAULT_ENCODING_MODEL = USAGE_DEFAULT_ENCODING_MODEL
 app.state.config.USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE = (
     USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE
-)
-app.state.config.USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE = (
-    USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE
-)
-app.state.config.USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE = (
-    USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE
-)
-app.state.config.USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE = (
-    USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE
 )
 app.state.config.USAGE_CALCULATE_FEATURE_TOOL_SERVER_PRICE = (
     USAGE_CALCULATE_FEATURE_TOOL_SERVER_PRICE
@@ -1654,8 +1596,6 @@ async def get_app_config(request: Request):
                 {
                     "enable_direct_connections": app.state.config.ENABLE_DIRECT_CONNECTIONS,
                     "enable_folders": app.state.config.ENABLE_FOLDERS,
-                    "enable_code_execution": app.state.config.ENABLE_CODE_EXECUTION,
-                    "enable_code_interpreter": app.state.config.ENABLE_CODE_INTERPRETER,
                     "enable_autocomplete_generation": app.state.config.ENABLE_AUTOCOMPLETE_GENERATION,
                     "enable_admin_export": ENABLE_ADMIN_EXPORT,
                     "enable_admin_chat_access": ENABLE_ADMIN_CHAT_ACCESS,
@@ -1685,9 +1625,6 @@ async def get_app_config(request: Request):
                 "default_pinned_models": app.state.config.DEFAULT_PINNED_MODELS,
                 "default_prompt_suggestions": app.state.config.DEFAULT_PROMPT_SUGGESTIONS,
                 "user_count": user_count,
-                "code": {
-                    "engine": app.state.config.CODE_EXECUTION_ENGINE,
-                },
                 "file": {
                     "max_size": app.state.config.FILE_MAX_SIZE,
                     "max_count": app.state.config.FILE_MAX_COUNT,

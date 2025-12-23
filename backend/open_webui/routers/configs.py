@@ -348,114 +348,6 @@ async def verify_tool_servers_config(
 
 
 ############################
-# CodeInterpreterConfig
-############################
-class CodeInterpreterConfigForm(BaseModel):
-    ENABLE_CODE_EXECUTION: bool
-    CODE_EXECUTION_ENGINE: str
-    CODE_EXECUTION_JUPYTER_URL: Optional[str]
-    CODE_EXECUTION_JUPYTER_AUTH: Optional[str]
-    CODE_EXECUTION_JUPYTER_AUTH_TOKEN: Optional[str]
-    CODE_EXECUTION_JUPYTER_AUTH_PASSWORD: Optional[str]
-    CODE_EXECUTION_JUPYTER_TIMEOUT: Optional[int]
-    ENABLE_CODE_INTERPRETER: bool
-    CODE_INTERPRETER_ENGINE: str
-    CODE_INTERPRETER_PROMPT_TEMPLATE: Optional[str]
-    CODE_INTERPRETER_JUPYTER_URL: Optional[str]
-    CODE_INTERPRETER_JUPYTER_AUTH: Optional[str]
-    CODE_INTERPRETER_JUPYTER_AUTH_TOKEN: Optional[str]
-    CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD: Optional[str]
-    CODE_INTERPRETER_JUPYTER_TIMEOUT: Optional[int]
-
-
-@router.get("/code_execution", response_model=CodeInterpreterConfigForm)
-async def get_code_execution_config(request: Request, user=Depends(get_admin_user)):
-    return {
-        "ENABLE_CODE_EXECUTION": request.app.state.config.ENABLE_CODE_EXECUTION,
-        "CODE_EXECUTION_ENGINE": request.app.state.config.CODE_EXECUTION_ENGINE,
-        "CODE_EXECUTION_JUPYTER_URL": request.app.state.config.CODE_EXECUTION_JUPYTER_URL,
-        "CODE_EXECUTION_JUPYTER_AUTH": request.app.state.config.CODE_EXECUTION_JUPYTER_AUTH,
-        "CODE_EXECUTION_JUPYTER_AUTH_TOKEN": request.app.state.config.CODE_EXECUTION_JUPYTER_AUTH_TOKEN,
-        "CODE_EXECUTION_JUPYTER_AUTH_PASSWORD": request.app.state.config.CODE_EXECUTION_JUPYTER_AUTH_PASSWORD,
-        "CODE_EXECUTION_JUPYTER_TIMEOUT": request.app.state.config.CODE_EXECUTION_JUPYTER_TIMEOUT,
-        "ENABLE_CODE_INTERPRETER": request.app.state.config.ENABLE_CODE_INTERPRETER,
-        "CODE_INTERPRETER_ENGINE": request.app.state.config.CODE_INTERPRETER_ENGINE,
-        "CODE_INTERPRETER_PROMPT_TEMPLATE": request.app.state.config.CODE_INTERPRETER_PROMPT_TEMPLATE,
-        "CODE_INTERPRETER_JUPYTER_URL": request.app.state.config.CODE_INTERPRETER_JUPYTER_URL,
-        "CODE_INTERPRETER_JUPYTER_AUTH": request.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH,
-        "CODE_INTERPRETER_JUPYTER_AUTH_TOKEN": request.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH_TOKEN,
-        "CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD": request.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD,
-        "CODE_INTERPRETER_JUPYTER_TIMEOUT": request.app.state.config.CODE_INTERPRETER_JUPYTER_TIMEOUT,
-    }
-
-
-@router.post("/code_execution", response_model=CodeInterpreterConfigForm)
-async def set_code_execution_config(
-    request: Request, form_data: CodeInterpreterConfigForm, user=Depends(get_admin_user)
-):
-    request.app.state.config.ENABLE_CODE_EXECUTION = form_data.ENABLE_CODE_EXECUTION
-
-    request.app.state.config.CODE_EXECUTION_ENGINE = form_data.CODE_EXECUTION_ENGINE
-    request.app.state.config.CODE_EXECUTION_JUPYTER_URL = (
-        form_data.CODE_EXECUTION_JUPYTER_URL
-    )
-    request.app.state.config.CODE_EXECUTION_JUPYTER_AUTH = (
-        form_data.CODE_EXECUTION_JUPYTER_AUTH
-    )
-    request.app.state.config.CODE_EXECUTION_JUPYTER_AUTH_TOKEN = (
-        form_data.CODE_EXECUTION_JUPYTER_AUTH_TOKEN
-    )
-    request.app.state.config.CODE_EXECUTION_JUPYTER_AUTH_PASSWORD = (
-        form_data.CODE_EXECUTION_JUPYTER_AUTH_PASSWORD
-    )
-    request.app.state.config.CODE_EXECUTION_JUPYTER_TIMEOUT = (
-        form_data.CODE_EXECUTION_JUPYTER_TIMEOUT
-    )
-
-    request.app.state.config.ENABLE_CODE_INTERPRETER = form_data.ENABLE_CODE_INTERPRETER
-    request.app.state.config.CODE_INTERPRETER_ENGINE = form_data.CODE_INTERPRETER_ENGINE
-    request.app.state.config.CODE_INTERPRETER_PROMPT_TEMPLATE = (
-        form_data.CODE_INTERPRETER_PROMPT_TEMPLATE
-    )
-
-    request.app.state.config.CODE_INTERPRETER_JUPYTER_URL = (
-        form_data.CODE_INTERPRETER_JUPYTER_URL
-    )
-
-    request.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH = (
-        form_data.CODE_INTERPRETER_JUPYTER_AUTH
-    )
-
-    request.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH_TOKEN = (
-        form_data.CODE_INTERPRETER_JUPYTER_AUTH_TOKEN
-    )
-    request.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD = (
-        form_data.CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD
-    )
-    request.app.state.config.CODE_INTERPRETER_JUPYTER_TIMEOUT = (
-        form_data.CODE_INTERPRETER_JUPYTER_TIMEOUT
-    )
-
-    return {
-        "ENABLE_CODE_EXECUTION": request.app.state.config.ENABLE_CODE_EXECUTION,
-        "CODE_EXECUTION_ENGINE": request.app.state.config.CODE_EXECUTION_ENGINE,
-        "CODE_EXECUTION_JUPYTER_URL": request.app.state.config.CODE_EXECUTION_JUPYTER_URL,
-        "CODE_EXECUTION_JUPYTER_AUTH": request.app.state.config.CODE_EXECUTION_JUPYTER_AUTH,
-        "CODE_EXECUTION_JUPYTER_AUTH_TOKEN": request.app.state.config.CODE_EXECUTION_JUPYTER_AUTH_TOKEN,
-        "CODE_EXECUTION_JUPYTER_AUTH_PASSWORD": request.app.state.config.CODE_EXECUTION_JUPYTER_AUTH_PASSWORD,
-        "CODE_EXECUTION_JUPYTER_TIMEOUT": request.app.state.config.CODE_EXECUTION_JUPYTER_TIMEOUT,
-        "ENABLE_CODE_INTERPRETER": request.app.state.config.ENABLE_CODE_INTERPRETER,
-        "CODE_INTERPRETER_ENGINE": request.app.state.config.CODE_INTERPRETER_ENGINE,
-        "CODE_INTERPRETER_PROMPT_TEMPLATE": request.app.state.config.CODE_INTERPRETER_PROMPT_TEMPLATE,
-        "CODE_INTERPRETER_JUPYTER_URL": request.app.state.config.CODE_INTERPRETER_JUPYTER_URL,
-        "CODE_INTERPRETER_JUPYTER_AUTH": request.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH,
-        "CODE_INTERPRETER_JUPYTER_AUTH_TOKEN": request.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH_TOKEN,
-        "CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD": request.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD,
-        "CODE_INTERPRETER_JUPYTER_TIMEOUT": request.app.state.config.CODE_INTERPRETER_JUPYTER_TIMEOUT,
-    }
-
-
-############################
 # SetDefaultModels
 ############################
 class ModelsConfigForm(BaseModel):
@@ -548,9 +440,6 @@ class UsageConfigForm(BaseModel):
     USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE: str = Field(default="")
     USAGE_DEFAULT_ENCODING_MODEL: str = Field(default="gpt-4o")
     USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE: float = Field(default=0, ge=0)
-    USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE: float = Field(default=0, ge=0)
-    USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE: float = Field(default=0, ge=0)
-    USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE: float = Field(default=0, ge=0)
     USAGE_CALCULATE_FEATURE_TOOL_SERVER_PRICE: float = Field(default=0, ge=0)
     USAGE_CALCULATE_MINIMUM_COST: float = Field(default=0, ge=0)
     USAGE_CUSTOM_PRICE_CONFIG: str = Field(default="[]")
@@ -579,9 +468,6 @@ async def get_usage_config(request: Request, _=Depends(get_admin_user)):
         "USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE": request.app.state.config.USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE,
         "USAGE_DEFAULT_ENCODING_MODEL": request.app.state.config.USAGE_DEFAULT_ENCODING_MODEL,
         "USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE": request.app.state.config.USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE,
-        "USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE": request.app.state.config.USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE,
-        "USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE": request.app.state.config.USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE,
-        "USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE": request.app.state.config.USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE,
         "USAGE_CALCULATE_FEATURE_TOOL_SERVER_PRICE": request.app.state.config.USAGE_CALCULATE_FEATURE_TOOL_SERVER_PRICE,
         "USAGE_CALCULATE_MINIMUM_COST": request.app.state.config.USAGE_CALCULATE_MINIMUM_COST,
         "USAGE_CUSTOM_PRICE_CONFIG": request.app.state.config.USAGE_CUSTOM_PRICE_CONFIG,
@@ -620,15 +506,6 @@ async def set_usage_config(
     request.app.state.config.USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE = (
         form_data.USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE
     )
-    request.app.state.config.USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE = (
-        form_data.USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE
-    )
-    request.app.state.config.USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE = (
-        form_data.USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE
-    )
-    request.app.state.config.USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE = (
-        form_data.USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE
-    )
     request.app.state.config.USAGE_CALCULATE_FEATURE_TOOL_SERVER_PRICE = (
         form_data.USAGE_CALCULATE_FEATURE_TOOL_SERVER_PRICE
     )
@@ -662,9 +539,6 @@ async def set_usage_config(
         "USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE": request.app.state.config.USAGE_CALCULATE_MODEL_PREFIX_TO_REMOVE,
         "USAGE_DEFAULT_ENCODING_MODEL": request.app.state.config.USAGE_DEFAULT_ENCODING_MODEL,
         "USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE": request.app.state.config.USAGE_CALCULATE_DEFAULT_EMBEDDING_PRICE,
-        "USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE": request.app.state.config.USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE,
-        "USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE": request.app.state.config.USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE,
-        "USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE": request.app.state.config.USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE,
         "USAGE_CALCULATE_FEATURE_TOOL_SERVER_PRICE": request.app.state.config.USAGE_CALCULATE_FEATURE_TOOL_SERVER_PRICE,
         "USAGE_CALCULATE_MINIMUM_COST": request.app.state.config.USAGE_CALCULATE_MINIMUM_COST,
         "USAGE_CUSTOM_PRICE_CONFIG": request.app.state.config.USAGE_CUSTOM_PRICE_CONFIG,

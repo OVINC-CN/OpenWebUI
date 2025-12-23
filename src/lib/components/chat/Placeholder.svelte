@@ -50,10 +50,6 @@
 
 	export let showCommands = false;
 
-	export let imageGenerationEnabled = false;
-	export let codeInterpreterEnabled = false;
-	export let webSearchEnabled = false;
-
 	export let onUpload: Function = (e) => {};
 	export let onSelect = (e) => {};
 	export let onChange = (e) => {};
@@ -207,9 +203,6 @@
 					bind:autoScroll
 					bind:selectedToolIds
 					bind:selectedFilterIds
-					bind:imageGenerationEnabled
-					bind:codeInterpreterEnabled
-					bind:webSearchEnabled
 					bind:atSelectedModel
 					bind:showCommands
 					{toolServers}

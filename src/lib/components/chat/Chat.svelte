@@ -69,7 +69,7 @@
 		updateChatFolderIdById
 	} from '$lib/apis/chats';
 	import { generateOpenAIChatCompletion } from '$lib/apis/openai';
-	import { processWeb, processWebSearch, processYoutubeVideo } from '$lib/apis/retrieval';
+	import { processWeb, processYoutubeVideo } from '$lib/apis/retrieval';
 	import { getAndUpdateUserLocation, getUserSettings } from '$lib/apis/users';
 	import {
 		chatCompleted,
@@ -135,9 +135,6 @@
 
 	let selectedToolIds = [];
 	let selectedFilterIds = [];
-	let imageGenerationEnabled = false;
-	let webSearchEnabled = false;
-	let codeInterpreterEnabled = false;
 
 	let showCommands = false;
 
@@ -173,8 +170,6 @@
 		files = [];
 		selectedToolIds = [];
 		selectedFilterIds = [];
-		webSearchEnabled = false;
-		imageGenerationEnabled = false;
 
 		const storageChatInput = sessionStorage.getItem(
 			`chat-input${chatIdProp ? `-${chatIdProp}` : ''}`
@@ -196,9 +191,6 @@
 						files = input.files;
 						selectedToolIds = input.selectedToolIds;
 						selectedFilterIds = input.selectedFilterIds;
-						webSearchEnabled = input.webSearchEnabled;
-						imageGenerationEnabled = input.imageGenerationEnabled;
-						codeInterpreterEnabled = input.codeInterpreterEnabled;
 					}
 				} catch (e) {}
 			} else {
@@ -256,9 +248,6 @@
 	const resetInput = () => {
 		selectedToolIds = [];
 		selectedFilterIds = [];
-		webSearchEnabled = false;
-		imageGenerationEnabled = false;
-		codeInterpreterEnabled = false;
 
 		if (selectedModelIds.filter((id) => id).length > 0) {
 			setDefaults();
@@ -292,21 +281,6 @@
 				selectedFilterIds = model.info.meta.defaultFilterIds.filter((id) =>
 					model?.filters?.find((f) => f.id === id)
 				);
-			}
-
-			// Set Default Features
-			if (model?.info?.meta?.defaultFeatureIds) {
-				if (model.info?.meta?.capabilities?.['image_generation']) {
-					imageGenerationEnabled = model.info.meta.defaultFeatureIds.includes('image_generation');
-				}
-
-				if (model.info?.meta?.capabilities?.['web_search']) {
-					webSearchEnabled = model.info.meta.defaultFeatureIds.includes('web_search');
-				}
-
-				if (model.info?.meta?.capabilities?.['code_interpreter']) {
-					codeInterpreterEnabled = model.info.meta.defaultFeatureIds.includes('code_interpreter');
-				}
 			}
 		}
 	};
@@ -404,15 +378,7 @@
 							message.code_executions = [];
 						}
 
-						const existingCodeExecutionIndex = message.code_executions.findIndex(
-							(execution) => execution.id === data.id
-						);
-
-						if (existingCodeExecutionIndex !== -1) {
-							message.code_executions[existingCodeExecutionIndex] = data;
-						} else {
-							message.code_executions.push(data);
-						}
+						message.code_executions.push(data);
 
 						message.code_executions = message.code_executions;
 					} else {
@@ -578,9 +544,6 @@
 			files = [];
 			selectedToolIds = [];
 			selectedFilterIds = [];
-			webSearchEnabled = false;
-			imageGenerationEnabled = false;
-			codeInterpreterEnabled = false;
 
 			try {
 				const input = JSON.parse(storageChatInput);
@@ -590,9 +553,6 @@
 					files = input.files;
 					selectedToolIds = input.selectedToolIds;
 					selectedFilterIds = input.selectedFilterIds;
-					webSearchEnabled = input.webSearchEnabled;
-					imageGenerationEnabled = input.imageGenerationEnabled;
-					codeInterpreterEnabled = input.codeInterpreterEnabled;
 				}
 			} catch (e) {}
 		}
@@ -995,26 +955,6 @@
 
 		chatFiles = [];
 		params = {};
-
-		if ($page.url.searchParams.get('youtube')) {
-			await uploadWeb(`https://www.youtube.com/watch?v=${$page.url.searchParams.get('youtube')}`);
-		}
-
-		if ($page.url.searchParams.get('load-url')) {
-			await uploadWeb($page.url.searchParams.get('load-url'));
-		}
-
-		if ($page.url.searchParams.get('web-search') === 'true') {
-			webSearchEnabled = true;
-		}
-
-		if ($page.url.searchParams.get('image-generation') === 'true') {
-			imageGenerationEnabled = true;
-		}
-
-		if ($page.url.searchParams.get('code-interpreter') === 'true') {
-			codeInterpreterEnabled = true;
-		}
 
 		if ($page.url.searchParams.get('tools')) {
 			selectedToolIds = $page.url.searchParams
@@ -1772,44 +1712,7 @@
 	};
 
 	const getFeatures = () => {
-		let features = {};
-
-		if ($config?.features)
-			features = {
-				voice: $showCallOverlay,
-				image_generation:
-					$config?.features?.enable_image_generation &&
-					($user?.role === 'admin' || $user?.permissions?.features?.image_generation)
-						? imageGenerationEnabled
-						: false,
-				code_interpreter:
-					$config?.features?.enable_code_interpreter &&
-					($user?.role === 'admin' || $user?.permissions?.features?.code_interpreter)
-						? codeInterpreterEnabled
-						: false,
-				web_search:
-					$config?.features?.enable_web_search &&
-					($user?.role === 'admin' || $user?.permissions?.features?.web_search)
-						? webSearchEnabled
-						: false
-			};
-
-		const currentModels = atSelectedModel?.id ? [atSelectedModel.id] : selectedModels;
-		if (
-			currentModels.filter(
-				(model) => $models.find((m) => m.id === model)?.info?.meta?.capabilities?.web_search ?? true
-			).length === currentModels.length
-		) {
-			if ($config?.features?.enable_web_search && ($settings?.webSearch ?? false) === 'always') {
-				features = { ...features, web_search: true };
-			}
-		}
-
-		if ($settings?.memory ?? false) {
-			features = { ...features, memory: true };
-		}
-
-		return features;
+		return {};
 	};
 
 	const sendMessageSocket = async (model, _messages, _history, responseMessageId, _chatId) => {
@@ -2518,9 +2421,6 @@
 									bind:autoScroll
 									bind:selectedToolIds
 									bind:selectedFilterIds
-									bind:imageGenerationEnabled
-									bind:codeInterpreterEnabled
-									bind:webSearchEnabled
 									bind:atSelectedModel
 									bind:showCommands
 									toolServers={$toolServers}
@@ -2560,9 +2460,6 @@
 									bind:autoScroll
 									bind:selectedToolIds
 									bind:selectedFilterIds
-									bind:imageGenerationEnabled
-									bind:codeInterpreterEnabled
-									bind:webSearchEnabled
 									bind:atSelectedModel
 									bind:showCommands
 									toolServers={$toolServers}

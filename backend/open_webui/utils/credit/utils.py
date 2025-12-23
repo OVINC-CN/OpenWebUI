@@ -10,9 +10,6 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 
 from open_webui.config import (
-    USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE,
-    USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE,
-    USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE,
     USAGE_CALCULATE_FEATURE_TOOL_SERVER_PRICE,
     USAGE_CALCULATE_DEFAULT_TOKEN_PRICE,
     USAGE_CALCULATE_DEFAULT_REQUEST_PRICE,
@@ -141,22 +138,6 @@ def get_feature_price(features: Union[set, list]) -> Decimal:
     price = Decimal(0)
     for feature in features:
         match feature:
-            case "image_generation":
-                price += (
-                    Decimal(USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE.value) / 1000 / 1000
-                )
-            case "code_interpreter":
-                price += (
-                    Decimal(USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE.value)
-                    / 1000
-                    / 1000
-                )
-            case "web_search":
-                price += (
-                    Decimal(USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE.value)
-                    / 1000
-                    / 1000
-                )
             case "direct_tool_servers":
                 price += (
                     Decimal(USAGE_CALCULATE_FEATURE_TOOL_SERVER_PRICE.value)

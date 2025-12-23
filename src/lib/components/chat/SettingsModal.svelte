@@ -94,7 +94,6 @@
 				'always play notification sound',
 				'alwayscollapsecodeblocks',
 				'alwaysexpanddetails',
-				'alwaysonwebsearch',
 				'alwaysplaynotificationsound',
 				'android',
 				'auto chat tags',
@@ -202,9 +201,7 @@
 				'widescreen mode',
 				'widescreenmode',
 				'whatsnew',
-				'whats new',
-				'websearchinchat',
-				'web search in chat'
+				'whats new'
 			]
 		},
 		{

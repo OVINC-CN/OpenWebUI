@@ -106,9 +106,6 @@
 	let capabilities = {
 		vision: true,
 		file_upload: true,
-		web_search: true,
-		image_generation: true,
-		code_interpreter: true,
 		citations: true,
 		status_updates: true,
 		usage: undefined
@@ -932,27 +929,6 @@
 									bind:selectedActionIds={actionIds}
 									actions={($functions ?? []).filter((func) => func.type === 'action')}
 								/>
-							</div>
-						{/if}
-					{/if}
-
-					<hr class=" border-gray-100/30 dark:border-gray-850/30 my-2" />
-
-					<div class="my-2">
-						<Capabilities bind:capabilities />
-					</div>
-
-					{#if Object.keys(capabilities).filter((key) => capabilities[key]).length > 0}
-						{@const availableFeatures = Object.entries(capabilities)
-							.filter(
-								([key, value]) =>
-									value && ['web_search', 'code_interpreter', 'image_generation'].includes(key)
-							)
-							.map(([key, value]) => key)}
-
-						{#if availableFeatures.length > 0}
-							<div class="my-2">
-								<DefaultFeatures {availableFeatures} bind:featureIds={defaultFeatureIds} />
 							</div>
 						{/if}
 					{/if}
