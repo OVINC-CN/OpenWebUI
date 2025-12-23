@@ -1426,10 +1426,6 @@ USER_PERMISSIONS_FEATURES_NOTES = (
     os.environ.get("USER_PERMISSIONS_FEATURES_NOTES", "True").lower() == "true"
 )
 
-USER_PERMISSIONS_FEATURES_CHANNELS = (
-    os.environ.get("USER_PERMISSIONS_FEATURES_CHANNELS", "True").lower() == "true"
-)
-
 USER_PERMISSIONS_FEATURES_API_KEYS = (
     os.environ.get("USER_PERMISSIONS_FEATURES_API_KEYS", "False").lower() == "true"
 )
@@ -1485,7 +1481,6 @@ DEFAULT_USER_PERMISSIONS = {
         "api_keys": USER_PERMISSIONS_FEATURES_API_KEYS,
         "notes": USER_PERMISSIONS_FEATURES_NOTES,
         "folders": USER_PERMISSIONS_FEATURES_FOLDERS,
-        "channels": USER_PERMISSIONS_FEATURES_CHANNELS,
         "direct_tool_servers": USER_PERMISSIONS_FEATURES_DIRECT_TOOL_SERVERS,
         # Chat features
         "web_search": USER_PERMISSIONS_FEATURES_WEB_SEARCH,
@@ -1504,12 +1499,6 @@ ENABLE_FOLDERS = PersistentConfig(
     "ENABLE_FOLDERS",
     "folders.enable",
     os.environ.get("ENABLE_FOLDERS", "True").lower() == "true",
-)
-
-ENABLE_CHANNELS = PersistentConfig(
-    "ENABLE_CHANNELS",
-    "channels.enable",
-    os.environ.get("ENABLE_CHANNELS", "False").lower() == "true",
 )
 
 ENABLE_NOTES = PersistentConfig(

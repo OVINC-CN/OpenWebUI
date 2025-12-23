@@ -62,7 +62,6 @@ from open_webui.routers import (
     pipelines,
     tasks,
     auths,
-    channels,
     chats,
     notes,
     folders,
@@ -226,7 +225,6 @@ from open_webui.config import (
     ENABLE_API_KEYS_ENDPOINT_RESTRICTIONS,
     API_KEYS_ALLOWED_ENDPOINTS,
     ENABLE_FOLDERS,
-    ENABLE_CHANNELS,
     ENABLE_NOTES,
     ENABLE_COMMUNITY_SHARING,
     ENABLE_MESSAGE_RATING,
@@ -680,7 +678,6 @@ app.state.config.BANNERS = WEBUI_BANNERS
 
 
 app.state.config.ENABLE_FOLDERS = ENABLE_FOLDERS
-app.state.config.ENABLE_CHANNELS = ENABLE_CHANNELS
 app.state.config.ENABLE_NOTES = ENABLE_NOTES
 app.state.config.ENABLE_COMMUNITY_SHARING = ENABLE_COMMUNITY_SHARING
 app.state.config.ENABLE_MESSAGE_RATING = ENABLE_MESSAGE_RATING
@@ -1167,7 +1164,6 @@ app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 
 app.include_router(credit.router, prefix="/api/v1/credit", tags=["credit"])
 
-app.include_router(channels.router, prefix="/api/v1/channels", tags=["channels"])
 app.include_router(chats.router, prefix="/api/v1/chats", tags=["chats"])
 app.include_router(notes.router, prefix="/api/v1/notes", tags=["notes"])
 
@@ -1700,7 +1696,6 @@ async def get_app_config(request: Request):
                 {
                     "enable_direct_connections": app.state.config.ENABLE_DIRECT_CONNECTIONS,
                     "enable_folders": app.state.config.ENABLE_FOLDERS,
-                    "enable_channels": app.state.config.ENABLE_CHANNELS,
                     "enable_notes": app.state.config.ENABLE_NOTES,
                     "enable_code_execution": app.state.config.ENABLE_CODE_EXECUTION,
                     "enable_code_interpreter": app.state.config.ENABLE_CODE_INTERPRETER,
