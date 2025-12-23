@@ -96,39 +96,7 @@ def get_rf(
     external_reranker_timeout: str = "",
     auto_update: bool = RAG_RERANKING_MODEL_AUTO_UPDATE,
 ):
-    rf = None
-    # Convert timeout string to int or None (system default)
-    timeout_value = (
-        int(external_reranker_timeout) if external_reranker_timeout else None
-    )
-    if reranking_model:
-        if any(model in reranking_model for model in ["jinaai/jina-colbert-v2"]):
-            try:
-                from open_webui.retrieval.models.colbert import ColBERT
-
-                rf = ColBERT(
-                    get_model_path(reranking_model, auto_update),
-                    env="docker" if DOCKER else None,
-                )
-
-            except Exception as e:
-                log.error(f"ColBERT: {e}")
-                raise Exception(ERROR_MESSAGES.DEFAULT(e))
-        else:
-            try:
-                from open_webui.retrieval.models.external import ExternalReranker
-
-                rf = ExternalReranker(
-                    url=external_reranker_url,
-                    api_key=external_reranker_api_key,
-                    model=reranking_model,
-                    timeout=timeout_value,
-                )
-            except Exception as e:
-                log.error(f"ExternalReranking: {e}")
-                raise Exception(ERROR_MESSAGES.DEFAULT(e))
-
-    return rf
+    return None
 
 
 ##########################################

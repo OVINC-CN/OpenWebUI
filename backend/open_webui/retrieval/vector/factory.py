@@ -37,36 +37,14 @@ class Vector:
                     from open_webui.retrieval.vector.dbs.qdrant import QdrantClient
 
                     return QdrantClient()
-            case VectorType.PINECONE:
-                from open_webui.retrieval.vector.dbs.pinecone import PineconeClient
-
-                return PineconeClient()
-            case VectorType.S3VECTOR:
-                from open_webui.retrieval.vector.dbs.s3vector import S3VectorClient
-
-                return S3VectorClient()
-            case VectorType.OPENSEARCH:
-                from open_webui.retrieval.vector.dbs.opensearch import OpenSearchClient
-
-                return OpenSearchClient()
             case VectorType.PGVECTOR:
                 from open_webui.retrieval.vector.dbs.pgvector import PgvectorClient
 
                 return PgvectorClient()
-            case VectorType.ELASTICSEARCH:
-                from open_webui.retrieval.vector.dbs.elasticsearch import (
-                    ElasticsearchClient,
-                )
-
-                return ElasticsearchClient()
             case VectorType.CHROMA:
                 from open_webui.retrieval.vector.dbs.chroma import ChromaClient
 
                 return ChromaClient()
-            case VectorType.ORACLE23AI:
-                from open_webui.retrieval.vector.dbs.oracle23ai import Oracle23aiClient
-
-                return Oracle23aiClient()
             case VectorType.WEAVIATE:
                 from open_webui.retrieval.vector.dbs.weaviate import WeaviateClient
 
