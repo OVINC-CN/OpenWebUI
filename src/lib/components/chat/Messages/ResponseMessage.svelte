@@ -25,7 +25,6 @@
 		user
 	} from '$lib/stores';
 	import { synthesizeOpenAISpeech } from '$lib/apis/audio';
-	import { imageGenerations } from '$lib/apis/images';
 	import {
 		copyToClipboard as _copyToClipboard,
 		approximateToHumanReadable,
@@ -44,15 +43,12 @@
 	import Image from '$lib/components/common/Image.svelte';
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
 	import RateComment from './RateComment.svelte';
-	import Spinner from '$lib/components/common/Spinner.svelte';
-	import WebSearchResults from './ResponseMessage/WebSearchResults.svelte';
 	import Sparkles from '$lib/components/icons/Sparkles.svelte';
 
 	import DeleteConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
 
 	import Error from './Error.svelte';
 	import Citations from './Citations.svelte';
-	import CodeExecutions from './CodeExecutions.svelte';
 	import ContentRenderer from './ContentRenderer.svelte';
 	import { KokoroWorker } from '$lib/workers/KokoroWorker';
 	import FileItem from '$lib/components/common/FileItem.svelte';
@@ -388,28 +384,6 @@
 		edit = false;
 		editedContent = '';
 		await tick();
-	};
-
-	const generateImage = async (message: MessageType) => {
-		generatingImage = true;
-		const res = await imageGenerations(localStorage.token, message.content).catch((error) => {
-			toast.error(`${error}`);
-		});
-		console.log(res);
-
-		if (res) {
-			const files = res.map((image) => ({
-				type: 'image',
-				url: `${image.url}`
-			}));
-
-			saveMessage(message.id, {
-				...message,
-				files: files
-			});
-		}
-
-		generatingImage = false;
 	};
 
 	let feedbackLoading = false;
@@ -832,10 +806,6 @@
 									{readOnly}
 								/>
 							{/if}
-
-							{#if message.code_executions}
-								<CodeExecutions codeExecutions={message.code_executions} />
-							{/if}
 						</div>
 					</div>
 				</div>
@@ -1092,73 +1062,6 @@
 									</Tooltip>
 								{/if}
 
-								{#if $config?.features.enable_image_generation && ($user?.role === 'admin' || $user?.permissions?.features?.image_generation) && !readOnly}
-									<Tooltip content={$i18n.t('Generate Image')} placement="bottom">
-										<button
-											aria-label={$i18n.t('Generate Image')}
-											class="{isLastMessage || ($settings?.highContrastMode ?? false)
-												? 'visible'
-												: 'invisible group-hover:visible'}  p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition"
-											on:click={() => {
-												if (!generatingImage) {
-													generateImage(message);
-												}
-											}}
-										>
-											{#if generatingImage}
-												<svg
-													aria-hidden="true"
-													class=" w-4 h-4"
-													fill="currentColor"
-													viewBox="0 0 24 24"
-													xmlns="http://www.w3.org/2000/svg"
-												>
-													<style>
-														.spinner_S1WN {
-															animation: spinner_MGfb 0.8s linear infinite;
-															animation-delay: -0.8s;
-														}
-
-														.spinner_Km9P {
-															animation-delay: -0.65s;
-														}
-
-														.spinner_JApP {
-															animation-delay: -0.5s;
-														}
-
-														@keyframes spinner_MGfb {
-															93.75%,
-															100% {
-																opacity: 0.2;
-															}
-														}
-													</style>
-													<circle class="spinner_S1WN" cx="4" cy="12" r="3" />
-													<circle class="spinner_S1WN spinner_Km9P" cx="12" cy="12" r="3" />
-													<circle class="spinner_S1WN spinner_JApP" cx="20" cy="12" r="3" />
-												</svg>
-											{:else}
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													fill="none"
-													aria-hidden="true"
-													viewBox="0 0 24 24"
-													stroke-width="2.3"
-													stroke="currentColor"
-													class="w-4 h-4"
-												>
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-													/>
-												</svg>
-											{/if}
-										</button>
-									</Tooltip>
-								{/if}
-
 								{#if message.usage}
 									<Tooltip
 										content={message.usage
@@ -1205,84 +1108,6 @@
 								{/if}
 
 								{#if !readOnly}
-									{#if !$temporaryChatEnabled && ($config?.features.enable_message_rating ?? true) && ($user?.role === 'admin' || ($user?.permissions?.chat?.rate_response ?? true))}
-										<Tooltip content={$i18n.t('Good Response')} placement="bottom">
-											<button
-												aria-label={$i18n.t('Good Response')}
-												class="{isLastMessage || ($settings?.highContrastMode ?? false)
-													? 'visible'
-													: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg {(
-													message?.annotation?.rating ?? ''
-												).toString() === '1'
-													? 'bg-gray-100 dark:bg-gray-800'
-													: ''} dark:hover:text-white hover:text-black transition disabled:cursor-progress disabled:hover:bg-transparent"
-												disabled={feedbackLoading}
-												on:click={async () => {
-													await feedbackHandler(1);
-													window.setTimeout(() => {
-														document
-															.getElementById(`message-feedback-${message.id}`)
-															?.scrollIntoView();
-													}, 0);
-												}}
-											>
-												<svg
-													aria-hidden="true"
-													stroke="currentColor"
-													fill="none"
-													stroke-width="2.3"
-													viewBox="0 0 24 24"
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													class="w-4 h-4"
-													xmlns="http://www.w3.org/2000/svg"
-												>
-													<path
-														d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
-													/>
-												</svg>
-											</button>
-										</Tooltip>
-
-										<Tooltip content={$i18n.t('Bad Response')} placement="bottom">
-											<button
-												aria-label={$i18n.t('Bad Response')}
-												class="{isLastMessage || ($settings?.highContrastMode ?? false)
-													? 'visible'
-													: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg {(
-													message?.annotation?.rating ?? ''
-												).toString() === '-1'
-													? 'bg-gray-100 dark:bg-gray-800'
-													: ''} dark:hover:text-white hover:text-black transition disabled:cursor-progress disabled:hover:bg-transparent"
-												disabled={feedbackLoading}
-												on:click={async () => {
-													await feedbackHandler(-1);
-													window.setTimeout(() => {
-														document
-															.getElementById(`message-feedback-${message.id}`)
-															?.scrollIntoView();
-													}, 0);
-												}}
-											>
-												<svg
-													aria-hidden="true"
-													stroke="currentColor"
-													fill="none"
-													stroke-width="2.3"
-													viewBox="0 0 24 24"
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													class="w-4 h-4"
-													xmlns="http://www.w3.org/2000/svg"
-												>
-													<path
-														d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"
-													/>
-												</svg>
-											</button>
-										</Tooltip>
-									{/if}
-
 									{#if isLastMessage && ($user?.role === 'admin' || ($user?.permissions?.chat?.continue_response ?? true))}
 										<Tooltip content={$i18n.t('Continue Response')} placement="bottom">
 											<button

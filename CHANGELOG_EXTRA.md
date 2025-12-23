@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [25.0.1] - 2025.12.23
+
+### Changed
+
+- 代码精简 (移除笔记、频道、音频输入输出、网页搜索、图片生成、Ollama、竞技场)
+- 依赖精简 (移除 transformer)
+
 ## [0.6.43.2] - 2025.12.22
 
 ### Fixed

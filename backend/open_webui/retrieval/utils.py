@@ -2,15 +2,12 @@ import logging
 import os
 from typing import Awaitable, Optional, Union
 
-import requests
 import aiohttp
 import asyncio
 import hashlib
 from concurrent.futures import ThreadPoolExecutor
-import time
 import re
 
-from urllib.parse import quote
 from huggingface_hub import snapshot_download
 from langchain_classic.retrievers import (
     ContextualCompressionRetriever,
@@ -19,7 +16,6 @@ from langchain_classic.retrievers import (
 from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
 
-from open_webui.config import VECTOR_DB
 from open_webui.retrieval.vector.factory import VECTOR_DB_CLIENT
 
 from open_webui.models.users import UserModel
@@ -33,9 +29,6 @@ from open_webui.retrieval.vector.main import GetResult
 from open_webui.utils.access_control import has_access
 from open_webui.utils.headers import include_user_info_headers
 from open_webui.utils.misc import get_message_list
-
-from open_webui.retrieval.web.utils import get_web_loader
-from open_webui.retrieval.loaders.youtube import YoutubeLoader
 
 from open_webui.env import (
     OFFLINE_MODE,
@@ -60,29 +53,6 @@ from langchain_core.retrievers import BaseRetriever
 def is_youtube_url(url: str) -> bool:
     youtube_regex = r"^(https?://)?(www\.)?(youtube\.com|youtu\.be)/.+$"
     return re.match(youtube_regex, url) is not None
-
-
-def get_loader(request, url: str):
-    if is_youtube_url(url):
-        return YoutubeLoader(
-            url,
-            language=request.app.state.config.YOUTUBE_LOADER_LANGUAGE,
-            proxy_url=request.app.state.config.YOUTUBE_LOADER_PROXY_URL,
-        )
-    else:
-        return get_web_loader(
-            url,
-            verify_ssl=request.app.state.config.ENABLE_WEB_LOADER_SSL_VERIFICATION,
-            requests_per_second=request.app.state.config.WEB_LOADER_CONCURRENT_REQUESTS,
-            trust_env=request.app.state.config.WEB_SEARCH_TRUST_ENV,
-        )
-
-
-def get_content_from_url(request, url: str) -> str:
-    loader = get_loader(request, url)
-    docs = loader.load()
-    content = " ".join([doc.page_content for doc in docs])
-    return content, docs
 
 
 class VectorSearchRetriever(BaseRetriever):
@@ -655,59 +625,6 @@ async def agenerate_azure_openai_batch_embeddings(
         return None
 
 
-async def agenerate_ollama_batch_embeddings(
-    model: str,
-    texts: list[str],
-    url: str,
-    key: str = "",
-    prefix: str = None,
-    user: UserModel = None,
-) -> Optional[list[list[float]]]:
-    # check credit
-    if user:
-        check_credit_by_user_id(user_id=user.id, form_data={}, is_embedding=True)
-
-    try:
-        log.debug(
-            f"agenerate_ollama_batch_embeddings:model {model} batch size: {len(texts)}"
-        )
-        form_data = {"input": texts, "model": model}
-        if isinstance(RAG_EMBEDDING_PREFIX_FIELD_NAME, str) and isinstance(prefix, str):
-            form_data[RAG_EMBEDDING_PREFIX_FIELD_NAME] = prefix
-
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {key}",
-        }
-        if ENABLE_FORWARD_USER_INFO_HEADERS and user:
-            headers = include_user_info_headers(headers, user)
-
-        async with aiohttp.ClientSession(trust_env=True) as session:
-            async with session.post(
-                f"{url}/api/embed", headers=headers, json=form_data
-            ) as r:
-                r.raise_for_status()
-                data = await r.json()
-
-                input_text = str(form_data["input"])
-                with CreditDeduct(
-                    user=user,
-                    model_id=model,
-                    body={"messages": [{"role": "user", "content": input_text}]},
-                    is_stream=False,
-                    is_embedding=True,
-                ) as credit_deduct:
-                    credit_deduct.run(input_text)
-
-                if "embeddings" in data:
-                    return data["embeddings"]
-                else:
-                    raise Exception("Something went wrong :/")
-    except Exception as e:
-        log.exception(f"Error generating ollama batch embeddings: {e}")
-        return None
-
-
 def get_embedding_function(
     embedding_engine,
     embedding_model,
@@ -732,7 +649,7 @@ def get_embedding_function(
             )
 
         return async_embedding_function
-    elif embedding_engine in ["ollama", "openai", "azure_openai"]:
+    elif embedding_engine in ["openai", "azure_openai"]:
         embedding_function = lambda query, prefix=None, user=None: generate_embeddings(
             engine=embedding_engine,
             model=embedding_model,
@@ -807,19 +724,7 @@ async def generate_embeddings(
         else:
             text = f"{prefix}{text}"
 
-    if engine == "ollama":
-        embeddings = await agenerate_ollama_batch_embeddings(
-            **{
-                "model": model,
-                "texts": text if isinstance(text, list) else [text],
-                "url": url,
-                "key": key,
-                "prefix": prefix,
-                "user": user,
-            }
-        )
-        return embeddings[0] if isinstance(text, str) else embeddings
-    elif engine == "openai":
+    if engine == "openai":
         embeddings = await agenerate_openai_batch_embeddings(
             model, text if isinstance(text, list) else [text], url, key, prefix, user
         )
@@ -951,13 +856,6 @@ async def get_sources_from_items(
                         "metadatas": [[{"file_id": chat.id, "name": chat.title}]],
                     }
 
-        elif item.get("type") == "url":
-            content, docs = get_content_from_url(request, item.get("url"))
-            if docs:
-                query_result = {
-                    "documents": [[content]],
-                    "metadatas": [[{"url": item.get("url"), "name": item.get("url")}]],
-                }
         elif item.get("type") == "file":
             if (
                 item.get("context") == "full"

@@ -57,7 +57,6 @@
 
 	import { WEBUI_BASE_URL, WEBUI_API_BASE_URL, PASTED_TEXT_CHARACTER_LIMIT } from '$lib/constants';
 
-	import { createNoteHandler } from '../notes/utils';
 	import { getSuggestionRenderer } from '../common/RichTextInput/suggestions';
 
 	import InputMenu from './MessageInput/InputMenu.svelte';
@@ -117,10 +116,6 @@
 	export let selectedToolIds = [];
 	export let selectedFilterIds = [];
 
-	export let imageGenerationEnabled = false;
-	export let webSearchEnabled = false;
-	export let codeInterpreterEnabled = false;
-
 	let inputContent = null;
 
 	let showInputVariablesModal = false;
@@ -149,10 +144,7 @@
 				};
 			}),
 		selectedToolIds,
-		selectedFilterIds,
-		imageGenerationEnabled,
-		webSearchEnabled,
-		codeInterpreterEnabled
+		selectedFilterIds
 	});
 
 	const inputVariableHandler = async (text: string): Promise<string> => {
@@ -436,27 +428,6 @@
 		(model) => $models.find((m) => m.id === model)?.info?.meta?.capabilities?.file_upload ?? true
 	);
 
-	let webSearchCapableModels = [];
-	$: webSearchCapableModels = (atSelectedModel?.id ? [atSelectedModel.id] : selectedModels).filter(
-		(model) => $models.find((m) => m.id === model)?.info?.meta?.capabilities?.web_search ?? true
-	);
-
-	let imageGenerationCapableModels = [];
-	$: imageGenerationCapableModels = (
-		atSelectedModel?.id ? [atSelectedModel.id] : selectedModels
-	).filter(
-		(model) =>
-			$models.find((m) => m.id === model)?.info?.meta?.capabilities?.image_generation ?? true
-	);
-
-	let codeInterpreterCapableModels = [];
-	$: codeInterpreterCapableModels = (
-		atSelectedModel?.id ? [atSelectedModel.id] : selectedModels
-	).filter(
-		(model) =>
-			$models.find((m) => m.id === model)?.info?.meta?.capabilities?.code_interpreter ?? true
-	);
-
 	let toggleFilters = [];
 	$: toggleFilters = (atSelectedModel?.id ? [atSelectedModel.id] : selectedModels)
 		.map((id) => ($models.find((model) => model.id === id) || {})?.filters ?? [])
@@ -464,27 +435,6 @@
 
 	let showToolsButton = false;
 	$: showToolsButton = ($tools ?? []).length > 0 || ($toolServers ?? []).length > 0;
-
-	let showWebSearchButton = false;
-	$: showWebSearchButton =
-		(atSelectedModel?.id ? [atSelectedModel.id] : selectedModels).length ===
-			webSearchCapableModels.length &&
-		$config?.features?.enable_web_search &&
-		($_user.role === 'admin' || $_user?.permissions?.features?.web_search);
-
-	let showImageGenerationButton = false;
-	$: showImageGenerationButton =
-		(atSelectedModel?.id ? [atSelectedModel.id] : selectedModels).length ===
-			imageGenerationCapableModels.length &&
-		$config?.features?.enable_image_generation &&
-		($_user.role === 'admin' || $_user?.permissions?.features?.image_generation);
-
-	let showCodeInterpreterButton = false;
-	$: showCodeInterpreterButton =
-		(atSelectedModel?.id ? [atSelectedModel.id] : selectedModels).length ===
-			codeInterpreterCapableModels.length &&
-		$config?.features?.enable_code_interpreter &&
-		($_user.role === 'admin' || $_user?.permissions?.features?.code_interpreter);
 
 	const scrollToBottom = () => {
 		const element = document.getElementById('messages-container');
@@ -752,25 +702,6 @@
 				uploadFileHandler(file);
 			}
 		});
-	};
-
-	const createNote = async () => {
-		if (inputContent?.md.trim() === '' && inputContent?.html.trim() === '') {
-			toast.error($i18n.t('Cannot create an empty note.'));
-			return;
-		}
-
-		const res = await createNoteHandler(
-			dayjs().format('YYYY-MM-DD'),
-			inputContent?.md,
-			inputContent?.html
-		);
-
-		if (res) {
-			// Clear the input content saved in session storage.
-			sessionStorage.removeItem('chat-input');
-			goto(`/notes/${res.id}`);
-		}
 	};
 
 	const onDragOver = (e) => {
@@ -1390,10 +1321,6 @@
 															atSelectedModel = undefined;
 															selectedToolIds = [];
 															selectedFilterIds = [];
-
-															webSearchEnabled = false;
-															imageGenerationEnabled = false;
-															codeInterpreterEnabled = false;
 														}
 													}}
 													on:paste={async (e) => {
@@ -1501,7 +1428,7 @@
 										</div>
 									</InputMenu>
 
-									{#if showWebSearchButton || showImageGenerationButton || showCodeInterpreterButton || showToolsButton || (toggleFilters && toggleFilters.length > 0)}
+									{#if showToolsButton || (toggleFilters && toggleFilters.length > 0)}
 										<div
 											class="flex self-center w-[1px] h-4 mx-1 bg-gray-200/50 dark:bg-gray-800/50"
 										/>
@@ -1509,14 +1436,8 @@
 										<IntegrationsMenu
 											selectedModels={atSelectedModel ? [atSelectedModel.id] : selectedModels}
 											{toggleFilters}
-											{showWebSearchButton}
-											{showImageGenerationButton}
-											{showCodeInterpreterButton}
 											bind:selectedToolIds
 											bind:selectedFilterIds
-											bind:webSearchEnabled
-											bind:imageGenerationEnabled
-											bind:codeInterpreterEnabled
 											closeOnOutsideClick={integrationsMenuCloseOnOutsideClick}
 											onShowValves={(e) => {
 												const { type, id } = e;
@@ -1620,68 +1541,6 @@
 												</Tooltip>
 											{/if}
 										{/each}
-
-										{#if webSearchEnabled}
-											<Tooltip content={$i18n.t('Web Search')} placement="top">
-												<button
-													on:click|preventDefault={() => (webSearchEnabled = !webSearchEnabled)}
-													type="button"
-													class="group p-[7px] flex gap-1.5 items-center text-sm rounded-full transition-colors duration-300 focus:outline-hidden max-w-full overflow-hidden {webSearchEnabled ||
-													($settings?.webSearch ?? false) === 'always'
-														? ' text-sky-500 dark:text-sky-300 bg-sky-50 hover:bg-sky-100 dark:bg-sky-400/10 dark:hover:bg-sky-600/10 border border-sky-200/40 dark:border-sky-500/20'
-														: 'bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 '}"
-												>
-													<GlobeAlt className="size-4" strokeWidth="1.75" />
-													<div class="hidden group-hover:block">
-														<XMark className="size-4" strokeWidth="1.75" />
-													</div>
-												</button>
-											</Tooltip>
-										{/if}
-
-										{#if imageGenerationEnabled}
-											<Tooltip content={$i18n.t('Image')} placement="top">
-												<button
-													on:click|preventDefault={() =>
-														(imageGenerationEnabled = !imageGenerationEnabled)}
-													type="button"
-													class="group p-[7px] flex gap-1.5 items-center text-sm rounded-full transition-colors duration-300 focus:outline-hidden max-w-full overflow-hidden {imageGenerationEnabled
-														? ' text-sky-500 dark:text-sky-300 bg-sky-50 hover:bg-sky-100 dark:bg-sky-400/10 dark:hover:bg-sky-700/10 border border-sky-200/40 dark:border-sky-500/20'
-														: 'bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 '}"
-												>
-													<Photo className="size-4" strokeWidth="1.75" />
-													<div class="hidden group-hover:block">
-														<XMark className="size-4" strokeWidth="1.75" />
-													</div>
-												</button>
-											</Tooltip>
-										{/if}
-
-										{#if codeInterpreterEnabled}
-											<Tooltip content={$i18n.t('Code Interpreter')} placement="top">
-												<button
-													aria-label={codeInterpreterEnabled
-														? $i18n.t('Disable Code Interpreter')
-														: $i18n.t('Enable Code Interpreter')}
-													aria-pressed={codeInterpreterEnabled}
-													on:click|preventDefault={() =>
-														(codeInterpreterEnabled = !codeInterpreterEnabled)}
-													type="button"
-													class=" group p-[7px] flex gap-1.5 items-center text-sm transition-colors duration-300 max-w-full overflow-hidden {codeInterpreterEnabled
-														? ' text-sky-500 dark:text-sky-300 bg-sky-50 hover:bg-sky-100 dark:bg-sky-400/10 dark:hover:bg-sky-700/10 border border-sky-200/40 dark:border-sky-500/20'
-														: 'bg-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 '} {($settings?.highContrastMode ??
-													false)
-														? 'm-1'
-														: 'focus:outline-hidden rounded-full'}"
-												>
-													<Terminal className="size-3.5" strokeWidth="2" />
-
-													<div class="hidden group-hover:block">
-														<XMark className="size-4" strokeWidth="1.75" />
-													</div>
-												</button>
-											</Tooltip>
-										{/if}
 									</div>
 								</div>
 
@@ -1711,163 +1570,31 @@
 											</Tooltip>
 										</div>
 									{:else}
-										{#if prompt !== '' && !history?.currentId && ($config?.features?.enable_notes ?? false) && ($user?.role === 'admin' || ($user?.permissions?.features?.notes ?? true))}
-											<!-- {$i18n.t('Create Note')}  -->
-											<Tooltip content={$i18n.t('Create note')} className=" flex items-center">
+										<div class=" flex items-center">
+											<Tooltip content={$i18n.t('Send message')}>
 												<button
 													id="send-message-button"
-													class=" text-gray-600 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 transition rounded-full p-1.5 self-center"
-													type="button"
+													class="{!(prompt === '' && files.length === 0)
+														? 'bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 '
+														: 'text-white bg-gray-200 dark:text-gray-900 dark:bg-gray-700 disabled'} transition rounded-full p-1.5 self-center"
+													type="submit"
 													disabled={prompt === '' && files.length === 0}
-													on:click={() => {
-														createNote();
-													}}
-												>
-													<PageEdit className="size-4.5 translate-y-[0.5px]" />
-												</button>
-											</Tooltip>
-										{/if}
-
-										{#if (!history?.currentId || history.messages[history.currentId]?.done == true) && ($_user?.role === 'admin' || ($_user?.permissions?.chat?.stt ?? true))}
-											<!-- {$i18n.t('Record voice')} -->
-											<Tooltip content={$i18n.t('Dictate')}>
-												<button
-													id="voice-input-button"
-													class=" text-gray-600 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 transition rounded-full p-1.5 self-center mr-0.5"
-													type="button"
-													on:click={async () => {
-														try {
-															let stream = await navigator.mediaDevices
-																.getUserMedia({ audio: true })
-																.catch(function (err) {
-																	toast.error(
-																		$i18n.t(
-																			`Permission denied when accessing microphone: {{error}}`,
-																			{
-																				error: err
-																			}
-																		)
-																	);
-																	return null;
-																});
-
-															if (stream) {
-																recording = true;
-																const tracks = stream.getTracks();
-																tracks.forEach((track) => track.stop());
-															}
-															stream = null;
-														} catch {
-															toast.error($i18n.t('Permission denied when accessing microphone'));
-														}
-													}}
-													aria-label="Voice Input"
 												>
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
-														viewBox="0 0 20 20"
+														viewBox="0 0 16 16"
 														fill="currentColor"
-														class="size-5 translate-y-[0.5px]"
+														class="size-5"
 													>
-														<path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z" />
 														<path
-															d="M5.5 9.643a.75.75 0 00-1.5 0V10c0 3.06 2.29 5.585 5.25 5.954V17.5h-1.5a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-1.5v-1.546A6.001 6.001 0 0016 10v-.357a.75.75 0 00-1.5 0V10a4.5 4.5 0 01-9 0v-.357z"
+															fill-rule="evenodd"
+															d="M8 14a.75.75 0 0 1-.75-.75V4.56L4.03 7.78a.75.75 0 0 1-1.06-1.06l4.5-4.5a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 0 1-1.06 1.06L8.75 4.56v8.69A.75.75 0 0 1 8 14Z"
+															clip-rule="evenodd"
 														/>
 													</svg>
 												</button>
 											</Tooltip>
-										{/if}
-
-										{#if prompt === '' && files.length === 0 && ($_user?.role === 'admin' || ($_user?.permissions?.chat?.call ?? true))}
-											<div class=" flex items-center">
-												<!-- {$i18n.t('Call')} -->
-												<Tooltip content={$i18n.t('Voice mode')}>
-													<button
-														class=" bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full p-1.5 self-center"
-														type="button"
-														on:click={async () => {
-															if (selectedModels.length > 1) {
-																toast.error($i18n.t('Select only one model to call'));
-
-																return;
-															}
-
-															if ($config.audio.stt.engine === 'web') {
-																toast.error(
-																	$i18n.t('Call feature is not supported when using Web STT engine')
-																);
-
-																return;
-															}
-															// check if user has access to getUserMedia
-															try {
-																let stream = await navigator.mediaDevices.getUserMedia({
-																	audio: true
-																});
-																// If the user grants the permission, proceed to show the call overlay
-
-																if (stream) {
-																	const tracks = stream.getTracks();
-																	tracks.forEach((track) => track.stop());
-																}
-
-																stream = null;
-
-																if ($settings.audio?.tts?.engine === 'browser-kokoro') {
-																	// If the user has not initialized the TTS worker, initialize it
-																	if (!$TTSWorker) {
-																		await TTSWorker.set(
-																			new KokoroWorker({
-																				dtype: $settings.audio?.tts?.engineConfig?.dtype ?? 'fp32'
-																			})
-																		);
-
-																		await $TTSWorker.init();
-																	}
-																}
-
-																showCallOverlay.set(true);
-																showControls.set(true);
-															} catch (err) {
-																// If the user denies the permission or an error occurs, show an error message
-																toast.error(
-																	$i18n.t('Permission denied when accessing media devices')
-																);
-															}
-														}}
-														aria-label={$i18n.t('Voice mode')}
-													>
-														<Voice className="size-5" strokeWidth="2.5" />
-													</button>
-												</Tooltip>
-											</div>
-										{:else}
-											<div class=" flex items-center">
-												<Tooltip content={$i18n.t('Send message')}>
-													<button
-														id="send-message-button"
-														class="{!(prompt === '' && files.length === 0)
-															? 'bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 '
-															: 'text-white bg-gray-200 dark:text-gray-900 dark:bg-gray-700 disabled'} transition rounded-full p-1.5 self-center"
-														type="submit"
-														disabled={prompt === '' && files.length === 0}
-													>
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															viewBox="0 0 16 16"
-															fill="currentColor"
-															class="size-5"
-														>
-															<path
-																fill-rule="evenodd"
-																d="M8 14a.75.75 0 0 1-.75-.75V4.56L4.03 7.78a.75.75 0 0 1-1.06-1.06l4.5-4.5a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 0 1-1.06 1.06L8.75 4.56v8.69A.75.75 0 0 1 8 14Z"
-																clip-rule="evenodd"
-															/>
-														</svg>
-													</button>
-												</Tooltip>
-											</div>
-										{/if}
+										</div>
 									{/if}
 								</div>
 							</div>

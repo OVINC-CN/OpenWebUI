@@ -153,33 +153,6 @@
 					</div>
 					<hr class="mt-2.5 border-gray-100 dark:border-gray-850 my-2" />
 					<div class="mt-2 flex w-full justify-between">
-						<div class=" self-center text-xs font-medium">{$i18n.t('Image Generation')}</div>
-						<input
-							class="rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
-							bind:value={config.USAGE_CALCULATE_FEATURE_IMAGE_GEN_PRICE}
-							type="number"
-							step="0.000001"
-						/>
-					</div>
-					<div class="mt-2 flex w-full justify-between">
-						<div class=" self-center text-xs font-medium">{$i18n.t('Code Execution')}</div>
-						<input
-							class="rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
-							bind:value={config.USAGE_CALCULATE_FEATURE_CODE_EXECUTE_PRICE}
-							type="number"
-							step="0.000001"
-						/>
-					</div>
-					<div class="mt-2 flex w-full justify-between">
-						<div class=" self-center text-xs font-medium">{$i18n.t('Web Search')}</div>
-						<input
-							class="rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
-							bind:value={config.USAGE_CALCULATE_FEATURE_WEB_SEARCH_PRICE}
-							type="number"
-							step="0.000001"
-						/>
-					</div>
-					<div class="mt-2 flex w-full justify-between">
 						<div class=" self-center text-xs font-medium">{$i18n.t('Direct Tool Servers')}</div>
 						<input
 							class="rounded-lg py-2 px-4 text-sm bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"

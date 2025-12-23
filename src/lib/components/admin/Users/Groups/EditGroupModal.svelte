@@ -57,9 +57,7 @@
 			prompts: false,
 			public_prompts: false,
 			tools: false,
-			public_tools: false,
-			notes: false,
-			public_notes: false
+			public_tools: false
 		},
 		chat: {
 			controls: true,
@@ -84,13 +82,7 @@
 		},
 		features: {
 			api_keys: false,
-			notes: true,
-			channels: true,
-			folders: true,
-			direct_tool_servers: false,
-			web_search: true,
-			image_generation: true,
-			code_interpreter: true
+			direct_tool_servers: false
 		}
 	};
 

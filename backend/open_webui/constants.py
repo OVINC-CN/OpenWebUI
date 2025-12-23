@@ -76,7 +76,6 @@ class ERROR_MESSAGES(str, Enum):
 
     MODEL_NOT_FOUND = lambda name="": f"Model '{name}' was not found"
     OPENAI_NOT_FOUND = lambda name="": "OpenAI API was not found"
-    OLLAMA_NOT_FOUND = "WebUI could not connect to Ollama"
     CREATE_API_KEY_ERROR = "Oops! Something went wrong while creating your API key. Please try again later. If the issue persists, contact support for assistance."
     API_KEY_CREATION_NOT_ALLOWED = "API key creation is not allowed in the environment."
 
@@ -90,10 +89,6 @@ class ERROR_MESSAGES(str, Enum):
 
     WEB_SEARCH_ERROR = (
         lambda err="": f"{err if err else 'Oops! Something went wrong while searching the web.'}"
-    )
-
-    OLLAMA_API_DISABLED = (
-        "The Ollama API is disabled. Please enable it to use this feature."
     )
 
     FILE_TOO_LARGE = (

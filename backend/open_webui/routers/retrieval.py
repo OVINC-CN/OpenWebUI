@@ -1,33 +1,21 @@
-import json
 import logging
-import mimetypes
 import os
 import shutil
 import asyncio
 
-import re
 import uuid
-from datetime import datetime
-from pathlib import Path
-from typing import Iterator, List, Optional, Sequence, Union
+from typing import List, Optional
 
 from fastapi import (
     Depends,
-    FastAPI,
-    Query,
-    File,
-    Form,
     HTTPException,
-    UploadFile,
     Request,
     status,
     APIRouter,
 )
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 import tiktoken
-
 
 from langchain_text_splitters import (
     RecursiveCharacterTextSplitter,
@@ -40,43 +28,12 @@ from open_webui.models.files import FileModel, FileUpdateForm, Files
 from open_webui.models.knowledge import Knowledges
 from open_webui.storage.provider import Storage
 
-
 from open_webui.retrieval.vector.factory import VECTOR_DB_CLIENT
 
 # Document loaders
 from open_webui.retrieval.loaders.main import Loader
-from open_webui.retrieval.loaders.youtube import YoutubeLoader
-
-# Web search engines
-from open_webui.retrieval.web.main import SearchResult
-from open_webui.retrieval.web.utils import get_web_loader
-from open_webui.retrieval.web.ollama import search_ollama_cloud
-from open_webui.retrieval.web.perplexity_search import search_perplexity_search
-from open_webui.retrieval.web.brave import search_brave
-from open_webui.retrieval.web.kagi import search_kagi
-from open_webui.retrieval.web.mojeek import search_mojeek
-from open_webui.retrieval.web.bocha import search_bocha
-from open_webui.retrieval.web.duckduckgo import search_duckduckgo
-from open_webui.retrieval.web.google_pse import search_google_pse
-from open_webui.retrieval.web.jina_search import search_jina
-from open_webui.retrieval.web.searchapi import search_searchapi
-from open_webui.retrieval.web.serpapi import search_serpapi
-from open_webui.retrieval.web.searxng import search_searxng
-from open_webui.retrieval.web.yacy import search_yacy
-from open_webui.retrieval.web.serper import search_serper
-from open_webui.retrieval.web.serply import search_serply
-from open_webui.retrieval.web.serpstack import search_serpstack
-from open_webui.retrieval.web.tavily import search_tavily
-from open_webui.retrieval.web.bing import search_bing
-from open_webui.retrieval.web.azure import search_azure
-from open_webui.retrieval.web.exa import search_exa
-from open_webui.retrieval.web.perplexity import search_perplexity
-from open_webui.retrieval.web.sougou import search_sougou
-from open_webui.retrieval.web.firecrawl import search_firecrawl
-from open_webui.retrieval.web.external import search_external
 
 from open_webui.retrieval.utils import (
-    get_content_from_url,
     get_embedding_function,
     get_reranking_function,
     get_model_path,
@@ -99,7 +56,6 @@ from open_webui.config import (
     RAG_RERANKING_MODEL_AUTO_UPDATE,
     RAG_RERANKING_MODEL_TRUST_REMOTE_CODE,
     UPLOAD_DIR,
-    DEFAULT_LOCALE,
     RAG_EMBEDDING_CONTENT_PREFIX,
     RAG_EMBEDDING_QUERY_PREFIX,
 )
@@ -116,6 +72,7 @@ from open_webui.constants import ERROR_MESSAGES
 
 log = logging.getLogger(__name__)
 
+
 ##########################################
 #
 # Utility functions
@@ -128,22 +85,7 @@ def get_ef(
     embedding_model: str,
     auto_update: bool = RAG_EMBEDDING_MODEL_AUTO_UPDATE,
 ):
-    ef = None
-    if embedding_model and engine == "":
-        from sentence_transformers import SentenceTransformer
-
-        try:
-            ef = SentenceTransformer(
-                get_model_path(embedding_model, auto_update),
-                device=DEVICE_TYPE,
-                trust_remote_code=RAG_EMBEDDING_MODEL_TRUST_REMOTE_CODE,
-                backend=SENTENCE_TRANSFORMERS_BACKEND,
-                model_kwargs=SENTENCE_TRANSFORMERS_MODEL_KWARGS,
-            )
-        except Exception as e:
-            log.debug(f"Error loading SentenceTransformer: {e}")
-
-    return ef
+    return None
 
 
 def get_rf(
@@ -173,53 +115,18 @@ def get_rf(
                 log.error(f"ColBERT: {e}")
                 raise Exception(ERROR_MESSAGES.DEFAULT(e))
         else:
-            if engine == "external":
-                try:
-                    from open_webui.retrieval.models.external import ExternalReranker
+            try:
+                from open_webui.retrieval.models.external import ExternalReranker
 
-                    rf = ExternalReranker(
-                        url=external_reranker_url,
-                        api_key=external_reranker_api_key,
-                        model=reranking_model,
-                        timeout=timeout_value,
-                    )
-                except Exception as e:
-                    log.error(f"ExternalReranking: {e}")
-                    raise Exception(ERROR_MESSAGES.DEFAULT(e))
-            else:
-                import sentence_transformers
-
-                try:
-                    rf = sentence_transformers.CrossEncoder(
-                        get_model_path(reranking_model, auto_update),
-                        device=DEVICE_TYPE,
-                        trust_remote_code=RAG_RERANKING_MODEL_TRUST_REMOTE_CODE,
-                        backend=SENTENCE_TRANSFORMERS_CROSS_ENCODER_BACKEND,
-                        model_kwargs=SENTENCE_TRANSFORMERS_CROSS_ENCODER_MODEL_KWARGS,
-                    )
-                except Exception as e:
-                    log.error(f"CrossEncoder: {e}")
-                    raise Exception(ERROR_MESSAGES.DEFAULT("CrossEncoder error"))
-
-                # Safely adjust pad_token_id if missing as some models do not have this in config
-                try:
-                    model_cfg = getattr(rf, "model", None)
-                    if model_cfg and hasattr(model_cfg, "config"):
-                        cfg = model_cfg.config
-                        if getattr(cfg, "pad_token_id", None) is None:
-                            # Fallback to eos_token_id when available
-                            eos = getattr(cfg, "eos_token_id", None)
-                            if eos is not None:
-                                cfg.pad_token_id = eos
-                                log.debug(
-                                    f"Missing pad_token_id detected; set to eos_token_id={eos}"
-                                )
-                            else:
-                                log.warning(
-                                    "Neither pad_token_id nor eos_token_id present in model config"
-                                )
-                except Exception as e2:
-                    log.warning(f"Failed to adjust pad_token_id on CrossEncoder: {e2}")
+                rf = ExternalReranker(
+                    url=external_reranker_url,
+                    api_key=external_reranker_api_key,
+                    model=reranking_model,
+                    timeout=timeout_value,
+                )
+            except Exception as e:
+                log.error(f"ExternalReranking: {e}")
+                raise Exception(ERROR_MESSAGES.DEFAULT(e))
 
     return rf
 
@@ -273,10 +180,6 @@ async def get_embedding_config(request: Request, user=Depends(get_admin_user)):
             "url": request.app.state.config.RAG_OPENAI_API_BASE_URL,
             "key": request.app.state.config.RAG_OPENAI_API_KEY,
         },
-        "ollama_config": {
-            "url": request.app.state.config.RAG_OLLAMA_BASE_URL,
-            "key": request.app.state.config.RAG_OLLAMA_API_KEY,
-        },
         "azure_openai_config": {
             "url": request.app.state.config.RAG_AZURE_OPENAI_BASE_URL,
             "key": request.app.state.config.RAG_AZURE_OPENAI_API_KEY,
@@ -303,7 +206,6 @@ class AzureOpenAIConfigForm(BaseModel):
 
 class EmbeddingModelUpdateForm(BaseModel):
     openai_config: Optional[OpenAIConfigForm] = None
-    ollama_config: Optional[OllamaConfigForm] = None
     azure_openai_config: Optional[AzureOpenAIConfigForm] = None
     RAG_EMBEDDING_ENGINE: str
     RAG_EMBEDDING_MODEL: str
@@ -345,7 +247,6 @@ async def update_embedding_config(
         )
 
         if request.app.state.config.RAG_EMBEDDING_ENGINE in [
-            "ollama",
             "openai",
             "azure_openai",
         ]:
@@ -355,14 +256,6 @@ async def update_embedding_config(
                 )
                 request.app.state.config.RAG_OPENAI_API_KEY = (
                     form_data.openai_config.key
-                )
-
-            if form_data.ollama_config is not None:
-                request.app.state.config.RAG_OLLAMA_BASE_URL = (
-                    form_data.ollama_config.url
-                )
-                request.app.state.config.RAG_OLLAMA_API_KEY = (
-                    form_data.ollama_config.key
                 )
 
             if form_data.azure_openai_config is not None:
@@ -388,20 +281,12 @@ async def update_embedding_config(
             (
                 request.app.state.config.RAG_OPENAI_API_BASE_URL
                 if request.app.state.config.RAG_EMBEDDING_ENGINE == "openai"
-                else (
-                    request.app.state.config.RAG_OLLAMA_BASE_URL
-                    if request.app.state.config.RAG_EMBEDDING_ENGINE == "ollama"
-                    else request.app.state.config.RAG_AZURE_OPENAI_BASE_URL
-                )
+                else request.app.state.config.RAG_AZURE_OPENAI_BASE_URL
             ),
             (
                 request.app.state.config.RAG_OPENAI_API_KEY
                 if request.app.state.config.RAG_EMBEDDING_ENGINE == "openai"
-                else (
-                    request.app.state.config.RAG_OLLAMA_API_KEY
-                    if request.app.state.config.RAG_EMBEDDING_ENGINE == "ollama"
-                    else request.app.state.config.RAG_AZURE_OPENAI_API_KEY
-                )
+                else request.app.state.config.RAG_AZURE_OPENAI_API_KEY
             ),
             request.app.state.config.RAG_EMBEDDING_BATCH_SIZE,
             azure_api_version=(
@@ -421,10 +306,6 @@ async def update_embedding_config(
             "openai_config": {
                 "url": request.app.state.config.RAG_OPENAI_API_BASE_URL,
                 "key": request.app.state.config.RAG_OPENAI_API_KEY,
-            },
-            "ollama_config": {
-                "url": request.app.state.config.RAG_OLLAMA_BASE_URL,
-                "key": request.app.state.config.RAG_OLLAMA_API_KEY,
             },
             "azure_openai_config": {
                 "url": request.app.state.config.RAG_AZURE_OPENAI_BASE_URL,
@@ -505,123 +386,7 @@ async def get_rag_config(request: Request, user=Depends(get_admin_user)):
         # Integration settings
         "ENABLE_GOOGLE_DRIVE_INTEGRATION": request.app.state.config.ENABLE_GOOGLE_DRIVE_INTEGRATION,
         "ENABLE_ONEDRIVE_INTEGRATION": request.app.state.config.ENABLE_ONEDRIVE_INTEGRATION,
-        # Web search settings
-        "web": {
-            "ENABLE_WEB_SEARCH": request.app.state.config.ENABLE_WEB_SEARCH,
-            "WEB_SEARCH_ENGINE": request.app.state.config.WEB_SEARCH_ENGINE,
-            "WEB_SEARCH_TRUST_ENV": request.app.state.config.WEB_SEARCH_TRUST_ENV,
-            "WEB_SEARCH_RESULT_COUNT": request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-            "WEB_SEARCH_CONCURRENT_REQUESTS": request.app.state.config.WEB_SEARCH_CONCURRENT_REQUESTS,
-            "WEB_LOADER_CONCURRENT_REQUESTS": request.app.state.config.WEB_LOADER_CONCURRENT_REQUESTS,
-            "WEB_SEARCH_DOMAIN_FILTER_LIST": request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            "BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL": request.app.state.config.BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL,
-            "BYPASS_WEB_SEARCH_WEB_LOADER": request.app.state.config.BYPASS_WEB_SEARCH_WEB_LOADER,
-            "OLLAMA_CLOUD_WEB_SEARCH_API_KEY": request.app.state.config.OLLAMA_CLOUD_WEB_SEARCH_API_KEY,
-            "SEARXNG_QUERY_URL": request.app.state.config.SEARXNG_QUERY_URL,
-            "SEARXNG_LANGUAGE": request.app.state.config.SEARXNG_LANGUAGE,
-            "YACY_QUERY_URL": request.app.state.config.YACY_QUERY_URL,
-            "YACY_USERNAME": request.app.state.config.YACY_USERNAME,
-            "YACY_PASSWORD": request.app.state.config.YACY_PASSWORD,
-            "GOOGLE_PSE_API_KEY": request.app.state.config.GOOGLE_PSE_API_KEY,
-            "GOOGLE_PSE_ENGINE_ID": request.app.state.config.GOOGLE_PSE_ENGINE_ID,
-            "BRAVE_SEARCH_API_KEY": request.app.state.config.BRAVE_SEARCH_API_KEY,
-            "KAGI_SEARCH_API_KEY": request.app.state.config.KAGI_SEARCH_API_KEY,
-            "MOJEEK_SEARCH_API_KEY": request.app.state.config.MOJEEK_SEARCH_API_KEY,
-            "BOCHA_SEARCH_API_KEY": request.app.state.config.BOCHA_SEARCH_API_KEY,
-            "SERPSTACK_API_KEY": request.app.state.config.SERPSTACK_API_KEY,
-            "SERPSTACK_HTTPS": request.app.state.config.SERPSTACK_HTTPS,
-            "SERPER_API_KEY": request.app.state.config.SERPER_API_KEY,
-            "SERPLY_API_KEY": request.app.state.config.SERPLY_API_KEY,
-            "TAVILY_API_KEY": request.app.state.config.TAVILY_API_KEY,
-            "SEARCHAPI_API_KEY": request.app.state.config.SEARCHAPI_API_KEY,
-            "SEARCHAPI_ENGINE": request.app.state.config.SEARCHAPI_ENGINE,
-            "SERPAPI_API_KEY": request.app.state.config.SERPAPI_API_KEY,
-            "SERPAPI_ENGINE": request.app.state.config.SERPAPI_ENGINE,
-            "JINA_API_KEY": request.app.state.config.JINA_API_KEY,
-            "BING_SEARCH_V7_ENDPOINT": request.app.state.config.BING_SEARCH_V7_ENDPOINT,
-            "BING_SEARCH_V7_SUBSCRIPTION_KEY": request.app.state.config.BING_SEARCH_V7_SUBSCRIPTION_KEY,
-            "EXA_API_KEY": request.app.state.config.EXA_API_KEY,
-            "PERPLEXITY_API_KEY": request.app.state.config.PERPLEXITY_API_KEY,
-            "PERPLEXITY_MODEL": request.app.state.config.PERPLEXITY_MODEL,
-            "PERPLEXITY_SEARCH_CONTEXT_USAGE": request.app.state.config.PERPLEXITY_SEARCH_CONTEXT_USAGE,
-            "PERPLEXITY_SEARCH_API_URL": request.app.state.config.PERPLEXITY_SEARCH_API_URL,
-            "SOUGOU_API_SID": request.app.state.config.SOUGOU_API_SID,
-            "SOUGOU_API_SK": request.app.state.config.SOUGOU_API_SK,
-            "WEB_LOADER_ENGINE": request.app.state.config.WEB_LOADER_ENGINE,
-            "WEB_LOADER_TIMEOUT": request.app.state.config.WEB_LOADER_TIMEOUT,
-            "ENABLE_WEB_LOADER_SSL_VERIFICATION": request.app.state.config.ENABLE_WEB_LOADER_SSL_VERIFICATION,
-            "PLAYWRIGHT_WS_URL": request.app.state.config.PLAYWRIGHT_WS_URL,
-            "PLAYWRIGHT_TIMEOUT": request.app.state.config.PLAYWRIGHT_TIMEOUT,
-            "FIRECRAWL_API_KEY": request.app.state.config.FIRECRAWL_API_KEY,
-            "FIRECRAWL_API_BASE_URL": request.app.state.config.FIRECRAWL_API_BASE_URL,
-            "TAVILY_EXTRACT_DEPTH": request.app.state.config.TAVILY_EXTRACT_DEPTH,
-            "EXTERNAL_WEB_SEARCH_URL": request.app.state.config.EXTERNAL_WEB_SEARCH_URL,
-            "EXTERNAL_WEB_SEARCH_API_KEY": request.app.state.config.EXTERNAL_WEB_SEARCH_API_KEY,
-            "EXTERNAL_WEB_LOADER_URL": request.app.state.config.EXTERNAL_WEB_LOADER_URL,
-            "EXTERNAL_WEB_LOADER_API_KEY": request.app.state.config.EXTERNAL_WEB_LOADER_API_KEY,
-            "YOUTUBE_LOADER_LANGUAGE": request.app.state.config.YOUTUBE_LOADER_LANGUAGE,
-            "YOUTUBE_LOADER_PROXY_URL": request.app.state.config.YOUTUBE_LOADER_PROXY_URL,
-            "YOUTUBE_LOADER_TRANSLATION": request.app.state.YOUTUBE_LOADER_TRANSLATION,
-        },
     }
-
-
-class WebConfig(BaseModel):
-    ENABLE_WEB_SEARCH: Optional[bool] = None
-    WEB_SEARCH_ENGINE: Optional[str] = None
-    WEB_SEARCH_TRUST_ENV: Optional[bool] = None
-    WEB_SEARCH_RESULT_COUNT: Optional[int] = None
-    WEB_SEARCH_CONCURRENT_REQUESTS: Optional[int] = None
-    WEB_LOADER_CONCURRENT_REQUESTS: Optional[int] = None
-    WEB_SEARCH_DOMAIN_FILTER_LIST: Optional[List[str]] = []
-    BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL: Optional[bool] = None
-    BYPASS_WEB_SEARCH_WEB_LOADER: Optional[bool] = None
-    OLLAMA_CLOUD_WEB_SEARCH_API_KEY: Optional[str] = None
-    SEARXNG_QUERY_URL: Optional[str] = None
-    SEARXNG_LANGUAGE: Optional[str] = None
-    YACY_QUERY_URL: Optional[str] = None
-    YACY_USERNAME: Optional[str] = None
-    YACY_PASSWORD: Optional[str] = None
-    GOOGLE_PSE_API_KEY: Optional[str] = None
-    GOOGLE_PSE_ENGINE_ID: Optional[str] = None
-    BRAVE_SEARCH_API_KEY: Optional[str] = None
-    KAGI_SEARCH_API_KEY: Optional[str] = None
-    MOJEEK_SEARCH_API_KEY: Optional[str] = None
-    BOCHA_SEARCH_API_KEY: Optional[str] = None
-    SERPSTACK_API_KEY: Optional[str] = None
-    SERPSTACK_HTTPS: Optional[bool] = None
-    SERPER_API_KEY: Optional[str] = None
-    SERPLY_API_KEY: Optional[str] = None
-    TAVILY_API_KEY: Optional[str] = None
-    SEARCHAPI_API_KEY: Optional[str] = None
-    SEARCHAPI_ENGINE: Optional[str] = None
-    SERPAPI_API_KEY: Optional[str] = None
-    SERPAPI_ENGINE: Optional[str] = None
-    JINA_API_KEY: Optional[str] = None
-    BING_SEARCH_V7_ENDPOINT: Optional[str] = None
-    BING_SEARCH_V7_SUBSCRIPTION_KEY: Optional[str] = None
-    EXA_API_KEY: Optional[str] = None
-    PERPLEXITY_API_KEY: Optional[str] = None
-    PERPLEXITY_MODEL: Optional[str] = None
-    PERPLEXITY_SEARCH_CONTEXT_USAGE: Optional[str] = None
-    PERPLEXITY_SEARCH_API_URL: Optional[str] = None
-    SOUGOU_API_SID: Optional[str] = None
-    SOUGOU_API_SK: Optional[str] = None
-    WEB_LOADER_ENGINE: Optional[str] = None
-    WEB_LOADER_TIMEOUT: Optional[str] = None
-    ENABLE_WEB_LOADER_SSL_VERIFICATION: Optional[bool] = None
-    PLAYWRIGHT_WS_URL: Optional[str] = None
-    PLAYWRIGHT_TIMEOUT: Optional[int] = None
-    FIRECRAWL_API_KEY: Optional[str] = None
-    FIRECRAWL_API_BASE_URL: Optional[str] = None
-    TAVILY_EXTRACT_DEPTH: Optional[str] = None
-    EXTERNAL_WEB_SEARCH_URL: Optional[str] = None
-    EXTERNAL_WEB_SEARCH_API_KEY: Optional[str] = None
-    EXTERNAL_WEB_LOADER_URL: Optional[str] = None
-    EXTERNAL_WEB_LOADER_API_KEY: Optional[str] = None
-    YOUTUBE_LOADER_LANGUAGE: Optional[List[str]] = None
-    YOUTUBE_LOADER_PROXY_URL: Optional[str] = None
-    YOUTUBE_LOADER_TRANSLATION: Optional[str] = None
 
 
 class ConfigForm(BaseModel):
@@ -696,9 +461,6 @@ class ConfigForm(BaseModel):
     # Integration settings
     ENABLE_GOOGLE_DRIVE_INTEGRATION: Optional[bool] = None
     ENABLE_ONEDRIVE_INTEGRATION: Optional[bool] = None
-
-    # Web search settings
-    web: Optional[WebConfig] = None
 
 
 @router.post("/config/update")
@@ -1024,119 +786,6 @@ async def update_rag_config(
         else request.app.state.config.ENABLE_ONEDRIVE_INTEGRATION
     )
 
-    if form_data.web is not None:
-        # Web search settings
-        request.app.state.config.ENABLE_WEB_SEARCH = form_data.web.ENABLE_WEB_SEARCH
-        request.app.state.config.WEB_SEARCH_ENGINE = form_data.web.WEB_SEARCH_ENGINE
-        request.app.state.config.WEB_SEARCH_TRUST_ENV = (
-            form_data.web.WEB_SEARCH_TRUST_ENV
-        )
-        request.app.state.config.WEB_SEARCH_RESULT_COUNT = (
-            form_data.web.WEB_SEARCH_RESULT_COUNT
-        )
-        request.app.state.config.WEB_SEARCH_CONCURRENT_REQUESTS = (
-            form_data.web.WEB_SEARCH_CONCURRENT_REQUESTS
-        )
-        request.app.state.config.WEB_LOADER_CONCURRENT_REQUESTS = (
-            form_data.web.WEB_LOADER_CONCURRENT_REQUESTS
-        )
-        request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST = (
-            form_data.web.WEB_SEARCH_DOMAIN_FILTER_LIST
-        )
-        request.app.state.config.BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL = (
-            form_data.web.BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL
-        )
-        request.app.state.config.BYPASS_WEB_SEARCH_WEB_LOADER = (
-            form_data.web.BYPASS_WEB_SEARCH_WEB_LOADER
-        )
-        request.app.state.config.OLLAMA_CLOUD_WEB_SEARCH_API_KEY = (
-            form_data.web.OLLAMA_CLOUD_WEB_SEARCH_API_KEY
-        )
-        request.app.state.config.SEARXNG_QUERY_URL = form_data.web.SEARXNG_QUERY_URL
-        request.app.state.config.SEARXNG_LANGUAGE = form_data.web.SEARXNG_LANGUAGE
-        request.app.state.config.YACY_QUERY_URL = form_data.web.YACY_QUERY_URL
-        request.app.state.config.YACY_USERNAME = form_data.web.YACY_USERNAME
-        request.app.state.config.YACY_PASSWORD = form_data.web.YACY_PASSWORD
-        request.app.state.config.GOOGLE_PSE_API_KEY = form_data.web.GOOGLE_PSE_API_KEY
-        request.app.state.config.GOOGLE_PSE_ENGINE_ID = (
-            form_data.web.GOOGLE_PSE_ENGINE_ID
-        )
-        request.app.state.config.BRAVE_SEARCH_API_KEY = (
-            form_data.web.BRAVE_SEARCH_API_KEY
-        )
-        request.app.state.config.KAGI_SEARCH_API_KEY = form_data.web.KAGI_SEARCH_API_KEY
-        request.app.state.config.MOJEEK_SEARCH_API_KEY = (
-            form_data.web.MOJEEK_SEARCH_API_KEY
-        )
-        request.app.state.config.BOCHA_SEARCH_API_KEY = (
-            form_data.web.BOCHA_SEARCH_API_KEY
-        )
-        request.app.state.config.SERPSTACK_API_KEY = form_data.web.SERPSTACK_API_KEY
-        request.app.state.config.SERPSTACK_HTTPS = form_data.web.SERPSTACK_HTTPS
-        request.app.state.config.SERPER_API_KEY = form_data.web.SERPER_API_KEY
-        request.app.state.config.SERPLY_API_KEY = form_data.web.SERPLY_API_KEY
-        request.app.state.config.TAVILY_API_KEY = form_data.web.TAVILY_API_KEY
-        request.app.state.config.SEARCHAPI_API_KEY = form_data.web.SEARCHAPI_API_KEY
-        request.app.state.config.SEARCHAPI_ENGINE = form_data.web.SEARCHAPI_ENGINE
-        request.app.state.config.SERPAPI_API_KEY = form_data.web.SERPAPI_API_KEY
-        request.app.state.config.SERPAPI_ENGINE = form_data.web.SERPAPI_ENGINE
-        request.app.state.config.JINA_API_KEY = form_data.web.JINA_API_KEY
-        request.app.state.config.BING_SEARCH_V7_ENDPOINT = (
-            form_data.web.BING_SEARCH_V7_ENDPOINT
-        )
-        request.app.state.config.BING_SEARCH_V7_SUBSCRIPTION_KEY = (
-            form_data.web.BING_SEARCH_V7_SUBSCRIPTION_KEY
-        )
-        request.app.state.config.EXA_API_KEY = form_data.web.EXA_API_KEY
-        request.app.state.config.PERPLEXITY_API_KEY = form_data.web.PERPLEXITY_API_KEY
-        request.app.state.config.PERPLEXITY_MODEL = form_data.web.PERPLEXITY_MODEL
-        request.app.state.config.PERPLEXITY_SEARCH_CONTEXT_USAGE = (
-            form_data.web.PERPLEXITY_SEARCH_CONTEXT_USAGE
-        )
-        request.app.state.config.PERPLEXITY_SEARCH_API_URL = (
-            form_data.web.PERPLEXITY_SEARCH_API_URL
-        )
-        request.app.state.config.SOUGOU_API_SID = form_data.web.SOUGOU_API_SID
-        request.app.state.config.SOUGOU_API_SK = form_data.web.SOUGOU_API_SK
-
-        # Web loader settings
-        request.app.state.config.WEB_LOADER_ENGINE = form_data.web.WEB_LOADER_ENGINE
-        request.app.state.config.WEB_LOADER_TIMEOUT = form_data.web.WEB_LOADER_TIMEOUT
-
-        request.app.state.config.ENABLE_WEB_LOADER_SSL_VERIFICATION = (
-            form_data.web.ENABLE_WEB_LOADER_SSL_VERIFICATION
-        )
-        request.app.state.config.PLAYWRIGHT_WS_URL = form_data.web.PLAYWRIGHT_WS_URL
-        request.app.state.config.PLAYWRIGHT_TIMEOUT = form_data.web.PLAYWRIGHT_TIMEOUT
-        request.app.state.config.FIRECRAWL_API_KEY = form_data.web.FIRECRAWL_API_KEY
-        request.app.state.config.FIRECRAWL_API_BASE_URL = (
-            form_data.web.FIRECRAWL_API_BASE_URL
-        )
-        request.app.state.config.EXTERNAL_WEB_SEARCH_URL = (
-            form_data.web.EXTERNAL_WEB_SEARCH_URL
-        )
-        request.app.state.config.EXTERNAL_WEB_SEARCH_API_KEY = (
-            form_data.web.EXTERNAL_WEB_SEARCH_API_KEY
-        )
-        request.app.state.config.EXTERNAL_WEB_LOADER_URL = (
-            form_data.web.EXTERNAL_WEB_LOADER_URL
-        )
-        request.app.state.config.EXTERNAL_WEB_LOADER_API_KEY = (
-            form_data.web.EXTERNAL_WEB_LOADER_API_KEY
-        )
-        request.app.state.config.TAVILY_EXTRACT_DEPTH = (
-            form_data.web.TAVILY_EXTRACT_DEPTH
-        )
-        request.app.state.config.YOUTUBE_LOADER_LANGUAGE = (
-            form_data.web.YOUTUBE_LOADER_LANGUAGE
-        )
-        request.app.state.config.YOUTUBE_LOADER_PROXY_URL = (
-            form_data.web.YOUTUBE_LOADER_PROXY_URL
-        )
-        request.app.state.YOUTUBE_LOADER_TRANSLATION = (
-            form_data.web.YOUTUBE_LOADER_TRANSLATION
-        )
-
     return {
         "status": True,
         # RAG settings
@@ -1198,64 +847,6 @@ async def update_rag_config(
         # Integration settings
         "ENABLE_GOOGLE_DRIVE_INTEGRATION": request.app.state.config.ENABLE_GOOGLE_DRIVE_INTEGRATION,
         "ENABLE_ONEDRIVE_INTEGRATION": request.app.state.config.ENABLE_ONEDRIVE_INTEGRATION,
-        # Web search settings
-        "web": {
-            "ENABLE_WEB_SEARCH": request.app.state.config.ENABLE_WEB_SEARCH,
-            "WEB_SEARCH_ENGINE": request.app.state.config.WEB_SEARCH_ENGINE,
-            "WEB_SEARCH_TRUST_ENV": request.app.state.config.WEB_SEARCH_TRUST_ENV,
-            "WEB_SEARCH_RESULT_COUNT": request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-            "WEB_SEARCH_CONCURRENT_REQUESTS": request.app.state.config.WEB_SEARCH_CONCURRENT_REQUESTS,
-            "WEB_LOADER_CONCURRENT_REQUESTS": request.app.state.config.WEB_LOADER_CONCURRENT_REQUESTS,
-            "WEB_SEARCH_DOMAIN_FILTER_LIST": request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            "BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL": request.app.state.config.BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL,
-            "BYPASS_WEB_SEARCH_WEB_LOADER": request.app.state.config.BYPASS_WEB_SEARCH_WEB_LOADER,
-            "OLLAMA_CLOUD_WEB_SEARCH_API_KEY": request.app.state.config.OLLAMA_CLOUD_WEB_SEARCH_API_KEY,
-            "SEARXNG_QUERY_URL": request.app.state.config.SEARXNG_QUERY_URL,
-            "SEARXNG_LANGUAGE": request.app.state.config.SEARXNG_LANGUAGE,
-            "YACY_QUERY_URL": request.app.state.config.YACY_QUERY_URL,
-            "YACY_USERNAME": request.app.state.config.YACY_USERNAME,
-            "YACY_PASSWORD": request.app.state.config.YACY_PASSWORD,
-            "GOOGLE_PSE_API_KEY": request.app.state.config.GOOGLE_PSE_API_KEY,
-            "GOOGLE_PSE_ENGINE_ID": request.app.state.config.GOOGLE_PSE_ENGINE_ID,
-            "BRAVE_SEARCH_API_KEY": request.app.state.config.BRAVE_SEARCH_API_KEY,
-            "KAGI_SEARCH_API_KEY": request.app.state.config.KAGI_SEARCH_API_KEY,
-            "MOJEEK_SEARCH_API_KEY": request.app.state.config.MOJEEK_SEARCH_API_KEY,
-            "BOCHA_SEARCH_API_KEY": request.app.state.config.BOCHA_SEARCH_API_KEY,
-            "SERPSTACK_API_KEY": request.app.state.config.SERPSTACK_API_KEY,
-            "SERPSTACK_HTTPS": request.app.state.config.SERPSTACK_HTTPS,
-            "SERPER_API_KEY": request.app.state.config.SERPER_API_KEY,
-            "SERPLY_API_KEY": request.app.state.config.SERPLY_API_KEY,
-            "TAVILY_API_KEY": request.app.state.config.TAVILY_API_KEY,
-            "SEARCHAPI_API_KEY": request.app.state.config.SEARCHAPI_API_KEY,
-            "SEARCHAPI_ENGINE": request.app.state.config.SEARCHAPI_ENGINE,
-            "SERPAPI_API_KEY": request.app.state.config.SERPAPI_API_KEY,
-            "SERPAPI_ENGINE": request.app.state.config.SERPAPI_ENGINE,
-            "JINA_API_KEY": request.app.state.config.JINA_API_KEY,
-            "BING_SEARCH_V7_ENDPOINT": request.app.state.config.BING_SEARCH_V7_ENDPOINT,
-            "BING_SEARCH_V7_SUBSCRIPTION_KEY": request.app.state.config.BING_SEARCH_V7_SUBSCRIPTION_KEY,
-            "EXA_API_KEY": request.app.state.config.EXA_API_KEY,
-            "PERPLEXITY_API_KEY": request.app.state.config.PERPLEXITY_API_KEY,
-            "PERPLEXITY_MODEL": request.app.state.config.PERPLEXITY_MODEL,
-            "PERPLEXITY_SEARCH_CONTEXT_USAGE": request.app.state.config.PERPLEXITY_SEARCH_CONTEXT_USAGE,
-            "PERPLEXITY_SEARCH_API_URL": request.app.state.config.PERPLEXITY_SEARCH_API_URL,
-            "SOUGOU_API_SID": request.app.state.config.SOUGOU_API_SID,
-            "SOUGOU_API_SK": request.app.state.config.SOUGOU_API_SK,
-            "WEB_LOADER_ENGINE": request.app.state.config.WEB_LOADER_ENGINE,
-            "WEB_LOADER_TIMEOUT": request.app.state.config.WEB_LOADER_TIMEOUT,
-            "ENABLE_WEB_LOADER_SSL_VERIFICATION": request.app.state.config.ENABLE_WEB_LOADER_SSL_VERIFICATION,
-            "PLAYWRIGHT_WS_URL": request.app.state.config.PLAYWRIGHT_WS_URL,
-            "PLAYWRIGHT_TIMEOUT": request.app.state.config.PLAYWRIGHT_TIMEOUT,
-            "FIRECRAWL_API_KEY": request.app.state.config.FIRECRAWL_API_KEY,
-            "FIRECRAWL_API_BASE_URL": request.app.state.config.FIRECRAWL_API_BASE_URL,
-            "TAVILY_EXTRACT_DEPTH": request.app.state.config.TAVILY_EXTRACT_DEPTH,
-            "EXTERNAL_WEB_SEARCH_URL": request.app.state.config.EXTERNAL_WEB_SEARCH_URL,
-            "EXTERNAL_WEB_SEARCH_API_KEY": request.app.state.config.EXTERNAL_WEB_SEARCH_API_KEY,
-            "EXTERNAL_WEB_LOADER_URL": request.app.state.config.EXTERNAL_WEB_LOADER_URL,
-            "EXTERNAL_WEB_LOADER_API_KEY": request.app.state.config.EXTERNAL_WEB_LOADER_API_KEY,
-            "YOUTUBE_LOADER_LANGUAGE": request.app.state.config.YOUTUBE_LOADER_LANGUAGE,
-            "YOUTUBE_LOADER_PROXY_URL": request.app.state.config.YOUTUBE_LOADER_PROXY_URL,
-            "YOUTUBE_LOADER_TRANSLATION": request.app.state.YOUTUBE_LOADER_TRANSLATION,
-        },
     }
 
 
@@ -1416,20 +1007,12 @@ def save_docs_to_vector_db(
             (
                 request.app.state.config.RAG_OPENAI_API_BASE_URL
                 if request.app.state.config.RAG_EMBEDDING_ENGINE == "openai"
-                else (
-                    request.app.state.config.RAG_OLLAMA_BASE_URL
-                    if request.app.state.config.RAG_EMBEDDING_ENGINE == "ollama"
-                    else request.app.state.config.RAG_AZURE_OPENAI_BASE_URL
-                )
+                else request.app.state.config.RAG_AZURE_OPENAI_BASE_URL
             ),
             (
                 request.app.state.config.RAG_OPENAI_API_KEY
                 if request.app.state.config.RAG_EMBEDDING_ENGINE == "openai"
-                else (
-                    request.app.state.config.RAG_OLLAMA_API_KEY
-                    if request.app.state.config.RAG_EMBEDDING_ENGINE == "ollama"
-                    else request.app.state.config.RAG_AZURE_OPENAI_API_KEY
-                )
+                else request.app.state.config.RAG_AZURE_OPENAI_API_KEY
             ),
             request.app.state.config.RAG_EMBEDDING_BATCH_SIZE,
             azure_api_version=(
@@ -1747,515 +1330,6 @@ async def process_text(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=ERROR_MESSAGES.DEFAULT(),
-        )
-
-
-@router.post("/process/youtube")
-@router.post("/process/web")
-async def process_web(
-    request: Request,
-    form_data: ProcessUrlForm,
-    process: bool = Query(True, description="Whether to process and save the content"),
-    user=Depends(get_verified_user),
-):
-    try:
-        content, docs = await run_in_threadpool(
-            get_content_from_url, request, form_data.url
-        )
-        log.debug(f"text_content: {content}")
-
-        if process:
-            collection_name = form_data.collection_name
-            if not collection_name:
-                collection_name = calculate_sha256_string(form_data.url)[:63]
-
-            if not request.app.state.config.BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL:
-                await run_in_threadpool(
-                    save_docs_to_vector_db,
-                    request,
-                    docs,
-                    collection_name,
-                    overwrite=True,
-                    user=user,
-                )
-            else:
-                collection_name = None
-
-            return {
-                "status": True,
-                "collection_name": collection_name,
-                "filename": form_data.url,
-                "file": {
-                    "data": {
-                        "content": content,
-                    },
-                    "meta": {
-                        "name": form_data.url,
-                        "source": form_data.url,
-                    },
-                },
-            }
-        else:
-            return {
-                "status": True,
-                "content": content,
-            }
-    except Exception as e:
-        log.exception(e)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=ERROR_MESSAGES.DEFAULT(e),
-        )
-
-
-def search_web(
-    request: Request, engine: str, query: str, user=None
-) -> list[SearchResult]:
-    """Search the web using a search engine and return the results as a list of SearchResult objects.
-    Will look for a search engine API key in environment variables in the following order:
-    - SEARXNG_QUERY_URL
-    - YACY_QUERY_URL + YACY_USERNAME + YACY_PASSWORD
-    - GOOGLE_PSE_API_KEY + GOOGLE_PSE_ENGINE_ID
-    - BRAVE_SEARCH_API_KEY
-    - KAGI_SEARCH_API_KEY
-    - MOJEEK_SEARCH_API_KEY
-    - BOCHA_SEARCH_API_KEY
-    - SERPSTACK_API_KEY
-    - SERPER_API_KEY
-    - SERPLY_API_KEY
-    - TAVILY_API_KEY
-    - EXA_API_KEY
-    - PERPLEXITY_API_KEY
-    - SOUGOU_API_SID + SOUGOU_API_SK
-    - SEARCHAPI_API_KEY + SEARCHAPI_ENGINE (by default `google`)
-    - SERPAPI_API_KEY + SERPAPI_ENGINE (by default `google`)
-    Args:
-        query (str): The query to search for
-    """
-
-    # TODO: add playwright to search the web
-    if engine == "ollama_cloud":
-        return search_ollama_cloud(
-            "https://ollama.com",
-            request.app.state.config.OLLAMA_CLOUD_WEB_SEARCH_API_KEY,
-            query,
-            request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-            request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-        )
-    elif engine == "perplexity_search":
-        if request.app.state.config.PERPLEXITY_API_KEY:
-            return search_perplexity_search(
-                request.app.state.config.PERPLEXITY_API_KEY,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-                request.app.state.config.PERPLEXITY_SEARCH_API_URL,
-                user,
-            )
-        else:
-            raise Exception("No PERPLEXITY_API_KEY found in environment variables")
-    elif engine == "searxng":
-        if request.app.state.config.SEARXNG_QUERY_URL:
-            searxng_kwargs = {"language": request.app.state.config.SEARXNG_LANGUAGE}
-            return search_searxng(
-                request.app.state.config.SEARXNG_QUERY_URL,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-                **searxng_kwargs,
-            )
-        else:
-            raise Exception("No SEARXNG_QUERY_URL found in environment variables")
-    elif engine == "yacy":
-        if request.app.state.config.YACY_QUERY_URL:
-            return search_yacy(
-                request.app.state.config.YACY_QUERY_URL,
-                request.app.state.config.YACY_USERNAME,
-                request.app.state.config.YACY_PASSWORD,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            )
-        else:
-            raise Exception("No YACY_QUERY_URL found in environment variables")
-    elif engine == "google_pse":
-        if (
-            request.app.state.config.GOOGLE_PSE_API_KEY
-            and request.app.state.config.GOOGLE_PSE_ENGINE_ID
-        ):
-            return search_google_pse(
-                request.app.state.config.GOOGLE_PSE_API_KEY,
-                request.app.state.config.GOOGLE_PSE_ENGINE_ID,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-                referer=request.app.state.config.WEBUI_URL,
-            )
-        else:
-            raise Exception(
-                "No GOOGLE_PSE_API_KEY or GOOGLE_PSE_ENGINE_ID found in environment variables"
-            )
-    elif engine == "brave":
-        if request.app.state.config.BRAVE_SEARCH_API_KEY:
-            return search_brave(
-                request.app.state.config.BRAVE_SEARCH_API_KEY,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            )
-        else:
-            raise Exception("No BRAVE_SEARCH_API_KEY found in environment variables")
-    elif engine == "kagi":
-        if request.app.state.config.KAGI_SEARCH_API_KEY:
-            return search_kagi(
-                request.app.state.config.KAGI_SEARCH_API_KEY,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            )
-        else:
-            raise Exception("No KAGI_SEARCH_API_KEY found in environment variables")
-    elif engine == "mojeek":
-        if request.app.state.config.MOJEEK_SEARCH_API_KEY:
-            return search_mojeek(
-                request.app.state.config.MOJEEK_SEARCH_API_KEY,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            )
-        else:
-            raise Exception("No MOJEEK_SEARCH_API_KEY found in environment variables")
-    elif engine == "bocha":
-        if request.app.state.config.BOCHA_SEARCH_API_KEY:
-            return search_bocha(
-                request.app.state.config.BOCHA_SEARCH_API_KEY,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            )
-        else:
-            raise Exception("No BOCHA_SEARCH_API_KEY found in environment variables")
-    elif engine == "serpstack":
-        if request.app.state.config.SERPSTACK_API_KEY:
-            return search_serpstack(
-                request.app.state.config.SERPSTACK_API_KEY,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-                https_enabled=request.app.state.config.SERPSTACK_HTTPS,
-            )
-        else:
-            raise Exception("No SERPSTACK_API_KEY found in environment variables")
-    elif engine == "serper":
-        if request.app.state.config.SERPER_API_KEY:
-            return search_serper(
-                request.app.state.config.SERPER_API_KEY,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            )
-        else:
-            raise Exception("No SERPER_API_KEY found in environment variables")
-    elif engine == "serply":
-        if request.app.state.config.SERPLY_API_KEY:
-            return search_serply(
-                request.app.state.config.SERPLY_API_KEY,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                filter_list=request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            )
-        else:
-            raise Exception("No SERPLY_API_KEY found in environment variables")
-    elif engine == "duckduckgo":
-        return search_duckduckgo(
-            query,
-            request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-            request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            concurrent_requests=request.app.state.config.WEB_SEARCH_CONCURRENT_REQUESTS,
-        )
-    elif engine == "tavily":
-        if request.app.state.config.TAVILY_API_KEY:
-            return search_tavily(
-                request.app.state.config.TAVILY_API_KEY,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            )
-        else:
-            raise Exception("No TAVILY_API_KEY found in environment variables")
-    elif engine == "exa":
-        if request.app.state.config.EXA_API_KEY:
-            return search_exa(
-                request.app.state.config.EXA_API_KEY,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            )
-        else:
-            raise Exception("No EXA_API_KEY found in environment variables")
-    elif engine == "searchapi":
-        if request.app.state.config.SEARCHAPI_API_KEY:
-            return search_searchapi(
-                request.app.state.config.SEARCHAPI_API_KEY,
-                request.app.state.config.SEARCHAPI_ENGINE,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            )
-        else:
-            raise Exception("No SEARCHAPI_API_KEY found in environment variables")
-    elif engine == "serpapi":
-        if request.app.state.config.SERPAPI_API_KEY:
-            return search_serpapi(
-                request.app.state.config.SERPAPI_API_KEY,
-                request.app.state.config.SERPAPI_ENGINE,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            )
-        else:
-            raise Exception("No SERPAPI_API_KEY found in environment variables")
-    elif engine == "jina":
-        return search_jina(
-            request.app.state.config.JINA_API_KEY,
-            query,
-            request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-        )
-    elif engine == "bing":
-        return search_bing(
-            request.app.state.config.BING_SEARCH_V7_SUBSCRIPTION_KEY,
-            request.app.state.config.BING_SEARCH_V7_ENDPOINT,
-            str(DEFAULT_LOCALE),
-            query,
-            request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-            request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-        )
-    elif engine == "azure":
-        if (
-            request.app.state.config.AZURE_AI_SEARCH_API_KEY
-            and request.app.state.config.AZURE_AI_SEARCH_ENDPOINT
-            and request.app.state.config.AZURE_AI_SEARCH_INDEX_NAME
-        ):
-            return search_azure(
-                request.app.state.config.AZURE_AI_SEARCH_API_KEY,
-                request.app.state.config.AZURE_AI_SEARCH_ENDPOINT,
-                request.app.state.config.AZURE_AI_SEARCH_INDEX_NAME,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            )
-        else:
-            raise Exception(
-                "AZURE_AI_SEARCH_API_KEY, AZURE_AI_SEARCH_ENDPOINT, and AZURE_AI_SEARCH_INDEX_NAME are required for Azure AI Search"
-            )
-    elif engine == "exa":
-        return search_exa(
-            request.app.state.config.EXA_API_KEY,
-            query,
-            request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-            request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-        )
-    elif engine == "perplexity":
-        return search_perplexity(
-            request.app.state.config.PERPLEXITY_API_KEY,
-            query,
-            request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-            request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            model=request.app.state.config.PERPLEXITY_MODEL,
-            search_context_usage=request.app.state.config.PERPLEXITY_SEARCH_CONTEXT_USAGE,
-        )
-    elif engine == "sougou":
-        if (
-            request.app.state.config.SOUGOU_API_SID
-            and request.app.state.config.SOUGOU_API_SK
-        ):
-            return search_sougou(
-                request.app.state.config.SOUGOU_API_SID,
-                request.app.state.config.SOUGOU_API_SK,
-                query,
-                request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-                request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            )
-        else:
-            raise Exception(
-                "No SOUGOU_API_SID or SOUGOU_API_SK found in environment variables"
-            )
-    elif engine == "firecrawl":
-        return search_firecrawl(
-            request.app.state.config.FIRECRAWL_API_BASE_URL,
-            request.app.state.config.FIRECRAWL_API_KEY,
-            query,
-            request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-            request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-        )
-    elif engine == "external":
-        return search_external(
-            request,
-            request.app.state.config.EXTERNAL_WEB_SEARCH_URL,
-            request.app.state.config.EXTERNAL_WEB_SEARCH_API_KEY,
-            query,
-            request.app.state.config.WEB_SEARCH_RESULT_COUNT,
-            request.app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST,
-            user=user,
-        )
-    else:
-        raise Exception("No search engine API key found in environment variables")
-
-
-@router.post("/process/web/search")
-async def process_web_search(
-    request: Request, form_data: SearchForm, user=Depends(get_verified_user)
-):
-
-    urls = []
-    result_items = []
-
-    try:
-        logging.debug(
-            f"trying to web search with {request.app.state.config.WEB_SEARCH_ENGINE, form_data.queries}"
-        )
-
-        # Use semaphore to limit concurrent requests based on WEB_SEARCH_CONCURRENT_REQUESTS
-        # 0 or None = unlimited (previous behavior), positive number = limited concurrency
-        # Set to 1 for sequential execution (rate-limited APIs like Brave free tier)
-        concurrent_limit = request.app.state.config.WEB_SEARCH_CONCURRENT_REQUESTS
-
-        if concurrent_limit:
-            # Limited concurrency with semaphore
-            semaphore = asyncio.Semaphore(concurrent_limit)
-
-            async def search_with_limit(query):
-                async with semaphore:
-                    return await run_in_threadpool(
-                        search_web,
-                        request,
-                        request.app.state.config.WEB_SEARCH_ENGINE,
-                        query,
-                        user,
-                    )
-
-            search_tasks = [search_with_limit(query) for query in form_data.queries]
-        else:
-            # Unlimited parallel execution (previous behavior)
-            search_tasks = [
-                run_in_threadpool(
-                    search_web,
-                    request,
-                    request.app.state.config.WEB_SEARCH_ENGINE,
-                    query,
-                    user,
-                )
-                for query in form_data.queries
-            ]
-
-        search_results = await asyncio.gather(*search_tasks)
-
-        for result in search_results:
-            if result:
-                for item in result:
-                    if item and item.link:
-                        result_items.append(item)
-                        urls.append(item.link)
-
-        urls = list(dict.fromkeys(urls))
-        log.debug(f"urls: {urls}")
-
-    except Exception as e:
-        log.exception(e)
-
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=ERROR_MESSAGES.WEB_SEARCH_ERROR(e),
-        )
-
-    if len(urls) == 0:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=ERROR_MESSAGES.DEFAULT("No results found from web search"),
-        )
-
-    try:
-        if request.app.state.config.BYPASS_WEB_SEARCH_WEB_LOADER:
-            search_results = [
-                item for result in search_results for item in result if result
-            ]
-
-            docs = [
-                Document(
-                    page_content=result.snippet,
-                    metadata={
-                        "source": result.link,
-                        "title": result.title,
-                        "snippet": result.snippet,
-                        "link": result.link,
-                    },
-                )
-                for result in search_results
-                if hasattr(result, "snippet") and result.snippet is not None
-            ]
-        else:
-            loader = get_web_loader(
-                urls,
-                verify_ssl=request.app.state.config.ENABLE_WEB_LOADER_SSL_VERIFICATION,
-                requests_per_second=request.app.state.config.WEB_LOADER_CONCURRENT_REQUESTS,
-                trust_env=request.app.state.config.WEB_SEARCH_TRUST_ENV,
-            )
-            docs = await loader.aload()
-
-        urls = [
-            doc.metadata.get("source") for doc in docs if doc.metadata.get("source")
-        ]  # only keep the urls returned by the loader
-        result_items = [
-            dict(item) for item in result_items if item.link in urls
-        ]  # only keep the search results that have been loaded
-
-        if request.app.state.config.BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL:
-            return {
-                "status": True,
-                "collection_name": None,
-                "filenames": urls,
-                "items": result_items,
-                "docs": [
-                    {
-                        "content": doc.page_content,
-                        "metadata": doc.metadata,
-                    }
-                    for doc in docs
-                ],
-                "loaded_count": len(docs),
-            }
-        else:
-            # Create a single collection for all documents
-            collection_name = (
-                f"web-search-{calculate_sha256_string('-'.join(form_data.queries))}"[
-                    :63
-                ]
-            )
-
-            try:
-                await run_in_threadpool(
-                    save_docs_to_vector_db,
-                    request,
-                    docs,
-                    collection_name,
-                    overwrite=True,
-                    user=user,
-                )
-            except Exception as e:
-                log.debug(f"error saving docs: {e}")
-
-            return {
-                "status": True,
-                "collection_names": [collection_name],
-                "items": result_items,
-                "filenames": urls,
-                "loaded_count": len(docs),
-            }
-    except Exception as e:
-        log.exception(e)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=ERROR_MESSAGES.DEFAULT(e),
         )
 
 

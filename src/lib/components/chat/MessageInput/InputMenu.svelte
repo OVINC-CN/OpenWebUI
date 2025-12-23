@@ -24,7 +24,6 @@
 	import ChevronLeft from '$lib/components/icons/ChevronLeft.svelte';
 	import PageEdit from '$lib/components/icons/PageEdit.svelte';
 	import Chats from './InputMenu/Chats.svelte';
-	import Notes from './InputMenu/Notes.svelte';
 	import Knowledge from './InputMenu/Knowledge.svelte';
 	import AttachWebpageModal from './AttachWebpageModal.svelte';
 	import GlobeAlt from '$lib/components/icons/GlobeAlt.svelte';
@@ -183,61 +182,6 @@
 							<div class=" line-clamp-1">{$i18n.t('Capture')}</div>
 						</DropdownMenu.Item>
 					</Tooltip>
-
-					<Tooltip
-						content={fileUploadCapableModels.length !== selectedModels.length
-							? $i18n.t('Model(s) do not support file upload')
-							: !fileUploadEnabled
-								? $i18n.t('You do not have permission to upload files.')
-								: ''}
-						className="w-full"
-					>
-						<DropdownMenu.Item
-							class="flex gap-2 items-center px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl {!fileUploadEnabled
-								? 'opacity-50'
-								: ''}"
-							on:click={() => {
-								if (fileUploadEnabled) {
-									showAttachWebpageModal = true;
-								}
-							}}
-						>
-							<GlobeAlt />
-							<div class="line-clamp-1">{$i18n.t('Attach Webpage')}</div>
-						</DropdownMenu.Item>
-					</Tooltip>
-
-					{#if $config?.features?.enable_notes ?? false}
-						<Tooltip
-							content={fileUploadCapableModels.length !== selectedModels.length
-								? $i18n.t('Model(s) do not support file upload')
-								: !fileUploadEnabled
-									? $i18n.t('You do not have permission to upload files.')
-									: ''}
-							className="w-full"
-						>
-							<button
-								class="flex gap-2 w-full items-center px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl {!fileUploadEnabled
-									? 'opacity-50'
-									: ''}"
-								on:click={() => {
-									tab = 'notes';
-								}}
-							>
-								<PageEdit />
-
-								<div class="flex items-center w-full justify-between">
-									<div class=" line-clamp-1">
-										{$i18n.t('Attach Notes')}
-									</div>
-
-									<div class="text-gray-500">
-										<ChevronRight />
-									</div>
-								</div>
-							</button>
-						</Tooltip>
-					{/if}
 
 					<Tooltip
 						content={fileUploadCapableModels.length !== selectedModels.length
@@ -465,25 +409,6 @@
 					</button>
 
 					<Knowledge {onSelect} />
-				</div>
-			{:else if tab === 'notes'}
-				<div in:fly={{ x: 20, duration: 150 }}>
-					<button
-						class="flex w-full justify-between gap-2 items-center px-3 py-1.5 text-sm cursor-pointer rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50"
-						on:click={() => {
-							tab = '';
-						}}
-					>
-						<ChevronLeft />
-
-						<div class="flex items-center w-full justify-between">
-							<div>
-								{$i18n.t('Notes')}
-							</div>
-						</div>
-					</button>
-
-					<Notes {onSelect} />
 				</div>
 			{:else if tab === 'chats'}
 				<div in:fly={{ x: 20, duration: 150 }}>

@@ -3,7 +3,6 @@
 	import { DropdownMenu } from 'bits-ui';
 	import { onMount, getContext, createEventDispatcher } from 'svelte';
 
-	import { searchNotes } from '$lib/apis/notes';
 	import { searchKnowledgeBases, searchKnowledgeFiles } from '$lib/apis/knowledge';
 
 	import { flyAndScale } from '$lib/utils/transitions';
@@ -40,26 +39,8 @@
 	}
 
 	const getItems = () => {
-		getNoteItems();
 		getKnowledgeItems();
 		getKnowledgeFileItems();
-	};
-
-	const getNoteItems = async () => {
-		const res = await searchNotes(localStorage.token, query).catch(() => {
-			return null;
-		});
-
-		if (res) {
-			noteItems = res.items.map((note) => {
-				return {
-					...note,
-					type: 'note',
-					name: note.title,
-					description: dayjs(note.updated_at / 1000000).fromNow()
-				};
-			});
-		}
 	};
 
 	const getKnowledgeItems = async () => {
@@ -140,9 +121,7 @@
 					{#each items as item, i}
 						{#if i === 0 || item?.type !== items[i - 1]?.type}
 							<div class="px-2 text-xs text-gray-500 py-1">
-								{#if item?.type === 'note'}
-									{$i18n.t('Notes')}
-								{:else if item?.type === 'collection'}
+								{#if item?.type === 'collection'}
 									{$i18n.t('Collections')}
 								{:else if item?.type === 'file'}
 									{$i18n.t('Files')}

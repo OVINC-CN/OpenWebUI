@@ -40,14 +40,12 @@ from open_webui.models.groups import Groups
 
 
 from open_webui.routers.retrieval import ProcessFileForm, process_file
-from open_webui.routers.audio import transcribe
 
 from open_webui.storage.provider import Storage
 
 
 from open_webui.utils.auth import get_admin_user, get_verified_user
 from open_webui.utils.access_control import has_access
-from open_webui.utils.misc import strict_match_mime_type
 from pydantic import BaseModel
 
 log = logging.getLogger(__name__)
@@ -116,18 +114,7 @@ def process_uploaded_file(request, file, file_path, file_item, file_metadata, us
                 request.app.state.config, "STT_SUPPORTED_CONTENT_TYPES", []
             )
 
-            if strict_match_mime_type(stt_supported_content_types, file.content_type):
-                file_path = Storage.get_file(file_path)
-                result = transcribe(request, file_path, file_metadata, user)
-
-                process_file(
-                    request,
-                    ProcessFileForm(
-                        file_id=file_item.id, content=result.get("text", "")
-                    ),
-                    user=user,
-                )
-            elif (not file.content_type.startswith(("image/", "video/"))) or (
+            if (not file.content_type.startswith(("image/", "video/"))) or (
                 request.app.state.config.CONTENT_EXTRACTION_ENGINE == "external"
             ):
                 process_file(request, ProcessFileForm(file_id=file_item.id), user=user)

@@ -18,11 +18,9 @@ import ast
 from uuid import uuid4
 from concurrent.futures import ThreadPoolExecutor
 
-
 from fastapi import Request, HTTPException
 from fastapi.responses import HTMLResponse
 from starlette.responses import Response, StreamingResponse, JSONResponse
-
 
 from open_webui.utils.misc import is_string_allowed
 from open_webui.models.oauth_sessions import OAuthSessions
@@ -41,7 +39,6 @@ from open_webui.routers.tasks import (
     generate_chat_tags,
 )
 from open_webui.routers.retrieval import (
-    process_web_search,
     SearchForm,
 )
 from open_webui.routers.images import (
@@ -64,13 +61,11 @@ from open_webui.utils.files import (
     get_image_url_from_base64,
 )
 
-
 from open_webui.models.users import UserModel
 from open_webui.models.functions import Functions
 from open_webui.models.models import Models
 
 from open_webui.retrieval.utils import get_sources_from_items
-
 
 from open_webui.utils.chat import generate_chat_completion
 from open_webui.utils.task import (
@@ -102,13 +97,10 @@ from open_webui.utils.code_interpreter import execute_code_jupyter
 from open_webui.utils.payload import apply_system_prompt_to_body
 from open_webui.utils.mcp.client import MCPClient
 
-
 from open_webui.config import (
     CACHE_DIR,
     DEFAULT_VOICE_MODE_PROMPT_TEMPLATE,
     DEFAULT_TOOLS_FUNCTION_CALLING_PROMPT_TEMPLATE,
-    DEFAULT_CODE_INTERPRETER_PROMPT,
-    CODE_INTERPRETER_BLOCKED_MODULES,
 )
 from open_webui.env import (
     GLOBAL_LOG_LEVEL,
@@ -121,10 +113,8 @@ from open_webui.env import (
 )
 from open_webui.constants import TASKS
 
-
 logging.basicConfig(stream=sys.stdout, level=GLOBAL_LOG_LEVEL)
 log = logging.getLogger(__name__)
-
 
 DEFAULT_REASONING_TAGS = [
     ("<think>", "</think>"),
@@ -137,7 +127,6 @@ DEFAULT_REASONING_TAGS = [
     ("◁think▷", "◁/think▷"),
 ]
 DEFAULT_SOLUTION_TAGS = [("<|begin_of_solution|>", "<|end_of_solution|>")]
-DEFAULT_CODE_INTERPRETER_TAGS = [("<code_interpreter>", "</code_interpreter>")]
 
 
 def process_tool_result(
@@ -552,169 +541,6 @@ async def chat_memory_handler(
     return form_data
 
 
-async def chat_web_search_handler(
-    request: Request, form_data: dict, extra_params: dict, user
-):
-    event_emitter = extra_params["__event_emitter__"]
-    await event_emitter(
-        {
-            "type": "status",
-            "data": {
-                "action": "web_search",
-                "description": "Searching the web",
-                "done": False,
-            },
-        }
-    )
-
-    messages = form_data["messages"]
-    user_message = get_last_user_message(messages)
-
-    queries = []
-    try:
-        res = await generate_queries(
-            request,
-            {
-                "model": form_data["model"],
-                "messages": messages,
-                "prompt": user_message,
-                "type": "web_search",
-            },
-            user,
-        )
-
-        response = res["choices"][0]["message"]["content"]
-
-        try:
-            bracket_start = response.find("{")
-            bracket_end = response.rfind("}") + 1
-
-            if bracket_start == -1 or bracket_end == -1:
-                raise Exception("No JSON object found in the response")
-
-            response = response[bracket_start:bracket_end]
-            queries = json.loads(response)
-            queries = queries.get("queries", [])
-        except Exception as e:
-            queries = [response]
-
-        if ENABLE_QUERIES_CACHE:
-            request.state.cached_queries = queries
-
-    except Exception as e:
-        log.exception(e)
-        queries = [user_message]
-
-    # Check if generated queries are empty
-    if len(queries) == 1 and queries[0].strip() == "":
-        queries = [user_message]
-
-    # Check if queries are not found
-    if len(queries) == 0:
-        await event_emitter(
-            {
-                "type": "status",
-                "data": {
-                    "action": "web_search",
-                    "description": "No search query generated",
-                    "done": True,
-                },
-            }
-        )
-        return form_data
-
-    await event_emitter(
-        {
-            "type": "status",
-            "data": {
-                "action": "web_search_queries_generated",
-                "queries": queries,
-                "done": False,
-            },
-        }
-    )
-
-    try:
-        results = await process_web_search(
-            request,
-            SearchForm(queries=queries),
-            user=user,
-        )
-
-        if results:
-            files = form_data.get("files", [])
-
-            if results.get("collection_names"):
-                for col_idx, collection_name in enumerate(
-                    results.get("collection_names")
-                ):
-                    files.append(
-                        {
-                            "collection_name": collection_name,
-                            "name": ", ".join(queries),
-                            "type": "web_search",
-                            "urls": results["filenames"],
-                            "queries": queries,
-                        }
-                    )
-            elif results.get("docs"):
-                # Invoked when bypass embedding and retrieval is set to True
-                docs = results["docs"]
-                files.append(
-                    {
-                        "docs": docs,
-                        "name": ", ".join(queries),
-                        "type": "web_search",
-                        "urls": results["filenames"],
-                        "queries": queries,
-                    }
-                )
-
-            form_data["files"] = files
-
-            await event_emitter(
-                {
-                    "type": "status",
-                    "data": {
-                        "action": "web_search",
-                        "description": "Searched {{count}} sites",
-                        "urls": results["filenames"],
-                        "items": results.get("items", []),
-                        "done": True,
-                    },
-                }
-            )
-        else:
-            await event_emitter(
-                {
-                    "type": "status",
-                    "data": {
-                        "action": "web_search",
-                        "description": "No search results found",
-                        "done": True,
-                        "error": True,
-                    },
-                }
-            )
-
-    except Exception as e:
-        log.exception(e)
-        await event_emitter(
-            {
-                "type": "status",
-                "data": {
-                    "action": "web_search",
-                    "description": "An error occurred while searching the web",
-                    "queries": queries,
-                    "done": True,
-                    "error": True,
-                },
-            }
-        )
-
-    return form_data
-
-
 def get_images_from_messages(message_list):
     images = []
 
@@ -1096,23 +922,19 @@ def apply_params_to_form_data(form_data, model):
         # If custom_params are provided, merge them into params
         params = deep_update(params, custom_params)
 
-    if model.get("owned_by") == "ollama":
-        # Ollama specific parameters
-        form_data["options"] = params
-    else:
-        if isinstance(params, dict):
-            for key, value in params.items():
-                if value is not None:
-                    form_data[key] = value
+    if isinstance(params, dict):
+        for key, value in params.items():
+            if value is not None:
+                form_data[key] = value
 
-        if "logit_bias" in params and params["logit_bias"] is not None:
-            try:
-                logit_bias = convert_logit_bias_input_to_json(params["logit_bias"])
+    if "logit_bias" in params and params["logit_bias"] is not None:
+        try:
+            logit_bias = convert_logit_bias_input_to_json(params["logit_bias"])
 
-                if logit_bias:
-                    form_data["logit_bias"] = json.loads(logit_bias)
-            except Exception as e:
-                log.exception(f"Error parsing logit_bias: {e}")
+            if logit_bias:
+                form_data["logit_bias"] = json.loads(logit_bias)
+        except Exception as e:
+            log.exception(f"Error parsing logit_bias: {e}")
 
     return form_data
 
@@ -1324,24 +1146,9 @@ async def process_chat_payload(request, form_data, user, metadata, model):
                 request, form_data, extra_params, user
             )
 
-        if "web_search" in features and features["web_search"]:
-            form_data = await chat_web_search_handler(
-                request, form_data, extra_params, user
-            )
-
         if "image_generation" in features and features["image_generation"]:
             form_data = await chat_image_generation_handler(
                 request, form_data, extra_params, user
-            )
-
-        if "code_interpreter" in features and features["code_interpreter"]:
-            form_data["messages"] = add_or_update_user_message(
-                (
-                    request.app.state.config.CODE_INTERPRETER_PROMPT_TEMPLATE
-                    if request.app.state.config.CODE_INTERPRETER_PROMPT_TEMPLATE != ""
-                    else DEFAULT_CODE_INTERPRETER_PROMPT
-                ),
-                form_data["messages"],
             )
 
     tool_ids = form_data.pop("tool_ids", None)
@@ -2460,9 +2267,6 @@ async def process_chat_response(
 
             reasoning_tags_param = metadata.get("params", {}).get("reasoning_tags")
             DETECT_REASONING_TAGS = reasoning_tags_param is not False
-            DETECT_CODE_INTERPRETER = metadata.get("features", {}).get(
-                "code_interpreter", False
-            )
 
             reasoning_tags = []
             if DETECT_REASONING_TAGS:
@@ -2790,19 +2594,6 @@ async def process_chat_response(
                                                 )
                                             )
 
-                                        if DETECT_CODE_INTERPRETER:
-                                            content, content_blocks, end = (
-                                                tag_content_handler(
-                                                    "code_interpreter",
-                                                    DEFAULT_CODE_INTERPRETER_TAGS,
-                                                    content,
-                                                    content_blocks,
-                                                )
-                                            )
-
-                                            if end:
-                                                break
-
                                         if ENABLE_REALTIME_CHAT_SAVE:
                                             # Save message in the database
                                             Chats.upsert_message_to_chat_by_id_and_message_id(
@@ -3072,185 +2863,6 @@ async def process_chat_response(
                     except Exception as e:
                         log.debug(e)
                         break
-
-                if DETECT_CODE_INTERPRETER:
-                    MAX_RETRIES = 5
-                    retries = 0
-
-                    while (
-                        content_blocks[-1]["type"] == "code_interpreter"
-                        and retries < MAX_RETRIES
-                    ):
-
-                        await event_emitter(
-                            {
-                                "type": "chat:completion",
-                                "data": {
-                                    "content": serialize_content_blocks(content_blocks),
-                                },
-                            }
-                        )
-
-                        retries += 1
-                        log.debug(f"Attempt count: {retries}")
-
-                        output = ""
-                        try:
-                            if content_blocks[-1]["attributes"].get("type") == "code":
-                                code = content_blocks[-1]["content"]
-                                if CODE_INTERPRETER_BLOCKED_MODULES:
-                                    blocking_code = textwrap.dedent(
-                                        f"""
-                                        import builtins
-
-                                        BLOCKED_MODULES = {CODE_INTERPRETER_BLOCKED_MODULES}
-
-                                        _real_import = builtins.__import__
-                                        def restricted_import(name, globals=None, locals=None, fromlist=(), level=0):
-                                            if name.split('.')[0] in BLOCKED_MODULES:
-                                                importer_name = globals.get('__name__') if globals else None
-                                                if importer_name == '__main__':
-                                                    raise ImportError(
-                                                        f"Direct import of module {{name}} is restricted."
-                                                    )
-                                            return _real_import(name, globals, locals, fromlist, level)
-
-                                        builtins.__import__ = restricted_import
-                                    """
-                                    )
-                                    code = blocking_code + "\n" + code
-
-                                if (
-                                    request.app.state.config.CODE_INTERPRETER_ENGINE
-                                    == "pyodide"
-                                ):
-                                    output = await event_caller(
-                                        {
-                                            "type": "execute:python",
-                                            "data": {
-                                                "id": str(uuid4()),
-                                                "code": code,
-                                                "session_id": metadata.get(
-                                                    "session_id", None
-                                                ),
-                                            },
-                                        }
-                                    )
-                                elif (
-                                    request.app.state.config.CODE_INTERPRETER_ENGINE
-                                    == "jupyter"
-                                ):
-                                    output = await execute_code_jupyter(
-                                        request.app.state.config.CODE_INTERPRETER_JUPYTER_URL,
-                                        code,
-                                        (
-                                            request.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH_TOKEN
-                                            if request.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH
-                                            == "token"
-                                            else None
-                                        ),
-                                        (
-                                            request.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD
-                                            if request.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH
-                                            == "password"
-                                            else None
-                                        ),
-                                        request.app.state.config.CODE_INTERPRETER_JUPYTER_TIMEOUT,
-                                    )
-                                else:
-                                    output = {
-                                        "stdout": "Code interpreter engine not configured."
-                                    }
-
-                                log.debug(f"Code interpreter output: {output}")
-
-                                if isinstance(output, dict):
-                                    stdout = output.get("stdout", "")
-
-                                    if isinstance(stdout, str):
-                                        stdoutLines = stdout.split("\n")
-                                        for idx, line in enumerate(stdoutLines):
-
-                                            if "data:image/png;base64" in line:
-                                                image_url = get_image_url_from_base64(
-                                                    request,
-                                                    line,
-                                                    metadata,
-                                                    user,
-                                                )
-                                                if image_url:
-                                                    stdoutLines[idx] = (
-                                                        f"![Output Image]({image_url})"
-                                                    )
-
-                                        output["stdout"] = "\n".join(stdoutLines)
-
-                                    result = output.get("result", "")
-
-                                    if isinstance(result, str):
-                                        resultLines = result.split("\n")
-                                        for idx, line in enumerate(resultLines):
-                                            if "data:image/png;base64" in line:
-                                                image_url = get_image_url_from_base64(
-                                                    request,
-                                                    line,
-                                                    metadata,
-                                                    user,
-                                                )
-                                                resultLines[idx] = (
-                                                    f"![Output Image]({image_url})"
-                                                )
-                                        output["result"] = "\n".join(resultLines)
-                        except Exception as e:
-                            output = str(e)
-
-                        content_blocks[-1]["output"] = output
-
-                        content_blocks.append(
-                            {
-                                "type": "text",
-                                "content": "",
-                            }
-                        )
-
-                        await event_emitter(
-                            {
-                                "type": "chat:completion",
-                                "data": {
-                                    "content": serialize_content_blocks(content_blocks),
-                                },
-                            }
-                        )
-
-                        try:
-                            new_form_data = {
-                                **form_data,
-                                "model": model_id,
-                                "stream": True,
-                                "messages": [
-                                    *form_data["messages"],
-                                    {
-                                        "role": "assistant",
-                                        "content": serialize_content_blocks(
-                                            content_blocks, raw=True
-                                        ),
-                                    },
-                                ],
-                            }
-
-                            res = await generate_chat_completion(
-                                request,
-                                new_form_data,
-                                user,
-                            )
-
-                            if isinstance(res, StreamingResponse):
-                                await stream_body_handler(res, new_form_data)
-                            else:
-                                break
-                        except Exception as e:
-                            log.debug(e)
-                            break
 
                 title = Chats.get_chat_title_by_id(metadata["chat_id"])
                 data = {
