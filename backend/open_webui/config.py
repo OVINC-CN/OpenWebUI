@@ -803,16 +803,17 @@ load_oauth_providers()
 STATIC_DIR = Path(os.getenv("STATIC_DIR", OPEN_WEBUI_DIR / "static")).resolve()
 
 # Removed
-# try:
-#     if STATIC_DIR.exists():
-#         for item in STATIC_DIR.iterdir():
-#             if item.is_file() or item.is_symlink():
-#                 try:
-#                     item.unlink()
-#                 except Exception as e:
-#                     pass
-# except Exception as e:
-#     pass
+if not os.getenv("IGNORE_STATIC_CLEANUP"):
+    try:
+        if STATIC_DIR.exists():
+            for item in STATIC_DIR.iterdir():
+                if item.is_file() or item.is_symlink():
+                    try:
+                        item.unlink()
+                    except Exception as e:
+                        pass
+    except Exception as e:
+        pass
 
 for file_path in (FRONTEND_BUILD_DIR / "static").glob("**/*"):
     if file_path.is_file():
@@ -1312,15 +1313,6 @@ USER_PERMISSIONS_WORKSPACE_TOOLS_ALLOW_PUBLIC_SHARING = (
     == "true"
 )
 
-USER_PERMISSIONS_NOTES_ALLOW_SHARING = (
-    os.environ.get("USER_PERMISSIONS_NOTES_ALLOW_SHARING", "False").lower() == "true"
-)
-
-USER_PERMISSIONS_NOTES_ALLOW_PUBLIC_SHARING = (
-    os.environ.get("USER_PERMISSIONS_NOTES_ALLOW_PUBLIC_SHARING", "False").lower()
-    == "true"
-)
-
 USER_PERMISSIONS_CHAT_CONTROLS = (
     os.environ.get("USER_PERMISSIONS_CHAT_CONTROLS", "True").lower() == "true"
 )
@@ -1422,10 +1414,6 @@ USER_PERMISSIONS_FEATURES_FOLDERS = (
     os.environ.get("USER_PERMISSIONS_FEATURES_FOLDERS", "True").lower() == "true"
 )
 
-USER_PERMISSIONS_FEATURES_NOTES = (
-    os.environ.get("USER_PERMISSIONS_FEATURES_NOTES", "True").lower() == "true"
-)
-
 USER_PERMISSIONS_FEATURES_API_KEYS = (
     os.environ.get("USER_PERMISSIONS_FEATURES_API_KEYS", "False").lower() == "true"
 )
@@ -1452,8 +1440,6 @@ DEFAULT_USER_PERMISSIONS = {
         "public_prompts": USER_PERMISSIONS_WORKSPACE_PROMPTS_ALLOW_PUBLIC_SHARING,
         "tools": USER_PERMISSIONS_WORKSPACE_TOOLS_ALLOW_SHARING,
         "public_tools": USER_PERMISSIONS_WORKSPACE_TOOLS_ALLOW_PUBLIC_SHARING,
-        "notes": USER_PERMISSIONS_NOTES_ALLOW_SHARING,
-        "public_notes": USER_PERMISSIONS_NOTES_ALLOW_PUBLIC_SHARING,
     },
     "chat": {
         "controls": USER_PERMISSIONS_CHAT_CONTROLS,
@@ -1479,7 +1465,6 @@ DEFAULT_USER_PERMISSIONS = {
     "features": {
         # General features
         "api_keys": USER_PERMISSIONS_FEATURES_API_KEYS,
-        "notes": USER_PERMISSIONS_FEATURES_NOTES,
         "folders": USER_PERMISSIONS_FEATURES_FOLDERS,
         "direct_tool_servers": USER_PERMISSIONS_FEATURES_DIRECT_TOOL_SERVERS,
         # Chat features
@@ -1499,12 +1484,6 @@ ENABLE_FOLDERS = PersistentConfig(
     "ENABLE_FOLDERS",
     "folders.enable",
     os.environ.get("ENABLE_FOLDERS", "True").lower() == "true",
-)
-
-ENABLE_NOTES = PersistentConfig(
-    "ENABLE_NOTES",
-    "notes.enable",
-    os.environ.get("ENABLE_NOTES", "True").lower() == "true",
 )
 
 ENABLE_EVALUATION_ARENA_MODELS = PersistentConfig(
