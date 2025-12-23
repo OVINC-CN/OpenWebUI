@@ -625,59 +625,6 @@ async def agenerate_azure_openai_batch_embeddings(
         return None
 
 
-async def agenerate_ollama_batch_embeddings(
-    model: str,
-    texts: list[str],
-    url: str,
-    key: str = "",
-    prefix: str = None,
-    user: UserModel = None,
-) -> Optional[list[list[float]]]:
-    # check credit
-    if user:
-        check_credit_by_user_id(user_id=user.id, form_data={}, is_embedding=True)
-
-    try:
-        log.debug(
-            f"agenerate_ollama_batch_embeddings:model {model} batch size: {len(texts)}"
-        )
-        form_data = {"input": texts, "model": model}
-        if isinstance(RAG_EMBEDDING_PREFIX_FIELD_NAME, str) and isinstance(prefix, str):
-            form_data[RAG_EMBEDDING_PREFIX_FIELD_NAME] = prefix
-
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {key}",
-        }
-        if ENABLE_FORWARD_USER_INFO_HEADERS and user:
-            headers = include_user_info_headers(headers, user)
-
-        async with aiohttp.ClientSession(trust_env=True) as session:
-            async with session.post(
-                f"{url}/api/embed", headers=headers, json=form_data
-            ) as r:
-                r.raise_for_status()
-                data = await r.json()
-
-                input_text = str(form_data["input"])
-                with CreditDeduct(
-                    user=user,
-                    model_id=model,
-                    body={"messages": [{"role": "user", "content": input_text}]},
-                    is_stream=False,
-                    is_embedding=True,
-                ) as credit_deduct:
-                    credit_deduct.run(input_text)
-
-                if "embeddings" in data:
-                    return data["embeddings"]
-                else:
-                    raise Exception("Something went wrong :/")
-    except Exception as e:
-        log.exception(f"Error generating ollama batch embeddings: {e}")
-        return None
-
-
 def get_embedding_function(
     embedding_engine,
     embedding_model,
@@ -702,7 +649,7 @@ def get_embedding_function(
             )
 
         return async_embedding_function
-    elif embedding_engine in ["ollama", "openai", "azure_openai"]:
+    elif embedding_engine in ["openai", "azure_openai"]:
         embedding_function = lambda query, prefix=None, user=None: generate_embeddings(
             engine=embedding_engine,
             model=embedding_model,
@@ -777,19 +724,7 @@ async def generate_embeddings(
         else:
             text = f"{prefix}{text}"
 
-    if engine == "ollama":
-        embeddings = await agenerate_ollama_batch_embeddings(
-            **{
-                "model": model,
-                "texts": text if isinstance(text, list) else [text],
-                "url": url,
-                "key": key,
-                "prefix": prefix,
-                "user": user,
-            }
-        )
-        return embeddings[0] if isinstance(text, str) else embeddings
-    elif engine == "openai":
+    if engine == "openai":
         embeddings = await agenerate_openai_batch_embeddings(
             model, text if isinstance(text, list) else [text], url, key, prefix, user
         )
