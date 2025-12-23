@@ -24,8 +24,13 @@
   <br />
 </div>
 
-> ⚠️ **注意**：此仓库的 `dev` 分支是开发分支，可能包含不稳定功能。生产环境请务必使用 [Release](https://github.com/ovinc-cn/openwebui/releases) 中的正式版本。
+> [!IMPORTANT]
+> 此仓库的 `dev` 分支是开发分支，可能包含不稳定功能。生产环境请务必使用 [Release](https://github.com/ovinc-cn/openwebui/releases) 中的正式版本。
 > 本项目是 [Open WebUI](https://github.com/open-webui/open-webui) 的定制分支，与官方团队无关联。
+
+> [!CAUTION]
+> 仓库瘦身计划已启动，后续不再跟随 OpenWebUI 官方版本更新，将移除内置的网页搜索、网页拉取、频道、笔记、音频、图片生成等功能
+
 
 ## 📖 简介
 
