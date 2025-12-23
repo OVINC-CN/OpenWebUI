@@ -184,29 +184,6 @@
 						</DropdownMenu.Item>
 					</Tooltip>
 
-					<Tooltip
-						content={fileUploadCapableModels.length !== selectedModels.length
-							? $i18n.t('Model(s) do not support file upload')
-							: !fileUploadEnabled
-								? $i18n.t('You do not have permission to upload files.')
-								: ''}
-						className="w-full"
-					>
-						<DropdownMenu.Item
-							class="flex gap-2 items-center px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl {!fileUploadEnabled
-								? 'opacity-50'
-								: ''}"
-							on:click={() => {
-								if (fileUploadEnabled) {
-									showAttachWebpageModal = true;
-								}
-							}}
-						>
-							<GlobeAlt />
-							<div class="line-clamp-1">{$i18n.t('Attach Webpage')}</div>
-						</DropdownMenu.Item>
-					</Tooltip>
-
 					{#if $config?.features?.enable_notes ?? false}
 						<Tooltip
 							content={fileUploadCapableModels.length !== selectedModels.length

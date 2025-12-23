@@ -5,9 +5,7 @@ import mimetypes
 import os
 import sys
 import time
-import random
 import re
-from uuid import uuid4
 
 from contextlib import asynccontextmanager
 from urllib.parse import urlencode, parse_qs, urlparse
@@ -17,7 +15,6 @@ from sqlalchemy import text
 import aiohttp
 import anyio.to_thread
 import requests
-from redis import Redis
 
 from fastapi import (
     Depends,
@@ -40,18 +37,15 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.datastructures import Headers
 
-from bs4 import BeautifulSoup
-
 from starsessions import (
     SessionMiddleware as StarSessionsMiddleware,
     SessionAutoloadMiddleware,
 )
 from starsessions.stores.redis import RedisStore
 
-from open_webui.models.credits import Credits
 from open_webui.utils import logger
 from open_webui.utils.audit import AuditLevel, AuditLoggingMiddleware
-from open_webui.utils.credit.utils import is_free_request, check_credit_by_user_id
+from open_webui.utils.credit.utils import check_credit_by_user_id
 from open_webui.utils.logger import start_logger
 from open_webui.socket.main import (
     MODELS,
@@ -61,7 +55,6 @@ from open_webui.socket.main import (
     get_models_in_use,
 )
 from open_webui.routers import (
-    audio,
     images,
     ollama,
     openai,
@@ -137,76 +130,6 @@ from open_webui.config import (
     CODE_INTERPRETER_JUPYTER_AUTH_TOKEN,
     CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD,
     CODE_INTERPRETER_JUPYTER_TIMEOUT,
-    # Image
-    AUTOMATIC1111_API_AUTH,
-    AUTOMATIC1111_BASE_URL,
-    AUTOMATIC1111_PARAMS,
-    COMFYUI_BASE_URL,
-    COMFYUI_API_KEY,
-    COMFYUI_WORKFLOW,
-    COMFYUI_WORKFLOW_NODES,
-    ENABLE_IMAGE_GENERATION,
-    ENABLE_IMAGE_PROMPT_GENERATION,
-    IMAGE_GENERATION_ENGINE,
-    IMAGE_GENERATION_MODEL,
-    IMAGE_SIZE,
-    IMAGE_STEPS,
-    IMAGES_OPENAI_API_BASE_URL,
-    IMAGES_OPENAI_API_VERSION,
-    IMAGES_OPENAI_API_KEY,
-    IMAGES_OPENAI_API_PARAMS,
-    IMAGES_GEMINI_API_BASE_URL,
-    IMAGES_GEMINI_API_KEY,
-    IMAGES_GEMINI_ENDPOINT_METHOD,
-    ENABLE_IMAGE_EDIT,
-    IMAGE_EDIT_ENGINE,
-    IMAGE_EDIT_MODEL,
-    IMAGE_EDIT_SIZE,
-    IMAGES_EDIT_OPENAI_API_BASE_URL,
-    IMAGES_EDIT_OPENAI_API_KEY,
-    IMAGES_EDIT_OPENAI_API_VERSION,
-    IMAGES_EDIT_GEMINI_API_BASE_URL,
-    IMAGES_EDIT_GEMINI_API_KEY,
-    IMAGES_EDIT_COMFYUI_BASE_URL,
-    IMAGES_EDIT_COMFYUI_API_KEY,
-    IMAGES_EDIT_COMFYUI_WORKFLOW,
-    IMAGES_EDIT_COMFYUI_WORKFLOW_NODES,
-    # Audio
-    AUDIO_STT_ENGINE,
-    AUDIO_STT_MODEL,
-    AUDIO_STT_SUPPORTED_CONTENT_TYPES,
-    AUDIO_STT_OPENAI_API_BASE_URL,
-    AUDIO_STT_OPENAI_API_KEY,
-    AUDIO_STT_AZURE_API_KEY,
-    AUDIO_STT_AZURE_REGION,
-    AUDIO_STT_AZURE_LOCALES,
-    AUDIO_STT_AZURE_BASE_URL,
-    AUDIO_STT_AZURE_MAX_SPEAKERS,
-    AUDIO_STT_MISTRAL_API_KEY,
-    AUDIO_STT_MISTRAL_API_BASE_URL,
-    AUDIO_STT_MISTRAL_USE_CHAT_COMPLETIONS,
-    AUDIO_TTS_ENGINE,
-    AUDIO_TTS_MODEL,
-    AUDIO_TTS_VOICE,
-    AUDIO_TTS_OPENAI_API_BASE_URL,
-    AUDIO_TTS_OPENAI_API_KEY,
-    AUDIO_TTS_OPENAI_PARAMS,
-    AUDIO_TTS_API_KEY,
-    AUDIO_TTS_SPLIT_ON,
-    AUDIO_TTS_AZURE_SPEECH_REGION,
-    AUDIO_TTS_AZURE_SPEECH_BASE_URL,
-    AUDIO_TTS_AZURE_SPEECH_OUTPUT_FORMAT,
-    PLAYWRIGHT_WS_URL,
-    PLAYWRIGHT_TIMEOUT,
-    FIRECRAWL_API_BASE_URL,
-    FIRECRAWL_API_KEY,
-    WEB_LOADER_ENGINE,
-    WEB_LOADER_CONCURRENT_REQUESTS,
-    WEB_LOADER_TIMEOUT,
-    WHISPER_MODEL,
-    WHISPER_VAD_FILTER,
-    WHISPER_LANGUAGE,
-    DEEPGRAM_API_KEY,
     # Retrieval
     RAG_TEMPLATE,
     RAG_FULL_CONTEXT,
@@ -275,46 +198,6 @@ from open_webui.config import (
     YOUTUBE_LOADER_LANGUAGE,
     YOUTUBE_LOADER_PROXY_URL,
     # Retrieval (Web Search)
-    ENABLE_WEB_SEARCH,
-    WEB_SEARCH_ENGINE,
-    BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL,
-    BYPASS_WEB_SEARCH_WEB_LOADER,
-    WEB_SEARCH_RESULT_COUNT,
-    WEB_SEARCH_CONCURRENT_REQUESTS,
-    WEB_SEARCH_TRUST_ENV,
-    WEB_SEARCH_DOMAIN_FILTER_LIST,
-    OLLAMA_CLOUD_WEB_SEARCH_API_KEY,
-    JINA_API_KEY,
-    SEARCHAPI_API_KEY,
-    SEARCHAPI_ENGINE,
-    SERPAPI_API_KEY,
-    SERPAPI_ENGINE,
-    SEARXNG_QUERY_URL,
-    SEARXNG_LANGUAGE,
-    YACY_QUERY_URL,
-    YACY_USERNAME,
-    YACY_PASSWORD,
-    SERPER_API_KEY,
-    SERPLY_API_KEY,
-    SERPSTACK_API_KEY,
-    SERPSTACK_HTTPS,
-    TAVILY_API_KEY,
-    TAVILY_EXTRACT_DEPTH,
-    BING_SEARCH_V7_ENDPOINT,
-    BING_SEARCH_V7_SUBSCRIPTION_KEY,
-    BRAVE_SEARCH_API_KEY,
-    EXA_API_KEY,
-    PERPLEXITY_API_KEY,
-    PERPLEXITY_MODEL,
-    PERPLEXITY_SEARCH_CONTEXT_USAGE,
-    PERPLEXITY_SEARCH_API_URL,
-    SOUGOU_API_SID,
-    SOUGOU_API_SK,
-    KAGI_SEARCH_API_KEY,
-    MOJEEK_SEARCH_API_KEY,
-    BOCHA_SEARCH_API_KEY,
-    GOOGLE_PSE_API_KEY,
-    GOOGLE_PSE_ENGINE_ID,
     GOOGLE_DRIVE_CLIENT_ID,
     GOOGLE_DRIVE_API_KEY,
     ENABLE_ONEDRIVE_INTEGRATION,
@@ -327,13 +210,8 @@ from open_webui.config import (
     ENABLE_RAG_HYBRID_SEARCH,
     ENABLE_RAG_HYBRID_SEARCH_ENRICHED_TEXTS,
     ENABLE_RAG_LOCAL_WEB_FETCH,
-    ENABLE_WEB_LOADER_SSL_VERIFICATION,
     ENABLE_GOOGLE_DRIVE_INTEGRATION,
     UPLOAD_DIR,
-    EXTERNAL_WEB_SEARCH_URL,
-    EXTERNAL_WEB_SEARCH_API_KEY,
-    EXTERNAL_WEB_LOADER_URL,
-    EXTERNAL_WEB_LOADER_API_KEY,
     # WebUI
     WEBUI_AUTH,
     WEBUI_NAME,
@@ -879,8 +757,6 @@ app.state.config.ENABLE_RAG_HYBRID_SEARCH = ENABLE_RAG_HYBRID_SEARCH
 app.state.config.ENABLE_RAG_HYBRID_SEARCH_ENRICHED_TEXTS = (
     ENABLE_RAG_HYBRID_SEARCH_ENRICHED_TEXTS
 )
-app.state.config.ENABLE_WEB_LOADER_SSL_VERIFICATION = ENABLE_WEB_LOADER_SSL_VERIFICATION
-
 app.state.config.CONTENT_EXTRACTION_ENGINE = CONTENT_EXTRACTION_ENGINE
 app.state.config.DATALAB_MARKER_API_KEY = DATALAB_MARKER_API_KEY
 app.state.config.DATALAB_MARKER_API_BASE_URL = DATALAB_MARKER_API_BASE_URL
@@ -946,66 +822,8 @@ app.state.config.PDF_EXTRACT_IMAGES = PDF_EXTRACT_IMAGES
 app.state.config.YOUTUBE_LOADER_LANGUAGE = YOUTUBE_LOADER_LANGUAGE
 app.state.config.YOUTUBE_LOADER_PROXY_URL = YOUTUBE_LOADER_PROXY_URL
 
-app.state.config.ENABLE_WEB_SEARCH = ENABLE_WEB_SEARCH
-app.state.config.WEB_SEARCH_ENGINE = WEB_SEARCH_ENGINE
-app.state.config.WEB_SEARCH_DOMAIN_FILTER_LIST = WEB_SEARCH_DOMAIN_FILTER_LIST
-app.state.config.WEB_SEARCH_RESULT_COUNT = WEB_SEARCH_RESULT_COUNT
-app.state.config.WEB_SEARCH_CONCURRENT_REQUESTS = WEB_SEARCH_CONCURRENT_REQUESTS
-
-app.state.config.WEB_LOADER_ENGINE = WEB_LOADER_ENGINE
-app.state.config.WEB_LOADER_CONCURRENT_REQUESTS = WEB_LOADER_CONCURRENT_REQUESTS
-app.state.config.WEB_LOADER_TIMEOUT = WEB_LOADER_TIMEOUT
-
-app.state.config.WEB_SEARCH_TRUST_ENV = WEB_SEARCH_TRUST_ENV
-app.state.config.BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL = (
-    BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL
-)
-app.state.config.BYPASS_WEB_SEARCH_WEB_LOADER = BYPASS_WEB_SEARCH_WEB_LOADER
-
 app.state.config.ENABLE_GOOGLE_DRIVE_INTEGRATION = ENABLE_GOOGLE_DRIVE_INTEGRATION
 app.state.config.ENABLE_ONEDRIVE_INTEGRATION = ENABLE_ONEDRIVE_INTEGRATION
-
-app.state.config.OLLAMA_CLOUD_WEB_SEARCH_API_KEY = OLLAMA_CLOUD_WEB_SEARCH_API_KEY
-app.state.config.SEARXNG_QUERY_URL = SEARXNG_QUERY_URL
-app.state.config.SEARXNG_LANGUAGE = SEARXNG_LANGUAGE
-app.state.config.YACY_QUERY_URL = YACY_QUERY_URL
-app.state.config.YACY_USERNAME = YACY_USERNAME
-app.state.config.YACY_PASSWORD = YACY_PASSWORD
-app.state.config.GOOGLE_PSE_API_KEY = GOOGLE_PSE_API_KEY
-app.state.config.GOOGLE_PSE_ENGINE_ID = GOOGLE_PSE_ENGINE_ID
-app.state.config.BRAVE_SEARCH_API_KEY = BRAVE_SEARCH_API_KEY
-app.state.config.KAGI_SEARCH_API_KEY = KAGI_SEARCH_API_KEY
-app.state.config.MOJEEK_SEARCH_API_KEY = MOJEEK_SEARCH_API_KEY
-app.state.config.BOCHA_SEARCH_API_KEY = BOCHA_SEARCH_API_KEY
-app.state.config.SERPSTACK_API_KEY = SERPSTACK_API_KEY
-app.state.config.SERPSTACK_HTTPS = SERPSTACK_HTTPS
-app.state.config.SERPER_API_KEY = SERPER_API_KEY
-app.state.config.SERPLY_API_KEY = SERPLY_API_KEY
-app.state.config.TAVILY_API_KEY = TAVILY_API_KEY
-app.state.config.SEARCHAPI_API_KEY = SEARCHAPI_API_KEY
-app.state.config.SEARCHAPI_ENGINE = SEARCHAPI_ENGINE
-app.state.config.SERPAPI_API_KEY = SERPAPI_API_KEY
-app.state.config.SERPAPI_ENGINE = SERPAPI_ENGINE
-app.state.config.JINA_API_KEY = JINA_API_KEY
-app.state.config.BING_SEARCH_V7_ENDPOINT = BING_SEARCH_V7_ENDPOINT
-app.state.config.BING_SEARCH_V7_SUBSCRIPTION_KEY = BING_SEARCH_V7_SUBSCRIPTION_KEY
-app.state.config.EXA_API_KEY = EXA_API_KEY
-app.state.config.PERPLEXITY_API_KEY = PERPLEXITY_API_KEY
-app.state.config.PERPLEXITY_MODEL = PERPLEXITY_MODEL
-app.state.config.PERPLEXITY_SEARCH_CONTEXT_USAGE = PERPLEXITY_SEARCH_CONTEXT_USAGE
-app.state.config.PERPLEXITY_SEARCH_API_URL = PERPLEXITY_SEARCH_API_URL
-app.state.config.SOUGOU_API_SID = SOUGOU_API_SID
-app.state.config.SOUGOU_API_SK = SOUGOU_API_SK
-app.state.config.EXTERNAL_WEB_SEARCH_URL = EXTERNAL_WEB_SEARCH_URL
-app.state.config.EXTERNAL_WEB_SEARCH_API_KEY = EXTERNAL_WEB_SEARCH_API_KEY
-app.state.config.EXTERNAL_WEB_LOADER_URL = EXTERNAL_WEB_LOADER_URL
-app.state.config.EXTERNAL_WEB_LOADER_API_KEY = EXTERNAL_WEB_LOADER_API_KEY
-
-app.state.config.PLAYWRIGHT_WS_URL = PLAYWRIGHT_WS_URL
-app.state.config.PLAYWRIGHT_TIMEOUT = PLAYWRIGHT_TIMEOUT
-app.state.config.FIRECRAWL_API_BASE_URL = FIRECRAWL_API_BASE_URL
-app.state.config.FIRECRAWL_API_KEY = FIRECRAWL_API_KEY
-app.state.config.TAVILY_EXTRACT_DEPTH = TAVILY_EXTRACT_DEPTH
 
 app.state.EMBEDDING_FUNCTION = None
 app.state.RERANKING_FUNCTION = None
@@ -1101,102 +919,6 @@ app.state.config.CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD = (
     CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD
 )
 app.state.config.CODE_INTERPRETER_JUPYTER_TIMEOUT = CODE_INTERPRETER_JUPYTER_TIMEOUT
-
-########################################
-#
-# IMAGES
-#
-########################################
-
-app.state.config.IMAGE_GENERATION_ENGINE = IMAGE_GENERATION_ENGINE
-app.state.config.ENABLE_IMAGE_GENERATION = ENABLE_IMAGE_GENERATION
-app.state.config.ENABLE_IMAGE_PROMPT_GENERATION = ENABLE_IMAGE_PROMPT_GENERATION
-
-app.state.config.IMAGE_GENERATION_MODEL = IMAGE_GENERATION_MODEL
-app.state.config.IMAGE_SIZE = IMAGE_SIZE
-app.state.config.IMAGE_STEPS = IMAGE_STEPS
-
-app.state.config.IMAGES_OPENAI_API_BASE_URL = IMAGES_OPENAI_API_BASE_URL
-app.state.config.IMAGES_OPENAI_API_VERSION = IMAGES_OPENAI_API_VERSION
-app.state.config.IMAGES_OPENAI_API_KEY = IMAGES_OPENAI_API_KEY
-app.state.config.IMAGES_OPENAI_API_PARAMS = IMAGES_OPENAI_API_PARAMS
-
-app.state.config.IMAGES_GEMINI_API_BASE_URL = IMAGES_GEMINI_API_BASE_URL
-app.state.config.IMAGES_GEMINI_API_KEY = IMAGES_GEMINI_API_KEY
-app.state.config.IMAGES_GEMINI_ENDPOINT_METHOD = IMAGES_GEMINI_ENDPOINT_METHOD
-
-app.state.config.AUTOMATIC1111_BASE_URL = AUTOMATIC1111_BASE_URL
-app.state.config.AUTOMATIC1111_API_AUTH = AUTOMATIC1111_API_AUTH
-app.state.config.AUTOMATIC1111_PARAMS = AUTOMATIC1111_PARAMS
-
-app.state.config.COMFYUI_BASE_URL = COMFYUI_BASE_URL
-app.state.config.COMFYUI_API_KEY = COMFYUI_API_KEY
-app.state.config.COMFYUI_WORKFLOW = COMFYUI_WORKFLOW
-app.state.config.COMFYUI_WORKFLOW_NODES = COMFYUI_WORKFLOW_NODES
-
-
-app.state.config.ENABLE_IMAGE_EDIT = ENABLE_IMAGE_EDIT
-app.state.config.IMAGE_EDIT_ENGINE = IMAGE_EDIT_ENGINE
-app.state.config.IMAGE_EDIT_MODEL = IMAGE_EDIT_MODEL
-app.state.config.IMAGE_EDIT_SIZE = IMAGE_EDIT_SIZE
-app.state.config.IMAGES_EDIT_OPENAI_API_BASE_URL = IMAGES_EDIT_OPENAI_API_BASE_URL
-app.state.config.IMAGES_EDIT_OPENAI_API_KEY = IMAGES_EDIT_OPENAI_API_KEY
-app.state.config.IMAGES_EDIT_OPENAI_API_VERSION = IMAGES_EDIT_OPENAI_API_VERSION
-app.state.config.IMAGES_EDIT_GEMINI_API_BASE_URL = IMAGES_EDIT_GEMINI_API_BASE_URL
-app.state.config.IMAGES_EDIT_GEMINI_API_KEY = IMAGES_EDIT_GEMINI_API_KEY
-app.state.config.IMAGES_EDIT_COMFYUI_BASE_URL = IMAGES_EDIT_COMFYUI_BASE_URL
-app.state.config.IMAGES_EDIT_COMFYUI_API_KEY = IMAGES_EDIT_COMFYUI_API_KEY
-app.state.config.IMAGES_EDIT_COMFYUI_WORKFLOW = IMAGES_EDIT_COMFYUI_WORKFLOW
-app.state.config.IMAGES_EDIT_COMFYUI_WORKFLOW_NODES = IMAGES_EDIT_COMFYUI_WORKFLOW_NODES
-
-########################################
-#
-# AUDIO
-#
-########################################
-
-app.state.config.STT_ENGINE = AUDIO_STT_ENGINE
-app.state.config.STT_MODEL = AUDIO_STT_MODEL
-app.state.config.STT_SUPPORTED_CONTENT_TYPES = AUDIO_STT_SUPPORTED_CONTENT_TYPES
-
-app.state.config.STT_OPENAI_API_BASE_URL = AUDIO_STT_OPENAI_API_BASE_URL
-app.state.config.STT_OPENAI_API_KEY = AUDIO_STT_OPENAI_API_KEY
-
-app.state.config.WHISPER_MODEL = WHISPER_MODEL
-app.state.config.WHISPER_VAD_FILTER = WHISPER_VAD_FILTER
-app.state.config.DEEPGRAM_API_KEY = DEEPGRAM_API_KEY
-
-app.state.config.AUDIO_STT_AZURE_API_KEY = AUDIO_STT_AZURE_API_KEY
-app.state.config.AUDIO_STT_AZURE_REGION = AUDIO_STT_AZURE_REGION
-app.state.config.AUDIO_STT_AZURE_LOCALES = AUDIO_STT_AZURE_LOCALES
-app.state.config.AUDIO_STT_AZURE_BASE_URL = AUDIO_STT_AZURE_BASE_URL
-app.state.config.AUDIO_STT_AZURE_MAX_SPEAKERS = AUDIO_STT_AZURE_MAX_SPEAKERS
-
-app.state.config.AUDIO_STT_MISTRAL_API_KEY = AUDIO_STT_MISTRAL_API_KEY
-app.state.config.AUDIO_STT_MISTRAL_API_BASE_URL = AUDIO_STT_MISTRAL_API_BASE_URL
-app.state.config.AUDIO_STT_MISTRAL_USE_CHAT_COMPLETIONS = (
-    AUDIO_STT_MISTRAL_USE_CHAT_COMPLETIONS
-)
-
-app.state.config.TTS_ENGINE = AUDIO_TTS_ENGINE
-
-app.state.config.TTS_MODEL = AUDIO_TTS_MODEL
-app.state.config.TTS_VOICE = AUDIO_TTS_VOICE
-
-app.state.config.TTS_OPENAI_API_BASE_URL = AUDIO_TTS_OPENAI_API_BASE_URL
-app.state.config.TTS_OPENAI_API_KEY = AUDIO_TTS_OPENAI_API_KEY
-app.state.config.TTS_OPENAI_PARAMS = AUDIO_TTS_OPENAI_PARAMS
-
-app.state.config.TTS_API_KEY = AUDIO_TTS_API_KEY
-app.state.config.TTS_SPLIT_ON = AUDIO_TTS_SPLIT_ON
-
-app.state.config.TTS_AZURE_SPEECH_REGION = AUDIO_TTS_AZURE_SPEECH_REGION
-app.state.config.TTS_AZURE_SPEECH_BASE_URL = AUDIO_TTS_AZURE_SPEECH_BASE_URL
-app.state.config.TTS_AZURE_SPEECH_OUTPUT_FORMAT = AUDIO_TTS_AZURE_SPEECH_OUTPUT_FORMAT
-
-app.state.faster_whisper_model = None
-app.state.speech_synthesiser = None
-app.state.speech_speaker_embeddings_dataset = None
 
 ########################################
 #
@@ -1436,7 +1158,6 @@ app.include_router(pipelines.router, prefix="/api/v1/pipelines", tags=["pipeline
 app.include_router(tasks.router, prefix="/api/v1/tasks", tags=["tasks"])
 app.include_router(images.router, prefix="/api/v1/images", tags=["images"])
 
-app.include_router(audio.router, prefix="/api/v1/audio", tags=["audio"])
 app.include_router(retrieval.router, prefix="/api/v1/retrieval", tags=["retrieval"])
 
 app.include_router(configs.router, prefix="/api/v1/configs", tags=["configs"])
@@ -1981,10 +1702,8 @@ async def get_app_config(request: Request):
                     "enable_folders": app.state.config.ENABLE_FOLDERS,
                     "enable_channels": app.state.config.ENABLE_CHANNELS,
                     "enable_notes": app.state.config.ENABLE_NOTES,
-                    "enable_web_search": app.state.config.ENABLE_WEB_SEARCH,
                     "enable_code_execution": app.state.config.ENABLE_CODE_EXECUTION,
                     "enable_code_interpreter": app.state.config.ENABLE_CODE_INTERPRETER,
-                    "enable_image_generation": app.state.config.ENABLE_IMAGE_GENERATION,
                     "enable_autocomplete_generation": app.state.config.ENABLE_AUTOCOMPLETE_GENERATION,
                     "enable_community_sharing": app.state.config.ENABLE_COMMUNITY_SHARING,
                     "enable_message_rating": app.state.config.ENABLE_MESSAGE_RATING,
@@ -2019,16 +1738,6 @@ async def get_app_config(request: Request):
                 "user_count": user_count,
                 "code": {
                     "engine": app.state.config.CODE_EXECUTION_ENGINE,
-                },
-                "audio": {
-                    "tts": {
-                        "engine": app.state.config.TTS_ENGINE,
-                        "voice": app.state.config.TTS_VOICE,
-                        "split_on": app.state.config.TTS_SPLIT_ON,
-                    },
-                    "stt": {
-                        "engine": app.state.config.STT_ENGINE,
-                    },
                 },
                 "file": {
                     "max_size": app.state.config.FILE_MAX_SIZE,
