@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- 代码精简 (移除笔记、频道、音频输入输出、网页搜索、图片生成、Ollama、竞技场)
+- 代码精简 (移除笔记、频道、音频输入输出、网页搜索、图片生成、Ollama、竞技场、谷歌云存储、S3 云存储、OneDrive 云存储、部分向量数据库)
 - 依赖精简 (移除 transformer / gogoleapi / openai 等依赖)
 
 ## [0.6.43.2] - 2025.12.22
