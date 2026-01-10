@@ -122,7 +122,7 @@ class SessionUserInfoResponse(SessionUserResponse, UserStatus):
 async def get_session_user(
     request: Request,
     response: Response,
-    user:UserModel=Depends(get_current_user),
+    user: UserModel = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
     auth_header = request.headers.get("Authorization")

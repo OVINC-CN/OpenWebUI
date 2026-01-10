@@ -34,7 +34,7 @@ from open_webui.env import (
     WEBUI_NAME,
     log,
 )
-from open_webui.internal.db import Base, get_db, Session
+from open_webui.internal.db import Base, get_db
 from open_webui.utils.redis import get_redis_connection
 
 
@@ -50,28 +50,6 @@ logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
 ####################################
 # Config helpers
 ####################################
-
-
-# Function to run the alembic migrations
-def run_migrations():
-    log.info("Running migrations")
-    try:
-        from alembic import command
-        from alembic.config import Config
-
-        alembic_cfg = Config(OPEN_WEBUI_DIR / "alembic.ini")
-
-        # Set the script location dynamically
-        migrations_path = OPEN_WEBUI_DIR / "migrations"
-        alembic_cfg.set_main_option("script_location", str(migrations_path))
-
-        command.upgrade(alembic_cfg, "head")
-    except Exception as e:
-        log.exception(f"Error running migrations: {e}")
-
-
-if ENABLE_DB_MIGRATIONS:
-    run_migrations()
 
 
 class Config(Base):
@@ -1460,11 +1438,9 @@ USER_PERMISSIONS_FEATURES_MEMORIES = (
     os.environ.get("USER_PERMISSIONS_FEATURES_MEMORIES", "True").lower() == "true"
 )
 
-
 USER_PERMISSIONS_SETTINGS_INTERFACE = (
     os.environ.get("USER_PERMISSIONS_SETTINGS_INTERFACE", "True").lower() == "true"
 )
-
 
 DEFAULT_USER_PERMISSIONS = {
     "workspace": {
@@ -2853,7 +2829,6 @@ RAG_EXTERNAL_RERANKER_TIMEOUT = PersistentConfig(
     os.environ.get("RAG_EXTERNAL_RERANKER_TIMEOUT", ""),
 )
 
-
 RAG_TEXT_SPLITTER = PersistentConfig(
     "RAG_TEXT_SPLITTER",
     "rag.text_splitter",
@@ -2865,7 +2840,6 @@ ENABLE_MARKDOWN_HEADER_TEXT_SPLITTER = PersistentConfig(
     "rag.enable_markdown_header_text_splitter",
     os.environ.get("ENABLE_MARKDOWN_HEADER_TEXT_SPLITTER", "True").lower() == "true",
 )
-
 
 TIKTOKEN_CACHE_DIR = os.environ.get("TIKTOKEN_CACHE_DIR", f"{CACHE_DIR}/tiktoken")
 TIKTOKEN_ENCODING_NAME = PersistentConfig(
@@ -3065,7 +3039,6 @@ WEB_LOADER_TIMEOUT = PersistentConfig(
     "rag.web.loader.timeout",
     os.getenv("WEB_LOADER_TIMEOUT", ""),
 )
-
 
 ENABLE_WEB_LOADER_SSL_VERIFICATION = PersistentConfig(
     "ENABLE_WEB_LOADER_SSL_VERIFICATION",

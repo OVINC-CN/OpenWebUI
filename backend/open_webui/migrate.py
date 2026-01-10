@@ -1,5 +1,5 @@
-from open_webui.env import OPEN_WEBUI_DIR, log
-from open_webui.internal.db import Session
+from open_webui.env import OPEN_WEBUI_DIR, log, ENABLE_DB_MIGRATIONS
+from open_webui.internal.db import ScopedSession
 from sqlalchemy import text
 
 
@@ -33,7 +33,7 @@ def run_extra_migrations():
     # do migrations
     try:
         # load version from db
-        current_version = Session.execute(
+        current_version = ScopedSession.execute(
             text("SELECT version_num FROM alembic_version")
         ).scalar_one()
 
@@ -73,5 +73,6 @@ def run_extra_migrations():
 
 
 if __name__ == "__main__":
-    run_migrations()
-    run_extra_migrations()
+    if ENABLE_DB_MIGRATIONS:
+        run_migrations()
+        run_extra_migrations()

@@ -97,12 +97,10 @@
 			]
 		},
 		{
-		    id: 'credit',
-		    title: 'Credit',
-		    route: '/admin/settings/credit',
-		    keywords: [
-		        'credit'
-            ]
+			id: 'credit',
+			title: 'Credit',
+			route: '/admin/settings/credit',
+			keywords: ['credit']
 		},
 		{
 			id: 'connections',
@@ -350,10 +348,10 @@
 							class="w-4 h-4"
 						>
 							<path
-                                fill-rule="evenodd"
-                                d="M2 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1h1a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4zm10 0H4v8h8V4zm2 2h-1v4h1V6zm-3 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"
-                                clip-rule="evenodd"
-                            />
+								fill-rule="evenodd"
+								d="M2 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1h1a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4zm10 0H4v8h8V4zm2 2h-1v4h1V6zm-3 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"
+								clip-rule="evenodd"
+							/>
 						</svg>
 					{:else if tab.id === 'connections'}
 						<svg
