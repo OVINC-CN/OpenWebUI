@@ -34,7 +34,9 @@ jobs:
           node-version: '22'
 
       - name: Install Dependencies
-        run: npm install --force
+        run: |
+          npm install -g npm@latest
+          npm install --force
 
       - name: Format Frontend
         run: npm run format
@@ -61,7 +63,9 @@ jobs:
           node-version: '22'
 
       - name: Install Dependencies
-        run: npm ci --force
+        run: |
+          npm install -g npm@latest
+          npm ci --force
 
       - name: Run vitest
         run: npm run test:frontend
