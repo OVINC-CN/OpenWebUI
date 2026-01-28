@@ -77,7 +77,8 @@
 		chatAction,
 		generateMoACompletion,
 		stopTask,
-		getTaskIdsByChatId
+		getTaskIdsByChatId,
+		handleError
 	} from '$lib/apis';
 	import { getTools } from '$lib/apis/tools';
 	import { uploadFile } from '$lib/apis/files';
@@ -885,7 +886,6 @@
 
 		artifactContents.set(contents);
 	};
-
 	//////////////////////////
 	// Web functions
 	//////////////////////////
@@ -2315,18 +2315,22 @@
 	};
 
 	const saveChatHandler = async (_chatId, history) => {
-		if ($chatId == _chatId) {
-			if (!$temporaryChatEnabled) {
-				chat = await updateChatById(localStorage.token, _chatId, {
-					models: selectedModels,
-					history: history,
-					messages: createMessagesList(history, history.currentId),
-					params: params,
-					files: chatFiles
-				});
-				currentChatPage.set(1);
-				await chats.set(await getChatList(localStorage.token, $currentChatPage));
+		try {
+			if ($chatId == _chatId) {
+				if (!$temporaryChatEnabled) {
+					chat = await updateChatById(localStorage.token, _chatId, {
+						models: selectedModels,
+						history: history,
+						messages: createMessagesList(history, history.currentId),
+						params: params,
+						files: chatFiles
+					});
+					currentChatPage.set(1);
+					await chats.set(await getChatList(localStorage.token, $currentChatPage));
+				}
 			}
+		} catch (e) {
+			handleError(e);
 		}
 	};
 
