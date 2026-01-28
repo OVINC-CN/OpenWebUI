@@ -2275,43 +2275,47 @@
 	};
 
 	const initChatHandler = async (history) => {
-		let _chatId = $chatId;
+		try {
+			let _chatId = $chatId;
 
-		if (!$temporaryChatEnabled) {
-			chat = await createNewChat(
-				localStorage.token,
-				{
-					id: _chatId,
-					title: $i18n.t('New Chat'),
-					models: selectedModels,
-					system: $settings.system ?? undefined,
-					params: params,
-					history: history,
-					messages: createMessagesList(history, history.currentId),
-					tags: [],
-					timestamp: Date.now()
-				},
-				$selectedFolder?.id
-			);
+			if (!$temporaryChatEnabled) {
+				chat = await createNewChat(
+					localStorage.token,
+					{
+						id: _chatId,
+						title: $i18n.t('New Chat'),
+						models: selectedModels,
+						system: $settings.system ?? undefined,
+						params: params,
+						history: history,
+						messages: createMessagesList(history, history.currentId),
+						tags: [],
+						timestamp: Date.now()
+					},
+					$selectedFolder?.id
+				);
 
-			_chatId = chat.id;
-			await chatId.set(_chatId);
+				_chatId = chat.id;
+				await chatId.set(_chatId);
 
-			window.history.replaceState(history.state, '', `/c/${_chatId}`);
+				window.history.replaceState(history.state, '', `/c/${_chatId}`);
 
+				await tick();
+
+				await chats.set(await getChatList(localStorage.token, $currentChatPage));
+				currentChatPage.set(1);
+
+				selectedFolder.set(null);
+			} else {
+				_chatId = `local:${$socket?.id}`; // Use socket id for temporary chat
+				await chatId.set(_chatId);
+			}
 			await tick();
 
-			await chats.set(await getChatList(localStorage.token, $currentChatPage));
-			currentChatPage.set(1);
-
-			selectedFolder.set(null);
-		} else {
-			_chatId = `local:${$socket?.id}`; // Use socket id for temporary chat
-			await chatId.set(_chatId);
+			return _chatId;
+		} catch (e) {
+			handleError(e);
 		}
-		await tick();
-
-		return _chatId;
 	};
 
 	const saveChatHandler = async (_chatId, history) => {
