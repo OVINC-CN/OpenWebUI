@@ -1,6 +1,30 @@
 import { WEBUI_BASE_URL } from '$lib/constants';
 import { convertOpenApiToToolPayload } from '$lib/utils';
 import { getOpenAIModelsDirect } from './openai';
+import { toast } from 'svelte-sonner';
+
+type UnknownError = {
+	code?: number;
+	trace?: string;
+	next?: string;
+	detail?: string;
+	error_message?: string;
+	message?: string;
+};
+
+export const handleError = (e: UnknownError | string) => {
+	console.error(e);
+	if (typeof e === 'object') {
+		const errorMsg = e?.detail || e?.error_message || e?.message || JSON.stringify(e);
+		toast.error(errorMsg);
+		if (e?.code && e?.code >= 400 && e?.next) {
+			window.location.reload();
+		}
+	} else {
+		toast.error(e);
+	}
+	throw e;
+};
 
 export const getModels = async (
 	token: string = '',
