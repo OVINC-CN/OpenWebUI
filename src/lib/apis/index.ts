@@ -18,9 +18,7 @@ export const handleError = (e: UnknownError | string) => {
 		const errorMsg = e?.detail || e?.error_message || e?.message || JSON.stringify(e);
 		toast.error(errorMsg);
 		if (e?.code && e?.code >= 400 && e?.next) {
-			setTimeout(() => {
-				window.location.replace(e?.next);
-			}, 1800);
+			window.location.reload();
 		}
 	} else {
 		toast.error(e);
