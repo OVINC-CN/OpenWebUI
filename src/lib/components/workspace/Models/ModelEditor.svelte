@@ -728,7 +728,7 @@
 										<input
 											class="w-full flex flex-1 text-xs bg-gray-50 dark:text-gray-300 dark:bg-gray-850 outline-hidden"
 											type="number"
-											step="1"
+											step="0.0001"
 											min="0"
 											bind:value={info.price.completion_long_ctx_price}
 											autocomplete="off"
