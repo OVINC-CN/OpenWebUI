@@ -9,7 +9,6 @@ from decimal import Decimal
 from aiohttp import ClientSession
 import urllib
 
-
 from open_webui.models.auths import (
     AddUserForm,
     ApiKey,
@@ -91,13 +90,14 @@ from open_webui.utils.redis import (
 )
 from open_webui.utils.rate_limit import RateLimiter
 
-
 from typing import Optional, List
 
 from ssl import CERT_NONE, CERT_REQUIRED, PROTOCOL_TLS
 
 from ldap3 import Server, Connection, NONE, Tls
 from ldap3.utils.conv import escape_filter_chars
+
+from backend.open_webui.models.credits import CreditModel
 
 router = APIRouter()
 
@@ -122,6 +122,9 @@ def create_session_response(
         response: FastAPI response object (required if set_cookie is True)
         set_cookie: Whether to set the auth cookie on the response
     """
+
+    credit: CreditModel = Credits.init_credit_by_user_id(user.id)
+
     expires_delta = parse_duration(request.app.state.config.JWT_EXPIRES_IN)
     expires_at = None
     if expires_delta:
@@ -161,6 +164,7 @@ def create_session_response(
         "role": user.role,
         "profile_image_url": user.profile_image_url,
         "permissions": user_permissions,
+        "credit": credit.credit,
     }
 
 
@@ -718,7 +722,13 @@ async def signup_handler(
     Raises HTTPException on failure.
     """
     has_users = Users.has_users(db=db)
-    role = "admin" if not has_users else request.app.state.config.DEFAULT_USER_ROLE
+    if not has_users:
+        role = "admin"
+    elif request.app.state.config.ENABLE_SIGNUP_VERIFY:
+        role = "pending"
+        send_verify_email(email=email.lower())
+    else:
+        role = request.app.state.config.DEFAULT_USER_ROLE
     hashed = get_password_hash(password)
 
     user = Auths.insert_new_auth(
@@ -843,7 +853,6 @@ async def signup_verify(request: Request, code: str):
 async def signout(
     request: Request, response: Response, db: Session = Depends(get_session)
 ):
-
     # get auth token from headers or cookies
     token = None
     auth_header = request.headers.get("Authorization")
