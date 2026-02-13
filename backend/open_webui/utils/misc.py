@@ -807,7 +807,9 @@ async def stream_wrapper(response, session, content_handler=None):
         await cleanup_response(response, session)
 
 
-def stream_chunks_handler(user: "UserModel", model_id: str, form_data: dict, stream: aiohttp.StreamReader):
+def stream_chunks_handler(
+    user: "UserModel", model_id: str, form_data: dict, stream: aiohttp.StreamReader
+):
     """
     Handle stream response chunks, supporting large data chunks that exceed the original 16kb limit.
     When a single line exceeds max_buffer_size, returns an empty JSON string {} and skips subsequent data
