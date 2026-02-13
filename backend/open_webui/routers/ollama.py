@@ -165,7 +165,7 @@ async def send_post_request(
 
             streaming = True
             return StreamingResponse(
-                stream_wrapper(r, session),
+                stream_wrapper(user, payload["model"], payload, r, session),
                 status_code=r.status,
                 headers=response_headers,
             )

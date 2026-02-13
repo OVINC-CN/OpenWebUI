@@ -4,7 +4,6 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from open_webui.internal.db import Base, JSONField, get_db, get_db_context
 
-
 from open_webui.env import DATABASE_USER_ACTIVE_STATUS_UPDATE_INTERVAL
 
 from open_webui.models.chats import Chats
@@ -13,7 +12,6 @@ from open_webui.models.channels import ChannelMember
 
 from open_webui.utils.misc import throttle
 from open_webui.utils.validate import validate_profile_image_url
-
 
 from pydantic import BaseModel, ConfigDict, field_validator
 from sqlalchemy import (
@@ -244,15 +242,15 @@ class UserUpdateForm(BaseModel):
     password: Optional[str] = None
     credit: Optional[float] = None
 
-
-class UserCreditUpdateForm(BaseModel):
-    amount: Optional[float] = None
-    credit: Optional[float] = None
-
     @field_validator("profile_image_url")
     @classmethod
     def check_profile_image_url(cls, v: str) -> str:
         return validate_profile_image_url(v)
+
+
+class UserCreditUpdateForm(BaseModel):
+    amount: Optional[float] = None
+    credit: Optional[float] = None
 
 
 class UsersTable:

@@ -11,7 +11,6 @@ import json
 import aiohttp
 import mimeparse
 
-
 import collections.abc
 from open_webui.env import CHAT_STREAM_RESPONSE_CHUNK_MAX_BUFFER_SIZE
 
@@ -792,61 +791,19 @@ async def cleanup_response(
         await session.close()
 
 
-async def stream_wrapper(response, session, content_handler=None):
+async def stream_wrapper(
+    user, model_id, form_data, response, session, content_handler=None
+):
     """
     Wrap a stream to ensure cleanup happens even if streaming is interrupted.
     This is more reliable than BackgroundTask which may not run if client disconnects.
     """
+    from open_webui.utils.credit.usage import CreditDeduct
+
     try:
         stream = (
             content_handler(response.content) if content_handler else response.content
         )
-        async for chunk in stream:
-            yield chunk
-    finally:
-        await cleanup_response(response, session)
-
-
-def stream_chunks_handler(
-    user: "UserModel", model_id: str, form_data: dict, stream: aiohttp.StreamReader
-):
-    """
-    Handle stream response chunks, supporting large data chunks that exceed the original 16kb limit.
-    When a single line exceeds max_buffer_size, returns an empty JSON string {} and skips subsequent data
-    until encountering normally sized data.
-
-    :param user: The user making the request.
-    :param model_id: The ID of the model being used.
-    :param form_data: The form data associated with the request.
-    :param stream: The stream reader to handle.
-    :return: An async generator that yields the stream data.
-    """
-
-    from open_webui.utils.credit.usage import CreditDeduct
-
-    max_buffer_size = CHAT_STREAM_RESPONSE_CHUNK_MAX_BUFFER_SIZE
-    if max_buffer_size is None or max_buffer_size <= 0:
-
-        async def consumer_content(stream: aiohttp.StreamReader):
-            with CreditDeduct(
-                user=user,
-                model_id=model_id,
-                body=form_data,
-                is_stream=True,
-            ) as credit_deduct:
-                # change to avoid multi \n\n cause message lose
-                async for chunk in stream:
-                    credit_deduct.run(response=chunk)
-                    yield chunk
-
-                yield credit_deduct.usage_message
-
-        return consumer_content(stream)
-
-    async def yield_safe_stream_chunks():
-        buffer = b""
-        skip_mode = False
-
         with CreditDeduct(
             user=user,
             model_id=model_id,
@@ -854,58 +811,79 @@ def stream_chunks_handler(
             is_stream=True,
         ) as credit_deduct:
             # change to avoid multi \n\n cause message lose
-            async for data in stream:
-
-                if not data:
-                    continue
-
-                credit_deduct.run(response=data)
-
-                # In skip_mode, if buffer already exceeds the limit, clear it (it's part of an oversized line)
-                if skip_mode and len(buffer) > max_buffer_size:
-                    buffer = b""
-
-                lines = (buffer + data).split(b"\n")
-
-                # Process complete lines (except the last possibly incomplete fragment)
-                for i in range(len(lines) - 1):
-                    line = lines[i]
-
-                    if skip_mode:
-                        # Skip mode: check if current line is small enough to exit skip mode
-                        if len(line) <= max_buffer_size:
-                            skip_mode = False
-                            yield line
-                        else:
-                            yield b"data: {}"
-                            yield b"\n"
-                    else:
-                        # Normal mode: check if line exceeds limit
-                        if len(line) > max_buffer_size:
-                            skip_mode = True
-                            yield b"data: {}"
-                            yield b"\n"
-                            log.info(f"Skip mode triggered, line size: {len(line)}")
-                        else:
-                            yield line
-                            yield b"\n"
-
-                # Save the last incomplete fragment
-                buffer = lines[-1]
-
-                # Check if buffer exceeds limit
-                if not skip_mode and len(buffer) > max_buffer_size:
-                    skip_mode = True
-                    log.info(f"Skip mode triggered, buffer size: {len(buffer)}")
-                    # Clear oversized buffer to prevent unlimited growth
-                    buffer = b""
-
-            # Process remaining buffer data
-            if buffer and not skip_mode:
-                credit_deduct.run(response=buffer)
-                yield buffer
-                yield b"\n"
+            async for chunk in stream:
+                credit_deduct.run(response=chunk)
+                yield chunk
 
             yield credit_deduct.usage_message
+    finally:
+        await cleanup_response(response, session)
+
+
+def stream_chunks_handler(stream: aiohttp.StreamReader):
+    """
+    Handle stream response chunks, supporting large data chunks that exceed the original 16kb limit.
+    When a single line exceeds max_buffer_size, returns an empty JSON string {} and skips subsequent data
+    until encountering normally sized data.
+
+    :param stream: The stream reader to handle.
+    :return: An async generator that yields the stream data.
+    """
+
+    max_buffer_size = CHAT_STREAM_RESPONSE_CHUNK_MAX_BUFFER_SIZE
+    if max_buffer_size is None or max_buffer_size <= 0:
+        return stream
+
+    async def yield_safe_stream_chunks():
+        buffer = b""
+        skip_mode = False
+
+        async for data, _ in stream.iter_chunks():
+            if not data:
+                continue
+
+            # In skip_mode, if buffer already exceeds the limit, clear it (it's part of an oversized line)
+            if skip_mode and len(buffer) > max_buffer_size:
+                buffer = b""
+
+            lines = (buffer + data).split(b"\n")
+
+            # Process complete lines (except the last possibly incomplete fragment)
+            for i in range(len(lines) - 1):
+                line = lines[i]
+
+                if skip_mode:
+                    # Skip mode: check if current line is small enough to exit skip mode
+                    if len(line) <= max_buffer_size:
+                        skip_mode = False
+                        yield line
+                    else:
+                        yield b"data: {}"
+                        yield b"\n"
+                else:
+                    # Normal mode: check if line exceeds limit
+                    if len(line) > max_buffer_size:
+                        skip_mode = True
+                        yield b"data: {}"
+                        yield b"\n"
+                        log.info(f"Skip mode triggered, line size: {len(line)}")
+                    else:
+                        yield line
+                        yield b"\n"
+
+            # Save the last incomplete fragment
+            buffer = lines[-1]
+
+            # Check if buffer exceeds limit
+            if not skip_mode and len(buffer) > max_buffer_size:
+                skip_mode = True
+                log.info(f"Skip mode triggered, buffer size: {len(buffer)}")
+                # Clear oversized buffer to prevent unlimited growth
+                buffer = b""
+
+        # Process remaining buffer data
+        if buffer and not skip_mode:
+            yield buffer
+            yield b"\n"
 
     return yield_safe_stream_chunks()

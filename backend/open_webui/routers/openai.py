@@ -1105,7 +1105,9 @@ async def generate_chat_completion(
 
             streaming = True
             return StreamingResponse(
-                stream_wrapper(r, session, stream_chunks_handler),
+                stream_wrapper(
+                    user, model_id, form_data, r, session, stream_chunks_handler
+                ),
                 status_code=r.status,
                 headers=dict(r.headers),
             )
@@ -1214,7 +1216,7 @@ async def embeddings(request: Request, form_data: dict, user):
                     credit_deduct.run(form_data["input"])
             streaming = True
             return StreamingResponse(
-                stream_wrapper(r, session),
+                stream_wrapper(user, model_id, form_data, r, session),
                 status_code=r.status,
                 headers=dict(r.headers),
             )
@@ -1251,96 +1253,6 @@ async def embeddings(request: Request, form_data: dict, user):
                         credit_deduct.run(form_data["input"])
 
             return response_data
-    except Exception as e:
-        log.exception(e)
-        raise HTTPException(
-            status_code=r.status if r else 500,
-            detail="Open WebUI: Server Connection Error",
-        )
-    finally:
-        if not streaming:
-            await cleanup_response(r, session)
-
-
-@router.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
-    """
-    Deprecated: proxy all requests to OpenAI API
-    """
-
-    body = await request.body()
-
-    idx = 0
-    url = request.app.state.config.OPENAI_API_BASE_URLS[idx]
-    key = request.app.state.config.OPENAI_API_KEYS[idx]
-    api_config = request.app.state.config.OPENAI_API_CONFIGS.get(
-        str(idx),
-        request.app.state.config.OPENAI_API_CONFIGS.get(
-            request.app.state.config.OPENAI_API_BASE_URLS[idx], {}
-        ),  # Legacy support
-    )
-
-    r = None
-    session = None
-    streaming = False
-
-    try:
-        headers, cookies = await get_headers_and_cookies(
-            request, url, key, api_config, user=user
-        )
-
-        if api_config.get("azure", False):
-            api_version = api_config.get("api_version", "2023-03-15-preview")
-
-            # Only set api-key header if not using Azure Entra ID authentication
-            auth_type = api_config.get("auth_type", "bearer")
-            if auth_type not in ("azure_ad", "microsoft_entra_id"):
-                headers["api-key"] = key
-
-            headers["api-version"] = api_version
-
-            payload = json.loads(body)
-            url, payload = convert_to_azure_payload(url, payload, api_version)
-            body = json.dumps(payload).encode()
-
-            request_url = f"{url}/{path}?api-version={api_version}"
-        else:
-            request_url = f"{url}/{path}"
-
-        session = aiohttp.ClientSession(trust_env=True)
-        r = await session.request(
-            method=request.method,
-            url=request_url,
-            data=body,
-            headers=headers,
-            cookies=cookies,
-            ssl=AIOHTTP_CLIENT_SESSION_SSL,
-        )
-
-        # Check if response is SSE
-        if "text/event-stream" in r.headers.get("Content-Type", ""):
-            streaming = True
-            return StreamingResponse(
-                stream_wrapper(r, session),
-                status_code=r.status,
-                headers=dict(r.headers),
-            )
-        else:
-            try:
-                response_data = await r.json()
-            except Exception:
-                response_data = await r.text()
-
-            if r.status >= 400:
-                if isinstance(response_data, (dict, list)):
-                    return JSONResponse(status_code=r.status, content=response_data)
-                else:
-                    return PlainTextResponse(
-                        status_code=r.status, content=response_data
-                    )
-
-            return response_data
-
     except Exception as e:
         log.exception(e)
         raise HTTPException(

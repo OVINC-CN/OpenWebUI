@@ -97,8 +97,6 @@ from ssl import CERT_NONE, CERT_REQUIRED, PROTOCOL_TLS
 from ldap3 import Server, Connection, NONE, Tls
 from ldap3.utils.conv import escape_filter_chars
 
-from backend.open_webui.models.credits import CreditModel
-
 router = APIRouter()
 
 log = logging.getLogger(__name__)
@@ -123,7 +121,7 @@ def create_session_response(
         set_cookie: Whether to set the auth cookie on the response
     """
 
-    credit: CreditModel = Credits.init_credit_by_user_id(user.id)
+    credit = Credits.init_credit_by_user_id(user.id)
 
     expires_delta = parse_duration(request.app.state.config.JWT_EXPIRES_IN)
     expires_at = None
