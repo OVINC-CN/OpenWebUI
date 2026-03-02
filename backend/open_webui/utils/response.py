@@ -145,9 +145,8 @@ def convert_response_ollama_to_openai(ollama_response: dict) -> dict:
     return response
 
 
-async def convert_streaming_response_ollama_to_openai(
-    user, model_id, form_data, ollama_streaming_response
-):
+async def convert_streaming_response_ollama_to_openai(ollama_streaming_response):
+    has_tool_calls = False
     with CreditDeduct(
         user=user,
         model_id=model_id,
@@ -165,6 +164,7 @@ async def convert_streaming_response_ollama_to_openai(
 
             if tool_calls:
                 openai_tool_calls = convert_ollama_tool_call_to_openai(tool_calls)
+                has_tool_calls = True
 
             done = data.get("done", False)
 
@@ -176,7 +176,7 @@ async def convert_streaming_response_ollama_to_openai(
                 model, message_content, reasoning_content, openai_tool_calls, usage
             )
 
-            if done and openai_tool_calls:
+            if done and has_tool_calls:
                 data["choices"][0]["finish_reason"] = "tool_calls"
 
             line = f"data: {json.dumps(data)}\n\n"

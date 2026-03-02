@@ -20,7 +20,7 @@
 
 	import Evaluations from './Settings/Evaluations.svelte';
 	import CodeExecution from './Settings/CodeExecution.svelte';
-	import Tools from './Settings/Tools.svelte';
+	import Integrations from './Settings/Integrations.svelte';
 	import Credit from './Settings/Credit.svelte';
 
 	import ChartBar from '../icons/ChartBar.svelte';
@@ -42,7 +42,7 @@
 			'connections',
 			'models',
 			'evaluations',
-			'tools',
+			'integrations',
 			'documents',
 			'web',
 			'code-execution',
@@ -140,10 +140,10 @@
 			keywords: ['evaluations', 'feedback', 'rating', 'arena', 'leaderboard', 'preference']
 		},
 		{
-			id: 'tools',
-			title: 'External Tools',
-			route: '/admin/settings/tools',
-			keywords: ['tools', 'plugins', 'extensions', 'functions', 'openapi', 'server']
+			id: 'integrations',
+			title: 'Integrations',
+			route: '/admin/settings/integrations',
+			keywords: ['tools', 'integrations', 'plugins', 'extensions', 'functions', 'openapi', 'server']
 		},
 		{
 			id: 'documents',
@@ -319,7 +319,7 @@
 		<!-- {$i18n.t('Connections')} -->
 		<!-- {$i18n.t('Models')} -->
 		<!-- {$i18n.t('Evaluations')} -->
-		<!-- {$i18n.t('External Tools')} -->
+		<!-- {$i18n.t('Integrations')} -->
 		<!-- {$i18n.t('Documents')} -->
 		<!-- {$i18n.t('Web Search')} -->
 		<!-- {$i18n.t('Code Execution')} -->
@@ -391,7 +391,7 @@
 						</svg>
 					{:else if tab.id === 'evaluations'}
 						<DocumentChartBar />
-					{:else if tab.id === 'tools'}
+					{:else if tab.id === 'integrations'}
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							viewBox="0 0 24 24"
@@ -546,8 +546,8 @@
 			<Models />
 		{:else if selectedTab === 'evaluations'}
 			<Evaluations />
-		{:else if selectedTab === 'tools'}
-			<Tools />
+		{:else if selectedTab === 'integrations'}
+			<Integrations />
 		{:else if selectedTab === 'documents'}
 			<Documents
 				on:save={async () => {
