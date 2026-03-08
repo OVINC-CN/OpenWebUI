@@ -79,6 +79,9 @@
 
 	let mouseOver = false;
 	let draggable = false;
+	$: if (mouseOver) {
+		loadChat();
+	}
 
 	const loadChat = async () => {
 		if (!chat) {
@@ -153,8 +156,14 @@
 	};
 
 	const archiveChatHandler = async (id) => {
-		await archiveChatById(localStorage.token, id);
-		dispatch('change');
+		try {
+			await archiveChatById(localStorage.token, id);
+			dispatch('change');
+			toast.success($i18n.t('Chat archived.'));
+		} catch (error) {
+			console.error('Error archiving chat:', error);
+			toast.error($i18n.t('Failed to archive chat.'));
+		}
 	};
 
 	const moveChatHandler = async (chatId, folderId) => {
