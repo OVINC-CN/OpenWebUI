@@ -86,7 +86,7 @@ sentencepiece==0.2.1
 jsonpath-ng
 soundfile==0.13.1
 
-pillow==12.1.1
+pillow==12.2.0
 opencv-python-headless==4.13.0.92
 rapidocr-onnxruntime==1.4.4
 rank-bm25==0.2.2
@@ -94,7 +94,7 @@ rank-bm25==0.2.2
 onnxruntime==1.24.3
 faster-whisper==1.2.1
 
-black==26.1.0
+black==26.3.1
 youtube-transcript-api==1.2.4
 pytube==15.0.0
 
