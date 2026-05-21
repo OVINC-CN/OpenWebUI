@@ -1,3 +1,6 @@
+> [!WARNING]
+> 本仓库已经停止维护，推荐使用 [DEEIX-AI/DEEIX-Chat](https://github.com/DEEIX-AI/DEEIX-Chat) 面向企业模型路由、多模态对话、文件、工具、计费、身份和运维的一体化 AI 工作台
+
 <div align="center">
   <a href="https://github.com/open-webui/open-webui">
     <img src="./static/favicon.png" alt="Logo" width="100" height="100">
